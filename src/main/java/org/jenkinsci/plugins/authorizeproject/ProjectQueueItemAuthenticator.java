@@ -26,11 +26,12 @@ package org.jenkinsci.plugins.authorizeproject;
 
 import hudson.Extension;
 import hudson.model.AbstractProject;
-import hudson.model.Queue$Item;
+import hudson.model.Queue;
 
 import javax.annotation.CheckForNull;
 
 import org.acegisecurity.Authentication;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 import jenkins.security.QueueItemAuthenticatorDescriptor;
 import jenkins.security.QueueItemAuthenticator;
@@ -39,6 +40,10 @@ import jenkins.security.QueueItemAuthenticator;
  *
  */
 public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
+    @DataBoundConstructor
+    public ProjectQueueItemAuthenticator() {
+    }
+    
     /**
      * @param item
      * @return
@@ -46,7 +51,7 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
      */
     @Override
     @CheckForNull
-    public Authentication authenticate(Queue$Item item) {
+    public Authentication authenticate(Queue.Item item) {
         if (!(item.task instanceof AbstractProject)) {
             // This handles only AbstractProject.
             return null;
@@ -63,8 +68,7 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
     public static class DescriptorImpl extends QueueItemAuthenticatorDescriptor {
         @Override
         public String getDisplayName() {
-            // TODO Auto-generated method stub
-            return null;
+            return Messages.ProjectQueueItemAuthenticator_DisplayName();
         }
     }
 }

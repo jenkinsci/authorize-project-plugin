@@ -28,7 +28,7 @@ import hudson.Extension;
 import hudson.model.Cause;
 import hudson.model.Cause.UpstreamCause;
 import hudson.model.Cause.UserIdCause;
-import hudson.model.Queue$Item;
+import hudson.model.Queue;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.model.Run;
@@ -41,17 +41,8 @@ import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
  *
  */
 public class TriggeredUsersAuthorizationStrategy extends AuthorizeProjectStrategy {
-    @Extension
-    public static class DescriptorImpl extends Descriptor<AuthorizeProjectStrategy> {
-        @Override
-        public String getDisplayName() {
-            // TODO Auto-generated method stub
-            return null;
-        }
-    }
-
     @Override
-    public Authentication authenticate(AbstractProject<?, ?> project, Queue$Item item) {
+    public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
         Cause.UserIdCause cause = getRootUserIdCause(item);
         if (cause != null) {
             return User.get(cause.getUserId()).impersonate();
@@ -59,7 +50,7 @@ public class TriggeredUsersAuthorizationStrategy extends AuthorizeProjectStrateg
         return null;
     }
     
-    private UserIdCause getRootUserIdCause(Queue$Item item) {
+    private UserIdCause getRootUserIdCause(Queue.Item item) {
         Run<?,?> upstream = null;
         for (Cause c: item.getCauses()) {
             if (c instanceof UserIdCause) {
@@ -79,5 +70,13 @@ public class TriggeredUsersAuthorizationStrategy extends AuthorizeProjectStrateg
         }
         
         return null;
+    }
+    
+    @Extension
+    public static class DescriptorImpl extends Descriptor<AuthorizeProjectStrategy> {
+        @Override
+        public String getDisplayName() {
+            return Messages.TriggeredUsersAuthorizationStrategy_DisplayName();
+        }
     }
 }

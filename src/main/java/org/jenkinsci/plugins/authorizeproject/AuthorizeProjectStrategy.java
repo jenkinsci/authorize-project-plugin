@@ -30,7 +30,7 @@ import jenkins.model.Jenkins;
 import hudson.DescriptorExtensionList;
 import hudson.ExtensionPoint;
 import hudson.model.AbstractDescribableImpl;
-import hudson.model.Queue$Item;
+import hudson.model.Queue;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 
@@ -43,5 +43,5 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
         return Jenkins.getInstance().getDescriptorList(AuthorizeProjectStrategy.class);
     }
     
-    public abstract Authentication authenticate(AbstractProject<?, ?> project, Queue$Item item);
+    public abstract Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item);
 }
