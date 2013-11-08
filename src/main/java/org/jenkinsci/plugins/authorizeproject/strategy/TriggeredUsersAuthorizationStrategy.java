@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.authorizeproject.strategy;
 
+import jenkins.model.Jenkins;
 import hudson.Extension;
 import hudson.model.Cause;
 import hudson.model.Cause.UpstreamCause;
@@ -45,7 +46,11 @@ public class TriggeredUsersAuthorizationStrategy extends AuthorizeProjectStrateg
     public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
         Cause.UserIdCause cause = getRootUserIdCause(item);
         if (cause != null) {
-            return User.get(cause.getUserId()).impersonate();
+            User u = User.get(cause.getUserId());
+            if (u == null) {
+                return Jenkins.ANONYMOUS;
+            }
+            return u.impersonate();
         }
         return null;
     }
