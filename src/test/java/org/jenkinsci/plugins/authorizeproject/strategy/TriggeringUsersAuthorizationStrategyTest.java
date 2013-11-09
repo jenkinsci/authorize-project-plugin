@@ -47,7 +47,7 @@ import com.gargoylesoftware.htmlunit.WebResponse;
 /**
  *
  */
-public class TriggeredUsersAuthorizationStrategyTest {
+public class TriggeringUsersAuthorizationStrategyTest {
     @Rule
     public JenkinsRule j = new JenkinsRule() {
         @Override
@@ -102,7 +102,7 @@ public class TriggeredUsersAuthorizationStrategyTest {
             b.delete();
         }
         
-        p.addProperty(new AuthorizeProjectProperty(new TriggeredUsersAuthorizationStrategy()));
+        p.addProperty(new AuthorizeProjectProperty(new TriggeringUsersAuthorizationStrategy()));
         
         // if configured, run in ANONYMOUS privilege.
         {
@@ -153,7 +153,7 @@ public class TriggeredUsersAuthorizationStrategyTest {
         FreeStyleProject p = j.createFreeStyleProject();
         AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
         p.getBuildersList().add(checker);
-        p.addProperty(new AuthorizeProjectProperty(new TriggeredUsersAuthorizationStrategy()));
+        p.addProperty(new AuthorizeProjectProperty(new TriggeringUsersAuthorizationStrategy()));
         
         FreeStyleProject upstream = j.createFreeStyleProject();
         upstream.getPublishersList().add(new BuildTrigger(p.getFullName(), false));

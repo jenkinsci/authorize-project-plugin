@@ -41,7 +41,7 @@ import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
 /**
  *
  */
-public class TriggeredUsersAuthorizationStrategy extends AuthorizeProjectStrategy {
+public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrategy {
     @Override
     public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
         Cause.UserIdCause cause = getRootUserIdCause(item);
@@ -81,7 +81,7 @@ public class TriggeredUsersAuthorizationStrategy extends AuthorizeProjectStrateg
     public static class DescriptorImpl extends Descriptor<AuthorizeProjectStrategy> {
         @Override
         public String getDisplayName() {
-            return Messages.TriggeredUsersAuthorizationStrategy_DisplayName();
+            return Messages.TriggeringUsersAuthorizationStrategy_DisplayName();
         }
     }
 }
