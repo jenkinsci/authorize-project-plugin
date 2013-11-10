@@ -25,14 +25,13 @@
 package org.jenkinsci.plugins.configurationhook;
 
 import java.io.IOException;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import jenkins.model.Jenkins;
 
+import org.jenkinsci.plugins.configurationhook.ConfigurationHook.HookInfo;
 import org.kohsuke.stapler.Ancestor;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -65,40 +64,12 @@ public class ConfigurationHookPageDecorator extends PageDecorator {
     protected <T>List<ConfigurationHook<? extends T>> getHooksFor(T target) {
         List<ConfigurationHook<? extends T>> hooks = new ArrayList<ConfigurationHook<? extends T>>();
         for(ConfigurationHook<?> hook: Jenkins.getInstance().getExtensionList(ConfigurationHook.class)) {
-            Class<?> clazz = getConfigurationHookGenericClass(hook.getClass());
+            Class<?> clazz = hook.getTargetType();
             if (clazz.isAssignableFrom(target.getClass())) {
                 hooks.add((ConfigurationHook<? extends T>)hook);
             }
         }
         return hooks;
-    }
-    
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    Class<?> getConfigurationHookGenericClass(Class<? extends ConfigurationHook> clazz){
-        while(clazz != null) {
-            Type directGenericSuperclass = clazz.getGenericSuperclass();
-            if (directGenericSuperclass != null) {
-                if (directGenericSuperclass instanceof ParameterizedType) {
-                    if (ConfigurationHook.class.equals(((ParameterizedType)directGenericSuperclass).getRawType())) {
-                        Type type = ((ParameterizedType)directGenericSuperclass).getActualTypeArguments()[0];
-                        if (type instanceof ParameterizedType) {
-                            type = ((ParameterizedType)type).getRawType();
-                        }
-                        return (Class<?>)type;
-                    }
-                }
-            }
-            
-            Class<?> superClazz = clazz.getSuperclass();
-            if (!ConfigurationHook.class.isAssignableFrom(superClazz)) {
-                // this never happen.
-                return null;
-            }
-            
-            clazz = (Class<? extends ConfigurationHook<?>>)superClazz;
-        }
-        
-        return null;
     }
     
     public void doQuery(StaplerRequest req, StaplerResponse rsp) throws IOException {
@@ -112,12 +83,16 @@ public class ConfigurationHookPageDecorator extends PageDecorator {
         
         Object target = ancestors.get(ancestors.size() - 2).getObject();
         for(ConfigurationHook<?> hook: getHooksFor(target)) {
-            if (hook.shouldHookRaw(target, req)) {
+            HookInfo info = hook.prepareHookRaw(target, req);
+            if (info != null) {
                 // found a hook!
                 rsp.setContentType("text/javascript");
                 rsp.getWriter().println(
-                        "YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm = null;"
-                        + "alert('" + hook.toString() + "')" // TODO
+                        String.format(
+                                "YAHOO.org.jenkinsci.plugins.configurationhook.showPopup('%s', '%s')",
+                                hook.getPopupId(),
+                                info.getTitle()
+                        )
                 );
                 return;
             }

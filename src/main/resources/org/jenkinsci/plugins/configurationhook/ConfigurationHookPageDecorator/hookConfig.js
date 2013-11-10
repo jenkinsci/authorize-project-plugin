@@ -26,6 +26,50 @@ YAHOO.namespace("org.jenkinsci.plugins.configurationhook");
 // Whether submission should be hooked.
 YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm = null;
 YAHOO.org.jenkinsci.plugins.configurationhook.hookSubmit = true;
+YAHOO.org.jenkinsci.plugins.configurationhook.showPopup = function(popupId, title) {
+  var popup = new YAHOO.widget.Panel(
+    "configurationHookForm",
+    {
+      width:"720px",
+      fixedcenter:true,
+      close:false,
+      draggable:false,
+      zindex:4,
+        modal:true
+    }
+  );
+  popup.setHeader(title);
+  popup.setBody($(popupId).innerHTML);
+  popup.showEvent.subscribe(
+    function(){
+      this.element.getElementsBySelector("input[name='json']")[0].setValue(
+        YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm['json'].getValue()
+      );
+      this.element.getElementsBySelector("input[name='_submit']")[0].on(
+        'click',
+        function(evt) {
+          this.form['_command'].setValue('submit');
+          this.form.request({
+            evalJS: true, // evaluate text/javascript contents.
+          });
+          Event.stop(evt);
+        }
+      );
+      this.element.getElementsBySelector("input[name='_cancel']")[0].on(
+        'click',
+        function(evt) {
+          this.form['_command'].setValue('cancel');
+          this.form.request({
+            evalJS: true, // evaluate text/javascript contents.
+          });
+          Event.stop(evt);
+        }
+      );
+    },
+    popup
+  );
+  popup.render(document.body);
+}
 
 var forms = $$("form[name='config']");
 if (forms && forms.length > 0) {

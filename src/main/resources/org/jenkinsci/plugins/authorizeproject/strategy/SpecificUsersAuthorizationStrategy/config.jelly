@@ -23,25 +23,10 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-<j:scope>
-  <j:set var="hooks" value="${it.getHooks(request)}" />
-  <j:if test="${!empty(hooks)}">
-    <st:adjunct includes="org.jenkinsci.plugins.configurationhook.ConfigurationHookPageDecorator.hookConfig" />
-    <div style="display:none" id="configuration-hook-popups">
-      <form id="configuration-hook-query" action="${it.getQueryUrl(request)}" />
-      <j:forEach var="hook" items="${hooks}">
-        <div id="${hook.popupId}">
-          <form action="${hook.getHookSubmitUrl(request)}">
-            <st:include page="popup.jelly" it="${hook}" />
-            <div>
-              <input type="submit" name="_submit" value="${%Proceed}" />
-              <input type="submit" name="_cancel" value="${%Cancel}" />
-              <input type="hidden" name="_command" value="" />
-           </div>
-          </form>
-        </div>
-      </j:forEach>
-    </div>
-  </j:if>
-</j:scope>
+  <f:entry title="${%User ID}" field="userid">
+    <f:textbox />
+  </f:entry>
+  <f:entry title="${%No need for re-authentication when userid is not updated}" field="noNeedReauthentication">
+    <f:checkbox />
+  </f:entry>
 </j:jelly>

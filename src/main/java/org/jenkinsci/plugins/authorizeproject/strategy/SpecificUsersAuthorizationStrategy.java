@@ -24,12 +24,15 @@
 
 package org.jenkinsci.plugins.authorizeproject.strategy;
 
+import java.io.IOException;
+
 import jenkins.model.Jenkins;
 import hudson.Extension;
 import hudson.model.Queue;
 import hudson.model.User;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
+import hudson.model.Descriptor.FormException;
 
 import net.sf.json.JSONObject;
 
@@ -142,13 +145,23 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
     @Extension
     public static class ConfigurationHookImpl extends ConfigurationHook<AbstractProject<?,?>> {
         @Override
-        public boolean shouldHook(AbstractProject<?, ?> target, StaplerRequest req) {
+        public HookInfo prepareHook(AbstractProject<?, ?> target, StaplerRequest req) {
             Boolean shouldNotHook = (Boolean)req.getSession(true).getAttribute("shouldNotHook");
             if (shouldNotHook != null && shouldNotHook.booleanValue()) {
-                return false;
+                return null;
             }
             req.getSession().setAttribute("shouldNotHook", true);
-            return true;
+            return new HookInfo("Test for " + target.getFullName());
+        }
+        
+        @Override
+        public void doHookSubmit(AbstractProject<?, ?> target, StaplerRequest req)  throws IOException, FormException {
+        }
+        
+        @Override
+        public String getTitle(AbstractProject<?, ?> target, StaplerRequest req) {
+            // TODO Auto-generated method stub
+            return null;
         }
     }
 }
