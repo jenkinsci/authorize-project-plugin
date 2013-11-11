@@ -25,6 +25,10 @@
 package org.jenkinsci.plugins.authorizeproject.strategy;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.servlet.ServletException;
 
 import jenkins.model.Jenkins;
 import hudson.Extension;
@@ -37,16 +41,22 @@ import hudson.model.Descriptor.FormException;
 import net.sf.json.JSONObject;
 
 import org.acegisecurity.Authentication;
+import org.acegisecurity.AuthenticationException;
+import org.acegisecurity.GrantedAuthority;
+import org.acegisecurity.providers.UsernamePasswordAuthenticationToken;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.jenkinsci.plugins.configurationhook.ConfigurationHook;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
 
 /**
  *
  */
 public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy {
+    private static Logger LOGGER = Logger.getLogger(SpecificUsersAuthorizationStrategy.class.getName());
     private final String userid;
     
     public String getUserid() {
@@ -63,10 +73,16 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
      * No {@link DataBoundConstructor} for requiring to pass the authentication.
      */
     public SpecificUsersAuthorizationStrategy(String userid, boolean noNeedReauthentication) {
+        this(userid, noNeedReauthentication, null);
+    }
+    
+    /**
+     * No {@link DataBoundConstructor} for requiring to pass the authentication.
+     */
+    public SpecificUsersAuthorizationStrategy(String userid, boolean noNeedReauthentication, String password) {
         this.userid = userid;
         this.noNeedReauthentication = noNeedReauthentication;
     }
-    
     
     /**
      * @param project
@@ -79,6 +95,54 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         return null;
     }
     
+    protected static boolean isAuthenticateionRequired(
+            SpecificUsersAuthorizationStrategy newStrategy,
+            SpecificUsersAuthorizationStrategy currentStrategy
+    ) {
+        if (Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+            // Administrator can specify any user.
+            return false;
+        }
+        
+        User u = User.current();
+        if (u != null && u.getId() != null && u.getId().equals(newStrategy.getUserid())) {
+            // Any user can specify oneself.
+            return false;
+        }
+        
+        if (currentStrategy == null) {
+            // if currentStrategy is null, authorization is always required.
+            return true;
+        }
+        
+        if (
+                currentStrategy.isNoNeedReauthentication()
+                && currentStrategy.getUserid() != null
+                && currentStrategy.getUserid().equals(newStrategy.getUserid())
+        ) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    protected static SpecificUsersAuthorizationStrategy getCurrentStrategy(AbstractProject<?,?> project) {
+        if (project == null) {
+            return null;
+        }
+        
+        AuthorizeProjectProperty prop = project.getProperty(AuthorizeProjectProperty.class);
+        if (prop == null) {
+            return null;
+        }
+        
+        if (!(prop.getStrategy() instanceof SpecificUsersAuthorizationStrategy)) {
+            return null;
+        }
+        
+        return (SpecificUsersAuthorizationStrategy)prop.getStrategy();
+    }
+    
     @Extension
     public static class DescriptorImpl extends Descriptor<AuthorizeProjectStrategy> {
         @Override
@@ -86,82 +150,137 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             return Messages.SpecificUsersAuthorizationStrategy_DisplayName();
         }
         
-        @Override
-        public AuthorizeProjectStrategy newInstance(StaplerRequest req, JSONObject formData)
-                throws hudson.model.Descriptor.FormException {
-            SpecificUsersAuthorizationStrategy strategy = new SpecificUsersAuthorizationStrategy(
-                    formData.getString("userid"), 
-                    formData.getBoolean("noNeedReauthentication")
+        protected SpecificUsersAuthorizationStrategy newInstanceWithoutAuthentication(
+                StaplerRequest req,
+                JSONObject formData
+        ) throws FormException {
+            String userid = formData.getString("userid");
+            boolean noNeedReauthentication = formData.getBoolean("noNeedReauthentication");
+            
+            if (StringUtils.isEmpty(userid)) {
+                throw new FormException("userid must be specified", "userid");
+            }
+            
+            return new SpecificUsersAuthorizationStrategy(
+                    userid, 
+                    noNeedReauthentication
             );
+        }
+        
+        protected boolean authenticate(
+                SpecificUsersAuthorizationStrategy strategy, 
+                StaplerRequest req,
+                JSONObject formData
+        ) {
+            String password = formData.getString("password");
+            if (StringUtils.isEmpty(password)) {
+                return false;
+            }
+            try {
+                Jenkins.getInstance().getSecurityRealm().getSecurityComponents().manager.authenticate(
+                        new UsernamePasswordAuthenticationToken(strategy.getUserid(), password)
+                );
+            } catch (AuthenticationException e) {
+                LOGGER.log(Level.WARNING, String.format("Failed to authenticate %s", strategy.userid), e);
+                return false;
+            }
+            return true;
+        }
+        
+        @Override
+        public SpecificUsersAuthorizationStrategy newInstance(StaplerRequest req, JSONObject formData)
+                throws FormException {
+            SpecificUsersAuthorizationStrategy strategy = newInstanceWithoutAuthentication(req, formData);
             
             SpecificUsersAuthorizationStrategy currentStrategy
                 = getCurrentStrategy(req.findAncestorObject(AbstractProject.class));
             
-            boolean requireAuthentication = isRequireAuthentication(strategy, currentStrategy);
-            
-            // TODO
+            if (isAuthenticateionRequired(strategy, currentStrategy)) {
+                if (!authenticate(strategy, req, formData)) {
+                    throw new FormException("Failed to authenticate", "userid");
+                }
+            }
             
             return strategy;
-        }
-        
-        private SpecificUsersAuthorizationStrategy getCurrentStrategy(AbstractProject<?,?> project) {
-            if (project == null) {
-                return null;
-            }
-            
-            AuthorizeProjectProperty prop = project.getProperty(AuthorizeProjectProperty.class);
-            if (prop == null) {
-                return null;
-            }
-            
-            if (!(prop.getStrategy() instanceof SpecificUsersAuthorizationStrategy)) {
-                return null;
-            }
-            
-            return (SpecificUsersAuthorizationStrategy)prop.getStrategy();
-        }
-        
-        private boolean isRequireAuthentication(
-                SpecificUsersAuthorizationStrategy newStrategy,
-                SpecificUsersAuthorizationStrategy currentStrategy
-        ) {
-            if (Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
-                // Administrator can specify any user.
-                return false;
-            }
-            
-            User u = User.current();
-            if (u != null && u.getId() != null && u.getId().equals(newStrategy.getUserid())) {
-                // Any user can specify oneself.
-                return false;
-            }
-            
-            // TODO
-            
-            return false;
         }
     }
     
     @Extension
     public static class ConfigurationHookImpl extends ConfigurationHook<AbstractProject<?,?>> {
         @Override
-        public HookInfo prepareHook(AbstractProject<?, ?> target, StaplerRequest req) {
-            Boolean shouldNotHook = (Boolean)req.getSession(true).getAttribute("shouldNotHook");
-            if (shouldNotHook != null && shouldNotHook.booleanValue()) {
+        public HookInfo prepareHook(AbstractProject<?, ?> target, StaplerRequest req, JSONObject formData) {
+            formData = getFormDataFromRoot(formData);
+            if (formData == null || formData.isNullObject()) {
                 return null;
             }
-            req.getSession().setAttribute("shouldNotHook", true);
-            return new HookInfo("Test for " + target.getFullName());
-        }
-        
-        @Override
-        public void doHookSubmit(AbstractProject<?, ?> target, StaplerRequest req)  throws IOException, FormException {
-        }
-        
-        @Override
-        public String getTitle(AbstractProject<?, ?> target, StaplerRequest req) {
-            // TODO Auto-generated method stub
+            if (!formData.has("stapler-class")) {
+                return null;
+            }
+            String staplerClazzName = formData.getString("stapler-class");
+            if (staplerClazzName == null) {
+                return null;
+            }
+            try {
+                @SuppressWarnings("unchecked")
+                Class<? extends AuthorizeProjectStrategy> staplerClass = (Class<? extends AuthorizeProjectStrategy>)Jenkins.getInstance().getPluginManager().uberClassLoader.loadClass(staplerClazzName);
+                if (!SpecificUsersAuthorizationStrategy.class.isAssignableFrom(staplerClass)) {
+                    return null;
+                }
+            } catch(ClassNotFoundException e) {
+                return null;
+            }
+            
+            DescriptorImpl d = (DescriptorImpl)Jenkins.getInstance().getDescriptor(SpecificUsersAuthorizationStrategy.class);
+            SpecificUsersAuthorizationStrategy newStrategy;
+            try {
+                newStrategy = d.newInstanceWithoutAuthentication(req, formData);
+            } catch (FormException e) {
+                return null;
+            }
+            
+            if (isAuthenticateionRequired(newStrategy, getCurrentStrategy(target))) {
+                if (!d.authenticate(newStrategy, req, formData)) {
+                    return new HookInfo(String.format("Password for %s", newStrategy.getUserid()));
+                }
+            }
+            
             return null;
+        }
+        
+        private JSONObject getFormDataFromRoot(JSONObject formData) {
+            if (formData == null || formData.isNullObject()) {
+                return null;
+            }
+            
+            for (String key: new String[]{
+                    "properties",
+                    Jenkins.getInstance().getDescriptor(AuthorizeProjectProperty.class).getJsonSafeClassName(),
+                    AuthorizeProjectProperty.PROPERTYNAME,
+                    "strategy"
+            }) {
+                formData = formData.getJSONObject(key);
+                if (formData == null || formData.isNullObject()) {
+                    return null;
+                }
+            }
+            
+            return formData;
+        }
+        
+        @Override
+        public void onProceeded(StaplerRequest req, StaplerResponse rsp, AbstractProject<?, ?> target, JSONObject formData, JSONObject targetFormData)  throws IOException, FormException {
+            String password = formData.getString("password");
+            rsp.setContentType("text/javascript");
+            rsp.getWriter().println(
+                    String.format(
+                            "$('specific-users-authorization-strategy-password').setValue('%s');",
+                            password
+                    )
+            );
+        }
+        
+        @Override
+        public void onCanceled(StaplerRequest req, StaplerResponse rsp, AbstractProject<?, ?> target, JSONObject formData, JSONObject targetFormData)  throws IOException, FormException {
         }
     }
 }

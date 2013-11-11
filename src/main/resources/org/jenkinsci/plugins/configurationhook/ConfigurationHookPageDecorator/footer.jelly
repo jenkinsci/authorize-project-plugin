@@ -34,9 +34,10 @@ THE SOFTWARE.
           <form action="${hook.getHookSubmitUrl(request)}">
             <st:include page="popup.jelly" it="${hook}" />
             <div>
-              <input type="submit" name="_submit" value="${%Proceed}" />
-              <input type="submit" name="_cancel" value="${%Cancel}" />
-              <input type="hidden" name="_command" value="" />
+              <input type="submit" name="submit" value="${%Proceed}" />
+              <input type="submit" name="cancel" value="${%Cancel}" />
+              <input type="hidden" name="command" value="" />
+              <input type="hidden" name="targetJson" value="init" />
            </div>
           </form>
         </div>

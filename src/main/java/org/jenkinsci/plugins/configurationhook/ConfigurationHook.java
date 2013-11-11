@@ -27,8 +27,16 @@ package org.jenkinsci.plugins.configurationhook;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.servlet.ServletException;
+
+import net.sf.json.JSONException;
+import net.sf.json.JSONObject;
 
 import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
 
 import hudson.ExtensionPoint;
 import hudson.model.Describable;
@@ -38,10 +46,11 @@ import hudson.model.Descriptor;
  *
  */
 public abstract class ConfigurationHook<T> extends Descriptor<ConfigurationHook<T>> implements Describable<ConfigurationHook<T>>, ExtensionPoint {
-    public abstract void doHookSubmit(T target, StaplerRequest req) throws IOException, FormException;
-    public abstract String getTitle(T target, StaplerRequest req);
-    public abstract HookInfo prepareHook(T target, StaplerRequest req);
+    public abstract HookInfo prepareHook(T target, StaplerRequest req, JSONObject formData);
+    public abstract void onProceeded(StaplerRequest req, StaplerResponse rsp, T target, JSONObject formData, JSONObject targetFormData) throws IOException, FormException;
+    public abstract void onCanceled(StaplerRequest req, StaplerResponse rsp, T target, JSONObject formData, JSONObject targetFormData) throws IOException, FormException;
     
+    private static final Logger LOGGER = Logger.getLogger(ConfigurationHook.class.getName());
     private final Class<T> targetType;
     
     @SuppressWarnings("unchecked")
@@ -57,7 +66,13 @@ public abstract class ConfigurationHook<T> extends Descriptor<ConfigurationHook<
     
     @SuppressWarnings("unchecked")
     public HookInfo prepareHookRaw(Object target, StaplerRequest req) {
-        return prepareHook((T)target, req);
+        JSONObject formData = null;
+        try {
+            formData = req.getSubmittedForm();
+        } catch (ServletException e) {
+            LOGGER.log(Level.WARNING, "Failed to extract submitted form", e);
+        }
+        return prepareHook((T)target, req, formData);
     }
     
     public Descriptor<ConfigurationHook<T>> getDescriptor() {
@@ -101,13 +116,26 @@ public abstract class ConfigurationHook<T> extends Descriptor<ConfigurationHook<
         return targetType;
     }
     
-    public String getTitle(StaplerRequest req) {
-        return getTitle(req.findAncestorObject(getTargetType()), req);
-    }
-    
-    public void doHookSubmit(StaplerRequest req) throws IOException, FormException {
-        // TODO: prepare some mechanism to handle response.
-        doHookSubmit(req.findAncestorObject(getTargetType()), req);
+    public void doHookSubmit(StaplerRequest req, StaplerResponse rsp) throws IOException, FormException {
+        T target = req.findAncestorObject(getTargetType());
+        JSONObject formData;
+        JSONObject targetFormData;
+        try {
+            formData = req.getSubmittedForm();
+        } catch (ServletException e) {
+            throw new FormException(e, "json");
+        }
+        try {
+            targetFormData = JSONObject.fromObject(req.getParameter("targetJson"));
+        } catch (JSONException e) {
+            throw new FormException(e, "targetJson");
+        }
+        
+        if ("cancel".equals(req.getParameter("command"))) {
+            onCanceled(req, rsp, target, formData, targetFormData);
+        } else {
+            onProceeded(req, rsp, target, formData, targetFormData);
+        }
     }
     
     public String getHookSubmitUrl(StaplerRequest req) {

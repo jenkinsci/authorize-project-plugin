@@ -29,4 +29,7 @@ THE SOFTWARE.
   <f:entry title="${%No need for re-authentication when userid is not updated}" field="noNeedReauthentication">
     <f:checkbox />
   </f:entry>
+  <f:invisibleEntry>
+    <f:textbox id="specific-users-authorization-strategy-password" field="password" />
+  </f:invisibleEntry>
 </j:jelly>

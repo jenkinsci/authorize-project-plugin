@@ -37,11 +37,16 @@ import hudson.model.User;
 
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  *
  */
 public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrategy {
+    @DataBoundConstructor
+    public TriggeringUsersAuthorizationStrategy() {
+    }
+    
     @Override
     public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
         Cause.UserIdCause cause = getRootUserIdCause(item);
