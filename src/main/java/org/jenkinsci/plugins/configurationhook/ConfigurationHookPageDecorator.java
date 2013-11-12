@@ -99,12 +99,7 @@ public class ConfigurationHookPageDecorator extends PageDecorator {
         }
         rsp.setContentType("text/javascript");
         rsp.getWriter().println(
-                "(function(){"
-                + "var form = YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm;"
-                + "YAHOO.org.jenkinsci.plugins.configurationhook.hookSubmit = false;"
-                + "YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm = null;"
-                + "form.submit();"
-                + "})();"
+                "YAHOO.org.jenkinsci.plugins.configurationhook.resumeSubmit();"
         );
     }
 }
