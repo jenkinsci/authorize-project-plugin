@@ -23,13 +23,36 @@
  */
 
 YAHOO.namespace("org.jenkinsci.plugins.configurationhook");
-// Whether submission should be hooked.
 
 // the form now suspending.
 YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm = null;
 
+// the form no longer needed to hook.
+YAHOO.org.jenkinsci.plugins.configurationhook.passedForm = null;
+
 // the popup window now displaying.
 YAHOO.org.jenkinsci.plugins.configurationhook.popup = null;
+
+// simulate form submission.
+YAHOO.org.jenkinsci.plugins.configurationhook.simulateSubmit = function(form) {
+  if (form.dispatchEvent) {
+    var event = document.createEvent("HTMLEvents");
+    event.initEvent("submit", true, true);
+    if (form.dispatchEvent(event)) {
+      form.submit();
+    }
+  } else if (form.fireEvent) {
+    // IE
+    if (form.fireEvent("onsubmit")) {
+      form.submit();
+    }
+  } else {
+    if (form.onsubmit()) {
+      form.submit();
+    }
+  }
+}
+
 
 // show popup.
 YAHOO.org.jenkinsci.plugins.configurationhook.showPopup = function(popupId, title) {
@@ -96,7 +119,12 @@ YAHOO.org.jenkinsci.plugins.configurationhook.hookSubmit = function(form) {
   if (YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm != null) {
     // Hooking process is already in progress.
     // ignore this submission.
-    return;
+    return false;
+  }
+  
+  if (YAHOO.org.jenkinsci.plugins.configurationhook.passedForm != null) {
+    YAHOO.org.jenkinsci.plugins.configurationhook.passedForm = null;
+    return true;
   }
   
   YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm = form;
@@ -108,6 +136,8 @@ YAHOO.org.jenkinsci.plugins.configurationhook.hookSubmit = function(form) {
   queryForm.request({
     evalJS: true, // evaluate text/javascript contents.
   });
+  
+  return false;
 };
 
 YAHOO.org.jenkinsci.plugins.configurationhook.retrySubmit = function() {
@@ -116,7 +146,7 @@ YAHOO.org.jenkinsci.plugins.configurationhook.retrySubmit = function() {
   }
   var form = YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm;
   YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm = null;
-  YAHOO.org.jenkinsci.plugins.configurationhook.hookSubmit(form);
+  YAHOO.org.jenkinsci.plugins.configurationhook.simulateSubmit(form);
 }
 
 YAHOO.org.jenkinsci.plugins.configurationhook.resumeSubmit = function() {
@@ -125,7 +155,8 @@ YAHOO.org.jenkinsci.plugins.configurationhook.resumeSubmit = function() {
   }
   var form = YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm;
   YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm = null;
-  form.submit();
+  YAHOO.org.jenkinsci.plugins.configurationhook.passedForm = form;
+  YAHOO.org.jenkinsci.plugins.configurationhook.simulateSubmit(form);
 }
 
 YAHOO.org.jenkinsci.plugins.configurationhook.cancelSubmit = function() {
@@ -141,8 +172,9 @@ if (forms && forms.length > 0) {
     var form = forms[i];
     
     form.observe("submit", function(evt){
-      YAHOO.org.jenkinsci.plugins.configurationhook.hookSubmit(this);
-      evt.stop();
+      if (!YAHOO.org.jenkinsci.plugins.configurationhook.hookSubmit(this)) {
+          evt.stop();
+      }
     });
   }
 }
