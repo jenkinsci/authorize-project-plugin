@@ -25,7 +25,11 @@
 YAHOO.namespace("org.jenkinsci.plugins.configurationhook");
 
 // the form now suspending.
-YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm = null;
+// {
+//    form: form,
+//    resubmit: function to resubmit form,
+// }
+YAHOO.org.jenkinsci.plugins.configurationhook.suspendedFormInfo = null;
 
 // the form no longer needed to hook.
 YAHOO.org.jenkinsci.plugins.configurationhook.passedForm = null;
@@ -45,7 +49,7 @@ YAHOO.org.jenkinsci.plugins.configurationhook.simulateSubmit = function(form) {
     // IE
     if (form.fireEvent("onsubmit")) {
       form.submit();
-    }
+   }
   } else {
     if (form.onsubmit()) {
       form.submit();
@@ -53,6 +57,25 @@ YAHOO.org.jenkinsci.plugins.configurationhook.simulateSubmit = function(form) {
   }
 }
 
+// simulate button click.
+YAHOO.org.jenkinsci.plugins.configurationhook.simulateClick = function(button) {
+  if (button.dispatchEvent) {
+    var event = document.createEvent("HTMLEvents");
+    event.initEvent("click", true, true);
+    if (button.dispatchEvent(event)) {
+      button.click();
+    }
+  } else if (button.fireEvent) {
+    // IE
+    if (button.fireEvent("onclick")) {
+      button.click();
+    }
+  } else {
+    if (button.onclick()) {
+      button.click();
+    }
+  }
+}
 
 // show popup.
 YAHOO.org.jenkinsci.plugins.configurationhook.showPopup = function(popupId, title) {
@@ -73,7 +96,7 @@ YAHOO.org.jenkinsci.plugins.configurationhook.showPopup = function(popupId, titl
   popup.showEvent.subscribe(
     function(){
       this.element.getElementsBySelector("input[name='targetJson']")[0].setValue(
-        YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm['json'].getValue()
+        YAHOO.org.jenkinsci.plugins.configurationhook.suspendedFormInfo['form']['json'].getValue()
       );
       this.element.getElementsBySelector("input[name='submit']")[0].on(
         'click',
@@ -115,19 +138,18 @@ YAHOO.org.jenkinsci.plugins.configurationhook.showPopup = function(popupId, titl
 }
 
 // called when hooking the submission.
-YAHOO.org.jenkinsci.plugins.configurationhook.hookSubmit = function(form) {
-  if (YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm != null) {
+YAHOO.org.jenkinsci.plugins.configurationhook.hookSubmit = function(form, resubmit) {
+  if (YAHOO.org.jenkinsci.plugins.configurationhook.suspendedFormInfo != null) {
     // Hooking process is already in progress.
     // ignore this submission.
     return false;
   }
   
-  if (YAHOO.org.jenkinsci.plugins.configurationhook.passedForm != null) {
-    YAHOO.org.jenkinsci.plugins.configurationhook.passedForm = null;
-    return true;
+  YAHOO.org.jenkinsci.plugins.configurationhook.suspendedFormInfo = {
+    form: form,
+    resubmit: resubmit,
   }
   
-  YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm = form;
   Event.fire(form,"jenkins:apply"); // give everyone a chance to write back to DOM
   buildFormTree(form);
   
@@ -141,40 +163,65 @@ YAHOO.org.jenkinsci.plugins.configurationhook.hookSubmit = function(form) {
 };
 
 YAHOO.org.jenkinsci.plugins.configurationhook.retrySubmit = function() {
-  if (YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm == null) {
+  if (YAHOO.org.jenkinsci.plugins.configurationhook.suspendedFormInfo == null) {
     return;
   }
-  var form = YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm;
-  YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm = null;
-  YAHOO.org.jenkinsci.plugins.configurationhook.simulateSubmit(form);
+  var formInfo = YAHOO.org.jenkinsci.plugins.configurationhook.suspendedFormInfo;
+  YAHOO.org.jenkinsci.plugins.configurationhook.suspendedFormInfo = null;
+  if (YAHOO.org.jenkinsci.plugins.configurationhook.hookSubmit(formInfo.form, formInfo.resubmit)) {
+    formInfo.resubmit();
+  }
 }
 
 YAHOO.org.jenkinsci.plugins.configurationhook.resumeSubmit = function() {
-  if (YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm == null) {
+  if (YAHOO.org.jenkinsci.plugins.configurationhook.suspendedFormInfo == null) {
     return;
   }
-  var form = YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm;
-  YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm = null;
-  YAHOO.org.jenkinsci.plugins.configurationhook.passedForm = form;
-  YAHOO.org.jenkinsci.plugins.configurationhook.simulateSubmit(form);
+  var formInfo = YAHOO.org.jenkinsci.plugins.configurationhook.suspendedFormInfo;
+  YAHOO.org.jenkinsci.plugins.configurationhook.suspendedFormInfo = null;
+  formInfo.resubmit();
 }
 
 YAHOO.org.jenkinsci.plugins.configurationhook.cancelSubmit = function() {
-  if (YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm == null) {
+  if (YAHOO.org.jenkinsci.plugins.configurationhook.suspendedFormInfo == null) {
     return;
   }
-  YAHOO.org.jenkinsci.plugins.configurationhook.suspendedForm = null;
+  YAHOO.org.jenkinsci.plugins.configurationhook.suspendedFormInfo = null;
 }
 
-var forms = $$("form[name='config']");
-if (forms && forms.length > 0) {
-  for (var i = 0; i < forms.length; ++i) {
-    var form = forms[i];
-    
-    form.observe("submit", function(evt){
-      if (!YAHOO.org.jenkinsci.plugins.configurationhook.hookSubmit(this)) {
-          evt.stop();
-      }
-    });
-  }
-}
+Behaviour.specify(".submit-button button", 'hookconfig-submit', 100, function (e) {
+  var replace = e.clone(true);
+  e.parentElement.appendChild(replace);
+  replace.cloneFrom = e;
+  e.hide();
+  replace.observe("click", function(evt) {
+    evt.stop();
+    var cloneFrom = this.cloneFrom;
+    if(
+      YAHOO.org.jenkinsci.plugins.configurationhook.hookSubmit(cloneFrom.form, function() {
+        YAHOO.org.jenkinsci.plugins.configurationhook.simulateClick(cloneFrom);
+      })
+    ) {
+      YAHOO.org.jenkinsci.plugins.configurationhook.simulateClick(cloneFrom);
+    }
+  });
+});
+
+Behaviour.specify(".apply-button button", "hookconfig-apply", 100, function (e) {
+  var replace = e.clone(true);
+  e.parentElement.appendChild(replace);
+  replace.cloneFrom = e;
+  e.hide();
+  replace.observe("click", function(evt) {
+    evt.stop();
+    var cloneFrom = this.cloneFrom;
+    if(
+      YAHOO.org.jenkinsci.plugins.configurationhook.hookSubmit(cloneFrom.form, function() {
+        YAHOO.org.jenkinsci.plugins.configurationhook.simulateClick(cloneFrom);
+      })
+    ) {
+      YAHOO.org.jenkinsci.plugins.configurationhook.simulateClick(cloneFrom);
+    }
+  });
+});
+
