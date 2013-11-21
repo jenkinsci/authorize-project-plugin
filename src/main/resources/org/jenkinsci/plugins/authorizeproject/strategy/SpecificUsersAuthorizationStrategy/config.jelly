@@ -23,11 +23,22 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <f:block><table style="width:100%" class="specific-user-authorization">
+  <!-- 
+    hetero-radio makes entries visiable even they are hidden.
+    So nest it not to handled by hetero-radio.
+  -->
   <f:entry title="${%User ID}" field="userid">
-    <f:textbox />
-    <f:textbox style="display:none" id="specific-users-authorization-strategy-password" field="password" />
+    <f:textbox checkPasswordRequestedUrl="${descriptor.calcCheckPasswordRequestedUrl()}" />
+  </f:entry>
+  <f:entry title="${%Password}" field="password">
+    <f:password />
   </f:entry>
   <f:entry title="${%No need for re-authentication when userid is not updated}" field="noNeedReauthentication">
     <f:checkbox />
   </f:entry>
+  </table></f:block>
+  <st:once>
+    <st:adjunct includes="org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy.checkPasswordRequested" />
+  </st:once>
 </j:jelly>

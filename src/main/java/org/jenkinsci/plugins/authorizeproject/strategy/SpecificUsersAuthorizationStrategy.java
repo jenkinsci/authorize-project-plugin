@@ -47,8 +47,8 @@ import org.acegisecurity.providers.UsernamePasswordAuthenticationToken;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
-import org.jenkinsci.plugins.configurationhook.ConfigurationHook;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
@@ -203,84 +203,25 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             
             return strategy;
         }
-    }
-    
-    @Extension
-    public static class ConfigurationHookImpl extends ConfigurationHook<AbstractProject<?,?>> {
-        @Override
-        public HookInfo prepareHook(AbstractProject<?, ?> target, StaplerRequest req, JSONObject formData) {
-            formData = getFormDataFromRoot(formData);
-            if (formData == null || formData.isNullObject()) {
-                return null;
-            }
-            if (!formData.has("stapler-class")) {
-                return null;
-            }
-            String staplerClazzName = formData.getString("stapler-class");
-            if (staplerClazzName == null) {
-                return null;
-            }
-            try {
-                @SuppressWarnings("unchecked")
-                Class<? extends AuthorizeProjectStrategy> staplerClass = (Class<? extends AuthorizeProjectStrategy>)Jenkins.getInstance().getPluginManager().uberClassLoader.loadClass(staplerClazzName);
-                if (!SpecificUsersAuthorizationStrategy.class.isAssignableFrom(staplerClass)) {
-                    return null;
-                }
-            } catch(ClassNotFoundException e) {
-                return null;
-            }
-            
-            DescriptorImpl d = (DescriptorImpl)Jenkins.getInstance().getDescriptor(SpecificUsersAuthorizationStrategy.class);
-            SpecificUsersAuthorizationStrategy newStrategy;
-            try {
-                newStrategy = d.newInstanceWithoutAuthentication(req, formData);
-            } catch (FormException e) {
-                return null;
-            }
-            
-            if (isAuthenticateionRequired(newStrategy, getCurrentStrategy(target))) {
-                if (!d.authenticate(newStrategy, req, formData)) {
-                    return new HookInfo(String.format("Password for %s", newStrategy.getUserid()));
-                }
-            }
-            
-            return null;
-        }
         
-        private JSONObject getFormDataFromRoot(JSONObject formData) {
-            if (formData == null || formData.isNullObject()) {
-                return null;
-            }
-            
-            for (String key: new String[]{
-                    "properties",
-                    Jenkins.getInstance().getDescriptor(AuthorizeProjectProperty.class).getJsonSafeClassName(),
-                    AuthorizeProjectProperty.PROPERTYNAME,
-                    "strategy"
-            }) {
-                formData = formData.getJSONObject(key);
-                if (formData == null || formData.isNullObject()) {
-                    return null;
-                }
-            }
-            
-            return formData;
-        }
-        
-        @Override
-        public void onProceeded(StaplerRequest req, StaplerResponse rsp, AbstractProject<?, ?> target, JSONObject formData, JSONObject targetFormData)  throws IOException, FormException {
-            String password = formData.getString("password");
-            rsp.setContentType("text/javascript");
-            rsp.getWriter().println(
-                    String.format(
-                            "$('specific-users-authorization-strategy-password').setValue('%s');",
-                            password
-                    )
+        public String calcCheckPasswordRequestedUrl() {
+            return String.format("'%s/%s/checkPasswordRequested' + qs(this).nearBy('userid').nearBy('password').nearBy('noNeedReauthentication')",
+                    getCurrentDescriptorByNameUrl(),
+                    getDescriptorUrl()
             );
         }
         
-        @Override
-        public void onCanceled(StaplerRequest req, StaplerResponse rsp, AbstractProject<?, ?> target, JSONObject formData, JSONObject targetFormData)  throws IOException, FormException {
+        public String doCheckPasswordRequested(
+                StaplerRequest req,
+                @QueryParameter String userid,
+                @QueryParameter String password,
+                @QueryParameter boolean noNeedReauthentication
+        ) {
+            SpecificUsersAuthorizationStrategy newStrategy = new SpecificUsersAuthorizationStrategy(userid, noNeedReauthentication);
+            return Boolean.toString(isAuthenticateionRequired(
+                    newStrategy,
+                    getCurrentStrategy(req.findAncestorObject(AbstractProject.class))
+            ));
         }
     }
 }
