@@ -26,51 +26,26 @@ package org.jenkinsci.plugins.authorizeproject.strategy;
 
 import static org.junit.Assert.*;
 import jenkins.model.Jenkins;
-import jenkins.security.QueueItemAuthenticatorConfiguration;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.security.ACL;
 import hudson.tasks.BuildTrigger;
 
-import org.jenkinsci.plugins.authorizeproject.ProjectQueueItemAuthenticator;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizationCheckBuilder;
-import org.junit.Before;
+import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.JenkinsRule.WebClient;
 import org.jvnet.hudson.test.recipes.LocalData;
 
-import com.gargoylesoftware.htmlunit.WebResponse;
-
 /**
  *
  */
 public class TriggeringUsersAuthorizationStrategyTest {
     @Rule
-    public JenkinsRule j = new JenkinsRule() {
-        @Override
-        public WebClient createWebClient() {
-            return new WebClient() {
-                private static final long serialVersionUID = 3389654318647204218L;
-                
-                @Override
-                public void throwFailingHttpStatusCodeExceptionIfNecessary(WebResponse webResponse) {
-                    // 405 Method Not Allowed is returned when parameter is required.
-                    if (webResponse.getStatusCode() == 405) {
-                        return;
-                    }
-                    super.throwFailingHttpStatusCodeExceptionIfNecessary(webResponse);
-                }
-            };
-        }
-    };
-    
-    @Before
-    public void before() throws Exception {
-        QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new ProjectQueueItemAuthenticator());
-    }
+    public JenkinsRule j = new AuthorizeProjectJenkinsRule();
     
     private void triggerBuildWithoutParameters(WebClient wc, FreeStyleProject project) throws Exception {
         // This code may get not to work in future versions of Jenkins.

@@ -22,42 +22,37 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.authorizeproject.strategy;
+package org.jenkinsci.plugins.authorizeproject.testutil;
 
-import jenkins.model.Jenkins;
-import hudson.Extension;
-import hudson.model.Descriptor;
-import hudson.model.Queue;
-import hudson.model.AbstractProject;
+import jenkins.security.QueueItemAuthenticatorConfiguration;
 
-import org.acegisecurity.Authentication;
-import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
-import org.kohsuke.stapler.DataBoundConstructor;
+import org.jenkinsci.plugins.authorizeproject.ProjectQueueItemAuthenticator;
+import org.jvnet.hudson.test.JenkinsRule;
+
+import com.gargoylesoftware.htmlunit.WebResponse;
 
 /**
  *
  */
-public class AnonymousAuthorizationStrategy extends AuthorizeProjectStrategy {
-    @DataBoundConstructor
-    public AnonymousAuthorizationStrategy() {
-    }
-    
-    /**
-     * @param project
-     * @param item
-     * @return
-     * @see org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy#authenticate(hudson.model.AbstractProject, hudson.model.Queue$Item)
-     */
+public class AuthorizeProjectJenkinsRule extends JenkinsRule {
     @Override
-    public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
-        return Jenkins.ANONYMOUS;
+    public WebClient createWebClient() {
+        return new WebClient() {
+            private static final long serialVersionUID = 3389654318647204218L;
+            
+            @Override
+            public void throwFailingHttpStatusCodeExceptionIfNecessary(WebResponse webResponse) {
+                // 405 Method Not Allowed is returned when parameter is required.
+                if (webResponse.getStatusCode() == 405) {
+                    return;
+                }
+                super.throwFailingHttpStatusCodeExceptionIfNecessary(webResponse);
+            }
+        };
     }
     
-    @Extension
-    public static class DescriptorImpl extends Descriptor<AuthorizeProjectStrategy> {
-        @Override
-        public String getDisplayName() {
-            return Messages.AnonymousAuthorizationStrategy_DisplayName();
-        }
+    protected void before() throws Throwable {
+        super.before();
+        QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new ProjectQueueItemAuthenticator());
     }
 }
