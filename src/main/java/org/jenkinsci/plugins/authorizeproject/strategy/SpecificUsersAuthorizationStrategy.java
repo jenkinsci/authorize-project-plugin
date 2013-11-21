@@ -73,13 +73,6 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
      * No {@link DataBoundConstructor} for requiring to pass the authentication.
      */
     public SpecificUsersAuthorizationStrategy(String userid, boolean noNeedReauthentication) {
-        this(userid, noNeedReauthentication, null);
-    }
-    
-    /**
-     * No {@link DataBoundConstructor} for requiring to pass the authentication.
-     */
-    public SpecificUsersAuthorizationStrategy(String userid, boolean noNeedReauthentication, String password) {
         this.userid = userid;
         this.noNeedReauthentication = noNeedReauthentication;
     }
@@ -92,7 +85,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
      */
     @Override
     public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
-        return null;
+        return User.get(getUserid()).impersonate();
     }
     
     protected static boolean isAuthenticateionRequired(
@@ -111,7 +104,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         }
         
         if (currentStrategy == null) {
-            // if currentStrategy is null, authorization is always required.
+            // if currentStrategy is null, authentication is always required.
             return true;
         }
         
