@@ -44,7 +44,7 @@ public class AnonymousAuthorizationStrategyTest {
     public JenkinsRule j = new AuthorizeProjectJenkinsRule();
     
     @Test
-    public void testBuild() throws Exception {
+    public void testAuthenticate() throws Exception {
         FreeStyleProject p = j.createFreeStyleProject();
         AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
         p.getBuildersList().add(checker);

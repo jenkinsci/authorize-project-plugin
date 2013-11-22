@@ -85,7 +85,17 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
      */
     @Override
     public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
-        return User.get(getUserid()).impersonate();
+        User u = User.get(getUserid());
+        if (u == null) {
+            // fallback to anonymous
+            return Jenkins.ANONYMOUS;
+        }
+        Authentication a = u.impersonate();
+        if (a == null) {
+            // fallback to anonymous
+            return Jenkins.ANONYMOUS;
+        }
+        return a;
     }
     
     protected static boolean isAuthenticateionRequired(
@@ -94,6 +104,10 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
     ) {
         if (Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
             // Administrator can specify any user.
+            return false;
+        }
+        
+        if (newStrategy == null) {
             return false;
         }
         
@@ -138,6 +152,14 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
     
     @Extension
     public static class DescriptorImpl extends Descriptor<AuthorizeProjectStrategy> {
+        public DescriptorImpl() {
+            super();
+        }
+        
+        protected DescriptorImpl(Class<? extends AuthorizeProjectStrategy> clazz) {
+            super(clazz);
+        }
+        
         @Override
         public String getDisplayName() {
             return Messages.SpecificUsersAuthorizationStrategy_DisplayName();
@@ -150,7 +172,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             String userid = formData.getString("userid");
             boolean noNeedReauthentication = formData.getBoolean("noNeedReauthentication");
             
-            if (StringUtils.isEmpty(userid)) {
+            if (StringUtils.isBlank(userid)) {
                 throw new FormException("userid must be specified", "userid");
             }
             
@@ -162,22 +184,25 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         
         protected boolean authenticate(
                 SpecificUsersAuthorizationStrategy strategy, 
-                StaplerRequest req,
-                JSONObject formData
+                String password
         ) {
-            String password = formData.getString("password");
-            if (StringUtils.isEmpty(password)) {
-                return false;
-            }
             try {
                 Jenkins.getInstance().getSecurityRealm().getSecurityComponents().manager.authenticate(
                         new UsernamePasswordAuthenticationToken(strategy.getUserid(), password)
                 );
-            } catch (AuthenticationException e) {
+            } catch (Exception e) { // handles any exception including NPE.
                 LOGGER.log(Level.WARNING, String.format("Failed to authenticate %s", strategy.userid), e);
                 return false;
             }
             return true;
+        }
+        
+        protected boolean authenticate(
+                SpecificUsersAuthorizationStrategy strategy, 
+                StaplerRequest req,
+                JSONObject formData
+        ) {
+            return authenticate(strategy, formData.getString("password"));
         }
         
         @Override

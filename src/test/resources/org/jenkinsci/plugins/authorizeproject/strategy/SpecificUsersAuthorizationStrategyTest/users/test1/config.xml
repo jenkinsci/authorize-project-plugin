@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<user>
+  <fullName>test1</fullName>
+  <properties>
+    <hudson.security.HudsonPrivateSecurityRealm_-Details>
+      <passwordHash>#jbcrypt:$2a$10$S5DjCIU4bPd5VlAC7dQjFeP5YdB0gqX8EBzcDETjL4X6SV6PTdQxu</passwordHash>
+    </hudson.security.HudsonPrivateSecurityRealm_-Details>
+  </properties>
+</user>

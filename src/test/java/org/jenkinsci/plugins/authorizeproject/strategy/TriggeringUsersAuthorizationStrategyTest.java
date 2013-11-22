@@ -58,7 +58,7 @@ public class TriggeringUsersAuthorizationStrategyTest {
     
     @Test
     @LocalData
-    public void testBuild() throws Exception {
+    public void testAuthenticate() throws Exception {
         FreeStyleProject p = j.createFreeStyleProject();
         AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
         p.getBuildersList().add(checker);
@@ -124,7 +124,7 @@ public class TriggeringUsersAuthorizationStrategyTest {
     
     @Test
     @LocalData
-    public void testBuildTrigger() throws Exception {
+    public void testAuthenticateDownstream() throws Exception {
         FreeStyleProject p = j.createFreeStyleProject();
         AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
         p.getBuildersList().add(checker);
