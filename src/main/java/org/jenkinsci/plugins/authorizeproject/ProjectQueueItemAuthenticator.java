@@ -37,9 +37,12 @@ import jenkins.security.QueueItemAuthenticatorDescriptor;
 import jenkins.security.QueueItemAuthenticator;
 
 /**
- *
+ * Authorize builds of projects configured with {@link AuthorizeProjectProperty}.
  */
 public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
+    /**
+     * 
+     */
     @DataBoundConstructor
     public ProjectQueueItemAuthenticator() {
     }
@@ -47,7 +50,7 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
     /**
      * @param item
      * @return
-     * @see jenkins.security.QueueItemAuthenticator#authenticate(hudson.model.Queue$Item)
+     * @see jenkins.security.QueueItemAuthenticator#authenticate(hudson.model.Queue.Item)
      */
     @Override
     @CheckForNull
@@ -61,11 +64,18 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
         if (prop == null) {
             return null;
         }
-        return prop.authenticate(project, item);
+        return prop.authenticate(item);
     }
     
+    /**
+     *
+     */
     @Extension
     public static class DescriptorImpl extends QueueItemAuthenticatorDescriptor {
+        /**
+         * @return the name shown in the security configuration page.
+         * @see hudson.model.Descriptor#getDisplayName()
+         */
         @Override
         public String getDisplayName() {
             return Messages.ProjectQueueItemAuthenticator_DisplayName();

@@ -40,9 +40,10 @@ import hudson.model.JobPropertyDescriptor;
 import hudson.model.Queue;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
+import hudson.security.AuthorizationStrategy;
 
 /**
- *
+ * Specifies how to authorize its builds.
  */
 public class AuthorizeProjectProperty extends JobProperty<AbstractProject<?,?>> {
     /**
@@ -52,6 +53,9 @@ public class AuthorizeProjectProperty extends JobProperty<AbstractProject<?,?>> 
     
     private AuthorizeProjectStrategy strategy;
     
+    /**
+     * @return
+     */
     public AuthorizeProjectStrategy getStrategy() {
         return strategy;
     }
@@ -59,8 +63,9 @@ public class AuthorizeProjectProperty extends JobProperty<AbstractProject<?,?>> 
     /**
      * Create a new instance.
      * 
-     * not annotate with {@link DataBoundConstructor} for instantiating
+     * Not annotated with {@link DataBoundConstructor} for instantiating
      * explicitly in {@link DescriptorImpl#newInstance(StaplerRequest, JSONObject)}.
+     * It is required to call newInstance of {@link AuthorizeProjectProperty}.
      * 
      * @param strategy
      */
@@ -68,15 +73,28 @@ public class AuthorizeProjectProperty extends JobProperty<AbstractProject<?,?>> 
         this.strategy = strategy;
     }
     
-    public Authentication authenticate(
-            AbstractProject<?, ?> project,
-            Queue.Item item
-    ) {
-        return strategy.authenticate(project, item);
+    /**
+     * Return the authorization for a build.
+     * 
+     * @param item the item in queue, which will be a build.
+     * @return authorization for this build.
+     * @see AuthorizeProjectStrategy#authenticate(hudson.model.AbstractProject, hudson.model.Queue.Item)
+     */
+    public Authentication authenticate(Queue.Item item) {
+        return strategy.authenticate(owner, item);
     }
     
+    /**
+     * Descriptor for {@link AuthorizeProjectProperty}.
+     * 
+     * Provides functions for displaying.
+     */
     @Extension
     public static class DescriptorImpl extends JobPropertyDescriptor {
+        /**
+         * @return the name shown in the project configuration page.
+         * @see hudson.model.Descriptor#getDisplayName()
+         */
         @Override
         public String getDisplayName() {
             return Messages.AuthorizeProjectProperty_DisplayName();
@@ -91,10 +109,22 @@ public class AuthorizeProjectProperty extends JobProperty<AbstractProject<?,?>> 
             return PROPERTYNAME;
         }
         
+        /**
+         * @return all the registered {@link AuthorizeProjectStrategy}.
+         */
         public DescriptorExtensionList<AuthorizeProjectStrategy, Descriptor<AuthorizeProjectStrategy>> getStrategyList() {
             return AuthorizeProjectStrategy.all();
         }
         
+        /**
+         * Create a new {@link AuthorizeProjectProperty} from user inputs.
+         * 
+         * @param req
+         * @param formData
+         * @return
+         * @throws hudson.model.Descriptor.FormException
+         * @see hudson.model.JobPropertyDescriptor#newInstance(org.kohsuke.stapler.StaplerRequest, net.sf.json.JSONObject)
+         */
         @Override
         public AuthorizeProjectProperty newInstance(StaplerRequest req, JSONObject formData)
                 throws hudson.model.Descriptor.FormException {
@@ -111,6 +141,16 @@ public class AuthorizeProjectProperty extends JobProperty<AbstractProject<?,?>> 
             return new AuthorizeProjectProperty(strategy);
         }
         
+        /**
+         * Create a new {@link Describable} object from user inputs.
+         * 
+         * @param req
+         * @param formData
+         * @param fieldName
+         * @param clazz
+         * @return
+         * @throws hudson.model.Descriptor.FormException
+         */
         private <T extends Describable<?>> T bindJSONWithDescriptor(
                 StaplerRequest req,
                 JSONObject formData,

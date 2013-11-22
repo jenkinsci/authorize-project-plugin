@@ -35,13 +35,23 @@ import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 
 /**
- *
+ * Extension point to define a new strategy to authorize builds configured in project configuration pages.
  */
 public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<AuthorizeProjectStrategy>
         implements ExtensionPoint {
+    /**
+     * @return all the registered {@link AuthorizeProjectStrategy}.
+     */
     public static DescriptorExtensionList<AuthorizeProjectStrategy, Descriptor<AuthorizeProjectStrategy>> all() {
         return Jenkins.getInstance().getDescriptorList(AuthorizeProjectStrategy.class);
     }
     
+    /**
+     * Returns the {@link Authentication} for the build.
+     * 
+     * @param project the project to run.
+     * @param item the item in queue, which will be a build.
+     * @return
+     */
     public abstract Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item);
 }

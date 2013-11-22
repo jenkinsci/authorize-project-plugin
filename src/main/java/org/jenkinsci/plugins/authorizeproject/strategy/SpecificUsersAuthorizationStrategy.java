@@ -53,24 +53,32 @@ import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
 /**
- *
+ * Run builds as a user specified in project configuration pages.
  */
 public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy {
     private static Logger LOGGER = Logger.getLogger(SpecificUsersAuthorizationStrategy.class.getName());
     private final String userid;
     
+    /**
+     * @return id of the user to run builds as.
+     */
     public String getUserid() {
         return userid;
     }
     
     private final boolean noNeedReauthentication;
     
+    /**
+     * @return if true, entering password is not required when the userid is not changed.
+     */
     public boolean isNoNeedReauthentication() {
         return noNeedReauthentication;
     }
     
     /**
      * No {@link DataBoundConstructor} for requiring to pass the authentication.
+     * 
+     * authentication is performed in {@link DescriptorImpl#newInstance(StaplerRequest, JSONObject)}
      */
     public SpecificUsersAuthorizationStrategy(String userid, boolean noNeedReauthentication) {
         this.userid = userid;
@@ -78,10 +86,14 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
     }
     
     /**
+     * Run builds as a specified user.
+     * 
+     * If the user is invalid, run as anonymous.
+     * 
      * @param project
      * @param item
      * @return
-     * @see org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy#authenticate(hudson.model.AbstractProject, hudson.model.Queue$Item)
+     * @see org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy#authenticate(hudson.model.AbstractProject, hudson.model.Queue.Item)
      */
     @Override
     public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
@@ -98,16 +110,24 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         return a;
     }
     
+    /**
+     * Returns whether authentication is required to update the configuration to newStrategy.
+     * 
+     * @param newStrategy strategy to be configured.
+     * @param currentStrategy strategy now configured.
+     * @return whether authentication is required.
+     */
     protected static boolean isAuthenticateionRequired(
             SpecificUsersAuthorizationStrategy newStrategy,
             SpecificUsersAuthorizationStrategy currentStrategy
     ) {
-        if (Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
-            // Administrator can specify any user.
+        if (newStrategy == null) {
+            // if configure is removed, no need to authenticate.
             return false;
         }
         
-        if (newStrategy == null) {
+        if (Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+            // Administrator can specify any user.
             return false;
         }
         
@@ -127,12 +147,20 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
                 && currentStrategy.getUserid() != null
                 && currentStrategy.getUserid().equals(newStrategy.getUserid())
         ) {
+            // the specified user is not changed, 
+            // and specified that authentication is not required in that case.
             return false;
         }
         
         return true;
     }
     
+    /**
+     * Return {@link SpecificUsersAuthorizationStrategy} configured in a project.
+     * 
+     * @param project
+     * @return
+     */
     protected static SpecificUsersAuthorizationStrategy getCurrentStrategy(AbstractProject<?,?> project) {
         if (project == null) {
             return null;
@@ -150,21 +178,44 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         return (SpecificUsersAuthorizationStrategy)prop.getStrategy();
     }
     
+    /**
+     *
+     */
     @Extension
     public static class DescriptorImpl extends Descriptor<AuthorizeProjectStrategy> {
+        /**
+         * 
+         */
         public DescriptorImpl() {
             super();
         }
         
+        /**
+         * For testing purpose.
+         * 
+         * @param clazz set SpecificUsersAuthorizationStrategy.class
+         */
         protected DescriptorImpl(Class<? extends AuthorizeProjectStrategy> clazz) {
             super(clazz);
         }
         
+        /**
+         * @return the name shown in project configuration pages.
+         * @see hudson.model.Descriptor#getDisplayName()
+         */
         @Override
         public String getDisplayName() {
             return Messages.SpecificUsersAuthorizationStrategy_DisplayName();
         }
         
+        /**
+         * Create a new instance. No authentication is performed.
+         * 
+         * @param req
+         * @param formData
+         * @return
+         * @throws FormException thrown when the input is incomplete.
+         */
         protected SpecificUsersAuthorizationStrategy newInstanceWithoutAuthentication(
                 StaplerRequest req,
                 JSONObject formData
@@ -182,6 +233,15 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             );
         }
         
+        /**
+         * Authenticate the specified user.
+         * 
+         * Checks whether the user has privilege to specify that authorization.
+         * 
+         * @param strategy
+         * @param password
+         * @return true if the authentication is succeeded.
+         */
         protected boolean authenticate(
                 SpecificUsersAuthorizationStrategy strategy, 
                 String password
@@ -197,6 +257,16 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             return true;
         }
         
+        /**
+         * Authenticate the specified user.
+         * 
+         * Checks whether the user has privilege to specify that authorization.
+         * 
+         * @param strategy
+         * @param req
+         * @param formData
+         * @return true if the authentication is succeeded.
+         */
         protected boolean authenticate(
                 SpecificUsersAuthorizationStrategy strategy, 
                 StaplerRequest req,
@@ -205,6 +275,14 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             return authenticate(strategy, formData.getString("password"));
         }
         
+        /**
+         * Create a new instance. Also performs authentication.
+         * 
+         * @param req
+         * @param formData
+         * @return
+         * @throws FormException thrown when the input is incomplete, or authentication failed.
+         */
         @Override
         public SpecificUsersAuthorizationStrategy newInstance(StaplerRequest req, JSONObject formData)
                 throws FormException {
@@ -222,6 +300,9 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             return strategy;
         }
         
+        /**
+         * @return the URL to check password field is required.
+         */
         public String calcCheckPasswordRequestedUrl() {
             return String.format("'%s/%s/checkPasswordRequested' + qs(this).nearBy('userid').nearBy('password').nearBy('noNeedReauthentication')",
                     getCurrentDescriptorByNameUrl(),
@@ -229,6 +310,17 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             );
         }
         
+        /**
+         * Checks password field is required in configuration page.
+         * 
+         * This is called asynchronously.
+         * 
+         * @param req
+         * @param userid
+         * @param password
+         * @param noNeedReauthentication
+         * @return "true" if password fiels is required. this should be evaluated as JavaScript.
+         */
         public String doCheckPasswordRequested(
                 StaplerRequest req,
                 @QueryParameter String userid,

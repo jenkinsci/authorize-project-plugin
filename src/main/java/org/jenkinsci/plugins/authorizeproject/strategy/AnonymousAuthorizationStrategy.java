@@ -35,26 +35,38 @@ import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
- *
+ * Run builds as anonymous.
  */
 public class AnonymousAuthorizationStrategy extends AuthorizeProjectStrategy {
+    /**
+     * 
+     */
     @DataBoundConstructor
     public AnonymousAuthorizationStrategy() {
     }
     
     /**
+     * Authorize builds as anonymous.
+     * 
      * @param project
      * @param item
-     * @return
-     * @see org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy#authenticate(hudson.model.AbstractProject, hudson.model.Queue$Item)
+     * @return anonymous authorization
+     * @see org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy#authenticate(hudson.model.AbstractProject, hudson.model.Queue.Item)
      */
     @Override
     public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
         return Jenkins.ANONYMOUS;
     }
     
+    /**
+     *
+     */
     @Extension
     public static class DescriptorImpl extends Descriptor<AuthorizeProjectStrategy> {
+        /**
+         * @return the name shown in project configuration pages.
+         * @see hudson.model.Descriptor#getDisplayName()
+         */
         @Override
         public String getDisplayName() {
             return Messages.AnonymousAuthorizationStrategy_DisplayName();

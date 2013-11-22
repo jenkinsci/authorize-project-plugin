@@ -40,13 +40,22 @@ import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
- *
+ * Run builds as a user who triggered the build.
  */
 public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrategy {
+    /**
+     * 
+     */
     @DataBoundConstructor
     public TriggeringUsersAuthorizationStrategy() {
     }
     
+    /**
+     * @param project
+     * @param item
+     * @return
+     * @see org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy#authenticate(hudson.model.AbstractProject, hudson.model.Queue.Item)
+     */
     @Override
     public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
         Cause.UserIdCause cause = getRootUserIdCause(item);
@@ -60,6 +69,14 @@ public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrate
         return null;
     }
     
+    /**
+     * Returns a cause who triggered this build.
+     * 
+     * If this is a downstream build, search upstream builds.
+     * 
+     * @param item
+     * @return
+     */
     private UserIdCause getRootUserIdCause(Queue.Item item) {
         Run<?,?> upstream = null;
         for (Cause c: item.getCauses()) {
@@ -82,8 +99,15 @@ public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrate
         return null;
     }
     
+    /**
+     *
+     */
     @Extension
     public static class DescriptorImpl extends Descriptor<AuthorizeProjectStrategy> {
+        /**
+         * @return the name shown in project configuration pages.
+         * @see hudson.model.Descriptor#getDisplayName()
+         */
         @Override
         public String getDisplayName() {
             return Messages.TriggeringUsersAuthorizationStrategy_DisplayName();
