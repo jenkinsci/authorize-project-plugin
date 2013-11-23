@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.authorizeproject;
 
 import jenkins.model.Jenkins;
+import jenkins.security.QueueItemAuthenticatorConfiguration;
 
 import net.sf.json.JSONObject;
 
@@ -35,6 +36,7 @@ import org.kohsuke.stapler.StaplerRequest;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.model.Describable;
+import hudson.model.Job;
 import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
 import hudson.model.Queue;
@@ -98,6 +100,19 @@ public class AuthorizeProjectProperty extends JobProperty<AbstractProject<?,?>> 
         @Override
         public String getDisplayName() {
             return Messages.AuthorizeProjectProperty_DisplayName();
+        }
+        
+        /**
+         * Enabled only when {@link ProjectQueueItemAuthenticator} is configured.
+         * 
+         * @param jobType
+         * @return
+         * @see hudson.model.JobPropertyDescriptor#isApplicable(java.lang.Class)
+         */
+        @SuppressWarnings("rawtypes")
+        @Override
+        public boolean isApplicable(Class<? extends Job> jobType) {
+            return ProjectQueueItemAuthenticator.isConfigured();
         }
         
         /**

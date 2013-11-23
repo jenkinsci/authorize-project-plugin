@@ -33,6 +33,7 @@ import javax.annotation.CheckForNull;
 import org.acegisecurity.Authentication;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import jenkins.security.QueueItemAuthenticatorConfiguration;
 import jenkins.security.QueueItemAuthenticatorDescriptor;
 import jenkins.security.QueueItemAuthenticator;
 
@@ -80,5 +81,17 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
         public String getDisplayName() {
             return Messages.ProjectQueueItemAuthenticator_DisplayName();
         }
+    }
+    
+    /**
+     * @return whether Jenkins is configured to use {@link ProjectQueueItemAuthenticator}.
+     */
+    public static boolean isConfigured() {
+        for (QueueItemAuthenticator authenticator: QueueItemAuthenticatorConfiguration.get().getAuthenticators()) {
+            if (authenticator instanceof ProjectQueueItemAuthenticator) {
+                return true;
+            }
+        }
+        return false;
     }
 }
