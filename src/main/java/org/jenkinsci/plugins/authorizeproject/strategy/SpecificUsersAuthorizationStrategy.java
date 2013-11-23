@@ -37,6 +37,7 @@ import hudson.model.User;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.model.Descriptor.FormException;
+import hudson.util.FormValidation;
 
 import net.sf.json.JSONObject;
 
@@ -81,7 +82,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
      * authentication is performed in {@link DescriptorImpl#newInstance(StaplerRequest, JSONObject)}
      */
     public SpecificUsersAuthorizationStrategy(String userid, boolean noNeedReauthentication) {
-        this.userid = userid;
+        this.userid = StringUtils.trim(userid);
         this.noNeedReauthentication = noNeedReauthentication;
     }
     
@@ -293,7 +294,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             
             if (isAuthenticateionRequired(strategy, currentStrategy)) {
                 if (!authenticate(strategy, req, formData)) {
-                    throw new FormException("Failed to authenticate", "userid");
+                    throw new FormException(Messages.SpecificUsersAuthorizationStrategy_userid_authenticate(), "userid");
                 }
             }
             
@@ -332,6 +333,63 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
                     newStrategy,
                     getCurrentStrategy(req.findAncestorObject(AbstractProject.class))
             ));
+        }
+        
+        /**
+         * @param userid
+         * @return
+         */
+        public FormValidation doCheckUserid(@QueryParameter String userid) {
+            if (StringUtils.isBlank(userid)) {
+                return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_userid_required());
+            }
+            return FormValidation.ok();
+        }
+        
+        /**
+         * @param req
+         * @param userid
+         * @param password
+         * @param noNeedReauthentication
+         * @return
+         */
+        public FormValidation doCheckPassword(
+                StaplerRequest req,
+                @QueryParameter String userid,
+                @QueryParameter String password,
+                @QueryParameter boolean noNeedReauthentication
+        ) {
+            SpecificUsersAuthorizationStrategy newStrategy = new SpecificUsersAuthorizationStrategy(userid, noNeedReauthentication);
+            if (!isAuthenticateionRequired(
+                    newStrategy,
+                    getCurrentStrategy(req.findAncestorObject(AbstractProject.class))
+            )) {
+                // authentication is not required.
+                return FormValidation.ok();
+            }
+            
+            if (StringUtils.isBlank(password)) {
+                return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_password_required());
+            }
+            
+            /*
+            if (!authenticate(newStrategy, password)) {
+                return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_password_invalid());
+            }
+            */
+            
+            return FormValidation.ok();
+        }
+        
+        /**
+         * @param noNeedReauthentication
+         * @return
+         */
+        public FormValidation doCheckNoNeedReauthentication(@QueryParameter boolean noNeedReauthentication) {
+            if (noNeedReauthentication) {
+                return FormValidation.warning(Messages.SpecificUsersAuthorizationStrategy_noNeedReauthentication_usage());
+            }
+            return FormValidation.ok();
         }
     }
 }

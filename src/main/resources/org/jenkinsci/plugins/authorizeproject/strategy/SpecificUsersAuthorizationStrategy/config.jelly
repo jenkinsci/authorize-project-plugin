@@ -34,7 +34,7 @@ THE SOFTWARE.
   <f:entry title="${%Password}" field="password">
     <f:password />
   </f:entry>
-  <f:entry title="${%No need for re-authentication when userid is not updated}" field="noNeedReauthentication">
+  <f:entry title="${%No need for re-authentication}" field="noNeedReauthentication">
     <f:checkbox />
   </f:entry>
   </table></f:block>
