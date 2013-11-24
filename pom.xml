@@ -13,7 +13,6 @@
   <name>Authorize Project</name>
   <description>Configure projects to run with specified authorization.</description>
 
-<!--
   <url>https://wiki.jenkins-ci.org/display/JENKINS/Authorize+Project+plugin</url>
   
   <scm>
@@ -21,7 +20,6 @@
     <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
     <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
   </scm>
--->
   
   <developers>
     <developer>
