@@ -19,14 +19,14 @@ This plugin provides following features:
         * You are requested to enter the password of the specified user except following cases:
             * You are an administrator.
             * You are the specified user.
-            * The specified user is not changed from the last configuration, and the project was configured "No need to re-enter passwords for the same authorization".
+            * The specified user is not changed from the last configuration, and "No need for re-authentication" is checked.
                 * This can threaten your Jenkins security. Be careful to use.
 * Provides an extension point to add new ways to specify authorization.
 
 Extension point
 ---------------
 
-New scoring rule can be added with extending `org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy`, overriding the following method:
+A new way to authorize projects can be added by extending `org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy`, overriding the following method:
 
 ```
 public abstract Authentication authenticate(hudson.model.AbstractProject<?, ?> project, hudson.model.Queue.Item item);
