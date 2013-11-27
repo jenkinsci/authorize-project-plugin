@@ -60,7 +60,7 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
             // This handles only AbstractProject.
             return null;
         }
-        AbstractProject<?, ?> project = (AbstractProject<?,?>)item.task;
+        AbstractProject<?, ?> project = ((AbstractProject<?,?>)item.task).getRootProject();
         AuthorizeProjectProperty prop = project.getProperty(AuthorizeProjectProperty.class);
         if (prop == null) {
             return null;
