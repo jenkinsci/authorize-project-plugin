@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.authorizeproject.strategy;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -98,7 +99,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
      */
     @Override
     public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
-        User u = User.get(getUserid());
+        User u = User.get(getUserid(), false, Collections.emptyMap());
         if (u == null) {
             // fallback to anonymous
             return Jenkins.ANONYMOUS;

@@ -336,6 +336,18 @@ public class SpecificUsersAuthorizationStrategyTest {
             assertEquals("admin", checker.authentication.getName());
         }
         
+        // invalid user
+        {
+            FreeStyleProject p = j.createFreeStyleProject();
+            AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
+            p.getBuildersList().add(checker);
+            
+            p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("nosuchuser", false)));
+            
+            j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+            assertEquals(Jenkins.ANONYMOUS, checker.authentication);
+        }
+        
         // null
         // it highly depends on its implementation how SecurityRealm works
         // for invalid input, so this test may fail when the implementation of 
