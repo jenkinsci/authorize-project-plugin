@@ -373,7 +373,11 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
                 return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_password_required());
             }
             
-            /*
+            /* Authentication should not be performed here,
+             * for this may cause account locking or
+             * is used for brute force attack.
+             * Authentication is done only in saving the configuration
+             * (that is, in DescriptorImpl#newInstance)
             if (!authenticate(newStrategy, password)) {
                 return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_password_invalid());
             }
