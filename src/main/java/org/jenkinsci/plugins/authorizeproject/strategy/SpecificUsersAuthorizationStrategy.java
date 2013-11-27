@@ -344,6 +344,9 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             if (StringUtils.isBlank(userid)) {
                 return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_userid_required());
             }
+            if (User.get(userid, false, Collections.emptyMap()) == null) {
+                return FormValidation.warning(Messages.SpecificUsersAuthorizationStrategy_userid_unregisteredUser());
+            }
             return FormValidation.ok();
         }
         
