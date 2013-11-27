@@ -83,7 +83,10 @@ public class AuthorizeProjectProperty extends JobProperty<AbstractProject<?,?>> 
      * @see AuthorizeProjectStrategy#authenticate(hudson.model.AbstractProject, hudson.model.Queue.Item)
      */
     public Authentication authenticate(Queue.Item item) {
-        return strategy.authenticate(owner, item);
+        if (getStrategy() == null) {
+            return null;
+        }
+        return getStrategy().authenticate(owner, item);
     }
     
     /**
