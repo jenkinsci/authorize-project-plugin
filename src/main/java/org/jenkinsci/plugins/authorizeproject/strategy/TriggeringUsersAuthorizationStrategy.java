@@ -34,6 +34,7 @@ import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.model.Run;
 import hudson.model.User;
+import java.util.Collections;
 
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
@@ -60,7 +61,7 @@ public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrate
     public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
         Cause.UserIdCause cause = getRootUserIdCause(item);
         if (cause != null) {
-            User u = User.get(cause.getUserId());
+            User u = User.get(cause.getUserId(), false, Collections.emptyMap());
             if (u == null) {
                 return Jenkins.ANONYMOUS;
             }
