@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.authorizeproject;
 
+import hudson.XmlFile;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,11 +33,15 @@ import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
 
 import hudson.model.Descriptor;
+import java.io.File;
+import jenkins.model.Jenkins;
 
 /**
  *
  */
 public abstract class AuthorizeProjectStrategyDescriptor extends Descriptor<AuthorizeProjectStrategy> {
+    
+    
     /**
      * 
      */
@@ -50,7 +55,12 @@ public abstract class AuthorizeProjectStrategyDescriptor extends Descriptor<Auth
     public AuthorizeProjectStrategyDescriptor(Class<? extends AuthorizeProjectStrategy> clazz) {
         super(clazz);
     }
-    
+
+    @Override
+    protected final XmlFile getConfigFile() {
+        return new XmlFile(new File(Jenkins.getInstance().getRootDir(),
+                Constants.CONFIG_FOLDER+"/"+getId()+".xml"));
+    }
     
     /**
      * @return return a page to shown in "Configure Global Security" as a child of {@link ProjectQueueItemAuthenticator}.
