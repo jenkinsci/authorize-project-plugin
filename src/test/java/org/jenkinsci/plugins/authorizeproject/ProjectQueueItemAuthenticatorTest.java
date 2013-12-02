@@ -305,7 +305,6 @@ public class ProjectQueueItemAuthenticatorTest {
             assertNull(alternateDescriptor.getValue());
             
             HtmlPage page = wc.goTo("configureSecurity");
-            System.out.println(page.asXml());
             HtmlForm form = page.getFormByName("config");
             
             // verify global-security.jelly is displayed
