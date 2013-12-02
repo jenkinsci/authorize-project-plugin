@@ -45,14 +45,14 @@ public abstract class AuthorizeProjectStrategyDescriptor extends Descriptor<Auth
     /**
      * 
      */
-    public AuthorizeProjectStrategyDescriptor() {
+    protected AuthorizeProjectStrategyDescriptor() {
         super();
     }
     
     /**
      * @param clazz
      */
-    public AuthorizeProjectStrategyDescriptor(Class<? extends AuthorizeProjectStrategy> clazz) {
+    protected AuthorizeProjectStrategyDescriptor(Class<? extends AuthorizeProjectStrategy> clazz) {
         super(clazz);
     }
 
