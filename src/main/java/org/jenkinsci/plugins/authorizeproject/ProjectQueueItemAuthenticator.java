@@ -24,14 +24,19 @@
 
 package org.jenkinsci.plugins.authorizeproject;
 
+import java.util.List;
+
 import hudson.Extension;
 import hudson.model.AbstractProject;
 import hudson.model.Queue;
 
 import javax.annotation.CheckForNull;
 
+import net.sf.json.JSONObject;
+
 import org.acegisecurity.Authentication;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.StaplerRequest;
 
 import jenkins.security.QueueItemAuthenticatorConfiguration;
 import jenkins.security.QueueItemAuthenticatorDescriptor;
@@ -80,6 +85,35 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
         @Override
         public String getDisplayName() {
             return Messages.ProjectQueueItemAuthenticator_DisplayName();
+        }
+        
+        public List<AuthorizeProjectStrategyDescriptor> getDescriptorsForGlobalSecurityConfigPage() {
+            return AuthorizeProjectStrategyDescriptor.getDescriptorsForGlobalSecurityConfigPage();
+        }
+        
+        /**
+         * Creates new {@link ProjectQueueItemAuthenticator} from inputs.
+         * Additional to that, configure global configurations of {@link AuthorizeProjectStrategy}.
+         * 
+         * @param req
+         * @param formData
+         * @return
+         * @throws hudson.model.Descriptor.FormException
+         * @see hudson.model.Descriptor#newInstance(org.kohsuke.stapler.StaplerRequest, net.sf.json.JSONObject)
+         */
+        @Override
+        public ProjectQueueItemAuthenticator newInstance(StaplerRequest req, JSONObject formData)
+                throws FormException
+        {
+            ProjectQueueItemAuthenticator r = (ProjectQueueItemAuthenticator)super.newInstance(req, formData);
+            
+            for (AuthorizeProjectStrategyDescriptor d : getDescriptorsForGlobalSecurityConfigPage()) {
+                String name = d.getJsonSafeClassName();
+                JSONObject js = formData.has(name) ? formData.getJSONObject(name) : new JSONObject();
+                d.configureFromGlobalSecurity(req, js);
+            }
+            
+            return r;
         }
     }
     

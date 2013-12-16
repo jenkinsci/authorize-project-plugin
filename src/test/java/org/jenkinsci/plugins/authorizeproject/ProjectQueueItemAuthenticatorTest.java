@@ -30,9 +30,11 @@ import hudson.matrix.AxisList;
 import hudson.matrix.MatrixProject;
 import hudson.matrix.TextAxis;
 import hudson.model.AbstractProject;
+import hudson.model.Descriptor;
 import hudson.model.FreeStyleProject;
 import hudson.model.Queue;
 import hudson.security.ACL;
+import net.sf.json.JSONObject;
 
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.authorizeproject.strategy.AnonymousAuthorizationStrategy;
@@ -41,6 +43,13 @@ import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRu
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.JenkinsRule.WebClient;
+import org.jvnet.hudson.test.TestExtension;
+import org.kohsuke.stapler.StaplerRequest;
+
+import com.gargoylesoftware.htmlunit.html.HtmlForm;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 
 /**
  *
@@ -156,5 +165,183 @@ public class ProjectQueueItemAuthenticatorTest {
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
             assertEquals(ACL.SYSTEM, checker.authentication);
         }
+    }
+    
+    /**
+     * Test no exception even if AuthorizeProjectStrategyDescriptor is not used.
+     */
+    public static class AuthorizeProjectStrategyExtendingBaseDescrptor extends AuthorizeProjectStrategy {
+        @Override
+        public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
+            return null;
+        }
+        
+        @TestExtension("testGlobalSecurityConfiguration")
+        public static class DescriptorImpl extends Descriptor<AuthorizeProjectStrategy> {
+            @Override
+            public String getDisplayName() {
+                return "AuthorizeProjectStrategyExtendingBaseDescrptor";
+            }
+        }
+    }
+    
+    /**
+     * Test no exception even if no global-security.jelly is not provided.
+     */
+    public static class AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration extends AuthorizeProjectStrategy {
+        @Override
+        public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
+            return null;
+        }
+        
+        @TestExtension("testGlobalSecurityConfiguration")
+        public static class DescriptorImpl extends AuthorizeProjectStrategyDescriptor {
+            @Override
+            public String getDisplayName() {
+                return "AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration";
+            }
+            
+            @Override
+            public void configureFromGlobalSecurity(StaplerRequest req, JSONObject js)
+                    throws hudson.model.Descriptor.FormException
+            {
+                throw new FormException("Should not be called for global-security.jelly is not defined.", "");
+            }
+        }
+    }
+    
+    /**
+     * Test configuration in "Configure Global Security" is available.
+     */
+    public static class AuthorizeProjectStrategyWithGlobalSecurityConfiguration extends AuthorizeProjectStrategy {
+        @Override
+        public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
+            return null;
+        }
+        
+        @TestExtension("testGlobalSecurityConfiguration")
+        public static class DescriptorImpl extends AuthorizeProjectStrategyDescriptor {
+            private String value;
+            
+            public String getValue() {
+                return value;
+            }
+            
+            public DescriptorImpl() {
+                load();
+            }
+            
+            @Override
+            public String getDisplayName() {
+                return "AuthorizeProjectStrategyWithGlobalSecurityConfiguration";
+            }
+            
+            @Override
+            public void configureFromGlobalSecurity(StaplerRequest req, JSONObject js)
+                    throws hudson.model.Descriptor.FormException
+            {
+                value = js.getString("value");
+                save();
+            }
+        }
+    }
+    
+    /**
+     * Test alternate file except global-security.jelly can be used.
+     */
+    public static class AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration extends AuthorizeProjectStrategy {
+        @Override
+        public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
+            return null;
+        }
+        
+        @TestExtension("testGlobalSecurityConfiguration")
+        public static class DescriptorImpl extends AuthorizeProjectStrategyDescriptor {
+            private String value;
+            
+            public String getValue() {
+                return value;
+            }
+            
+            public DescriptorImpl() {
+                load();
+            }
+            
+            @Override
+            public String getDisplayName() {
+                return "AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration";
+            }
+            
+            @Override
+            public void configureFromGlobalSecurity(StaplerRequest req, JSONObject js)
+                    throws hudson.model.Descriptor.FormException
+            {
+                value = js.getString("value");
+                save();
+            }
+            
+            @Override
+            public String getGlobalSecurityConfigPage() {
+                return getViewPage(clazz, "alternate.jelly");
+            }
+        }
+    }
+    
+    @Test
+    public void testGlobalSecurityConfiguration() throws Exception {
+        AuthorizeProjectStrategyWithGlobalSecurityConfiguration.DescriptorImpl descriptor
+            = (AuthorizeProjectStrategyWithGlobalSecurityConfiguration.DescriptorImpl)Jenkins.getInstance().getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class);
+        AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.DescriptorImpl alternateDescriptor
+            = (AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.DescriptorImpl)Jenkins.getInstance().getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class);
+        
+        final String value1 = "value1 for AuthorizeProjectStrategyWithGlobalSecurityConfigurationValueField";
+        final String alternateValue1 = "value1 for AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration";
+        
+        WebClient wc = j.createWebClient();
+        
+        // access to Configure Global Security.
+        {
+            assertNull(descriptor.getValue());
+            assertNull(alternateDescriptor.getValue());
+            
+            HtmlPage page = wc.goTo("configureSecurity");
+            System.out.println(page.asXml());
+            HtmlForm form = page.getFormByName("config");
+            
+            // verify global-security.jelly is displayed
+            HtmlTextInput valueField = form.getElementById("AuthorizeProjectStrategyWithGlobalSecurityConfigurationValueField");
+            assertNotNull(valueField);
+            assertEquals("", valueField.getValueAttribute());
+            
+            // verify alternate.jelly is displayed
+            HtmlTextInput alternateField = form.getElementById("AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration");
+            assertNotNull(alternateField);
+            assertEquals("", alternateField.getValueAttribute());
+            
+            valueField.setValueAttribute(value1);
+            alternateField.setValueAttribute(alternateValue1);
+            
+            j.submit(form);
+            
+            assertEquals(value1, descriptor.getValue());
+            assertEquals(alternateValue1, alternateDescriptor.getValue());
+        }
+        
+        // field is displayed again
+        {
+            HtmlPage page = wc.goTo("configureSecurity");
+            HtmlForm form = page.getFormByName("config");
+            
+            // verify global-security.jelly is displayed
+            HtmlTextInput valueField = form.getElementById("AuthorizeProjectStrategyWithGlobalSecurityConfigurationValueField");
+            assertNotNull(valueField);
+            assertEquals(value1, valueField.getValueAttribute());
+            
+            // verify alternate.jelly is displayed
+            HtmlTextInput alternateField = form.getElementById("AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration");
+            assertNotNull(alternateField);
+            assertEquals(alternateValue1, alternateField.getValueAttribute());
+        }
+        
     }
 }

@@ -36,7 +36,6 @@ import hudson.Extension;
 import hudson.model.Queue;
 import hudson.model.User;
 import hudson.model.AbstractProject;
-import hudson.model.Descriptor;
 import hudson.model.Descriptor.FormException;
 import hudson.util.FormValidation;
 
@@ -48,6 +47,7 @@ import org.acegisecurity.GrantedAuthority;
 import org.acegisecurity.providers.UsernamePasswordAuthenticationToken;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
+import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategyDescriptor;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -184,7 +184,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
      *
      */
     @Extension
-    public static class DescriptorImpl extends Descriptor<AuthorizeProjectStrategy> {
+    public static class DescriptorImpl extends AuthorizeProjectStrategyDescriptor {
         /**
          * 
          */

@@ -26,12 +26,12 @@ package org.jenkinsci.plugins.authorizeproject.strategy;
 
 import jenkins.model.Jenkins;
 import hudson.Extension;
-import hudson.model.Descriptor;
 import hudson.model.Queue;
 import hudson.model.AbstractProject;
 
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
+import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategyDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -62,7 +62,7 @@ public class AnonymousAuthorizationStrategy extends AuthorizeProjectStrategy {
      *
      */
     @Extension
-    public static class DescriptorImpl extends Descriptor<AuthorizeProjectStrategy> {
+    public static class DescriptorImpl extends AuthorizeProjectStrategyDescriptor {
         /**
          * @return the name shown in project configuration pages.
          * @see hudson.model.Descriptor#getDisplayName()
