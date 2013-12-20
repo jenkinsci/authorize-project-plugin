@@ -355,6 +355,9 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
          * @return
          */
         public FormValidation doCheckUserid(@QueryParameter String userid) {
+            if (!userIdCheckEnabled) {
+                return FormValidation.warning(Messages.SpecificUsersAuthorizationStrategy_userid_validationDisabled());
+            }
             if (StringUtils.isBlank(userid)) {
                 return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_userid_required());
             }
@@ -363,6 +366,13 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             }
             return FormValidation.ok();
         }
+        
+        public FormValidation doCheckCredentials() {
+            if (!credentialsCheckEnabled) {
+                return FormValidation.warning(Messages.SpecificUsersAuthorizationStrategy_credentials_validationDisabled());
+            }
+            return FormValidation.ok();
+        } 
         
         /**
          * @param req
