@@ -32,13 +32,15 @@ THE SOFTWARE.
     <f:textbox checkPasswordRequestedUrl="${descriptor.calcCheckPasswordRequestedUrl()}" />
   </f:entry>
   <f:entry title="${%Password}" field="password">
-    <f:password />
+    <f:password checkUrl="${descriptor.descriptorUrl}/checkCredentials"/>
   </f:entry>
   <f:entry title="${%No need for re-authentication}" field="noNeedReauthentication">
     <f:checkbox />
   </f:entry>
   </table></f:block>
-  <st:once>
-    <st:adjunct includes="org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy.checkPasswordRequested" />
-  </st:once>
+  <j:if test="${descriptor.credentialsCheckEnabled}">
+    <st:once>
+      <st:adjunct includes="org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy.checkPasswordRequested" />
+    </st:once>
+  </j:if> 
 </j:jelly>

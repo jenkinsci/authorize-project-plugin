@@ -24,12 +24,10 @@
 
 package org.jenkinsci.plugins.authorizeproject.strategy;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.servlet.ServletException;
 
 import jenkins.model.Jenkins;
 import hudson.Extension;
@@ -42,8 +40,6 @@ import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
 
 import org.acegisecurity.Authentication;
-import org.acegisecurity.AuthenticationException;
-import org.acegisecurity.GrantedAuthority;
 import org.acegisecurity.providers.UsernamePasswordAuthenticationToken;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
@@ -52,7 +48,6 @@ import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
 
 /**
  * Run builds as a user specified in project configuration pages.
@@ -185,6 +180,9 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
      */
     @Extension
     public static class DescriptorImpl extends AuthorizeProjectStrategyDescriptor {
+        private boolean userIdCheckEnabled;
+        private boolean credentialsCheckEnabled;
+        
         /**
          * 
          */
@@ -200,7 +198,15 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         protected DescriptorImpl(Class<? extends AuthorizeProjectStrategy> clazz) {
             super(clazz);
         }
-        
+
+        public boolean isCredentialsCheckEnabled() {
+            return credentialsCheckEnabled;
+        }
+
+        public boolean isUserIdCheckEnabled() {
+            return userIdCheckEnabled;
+        }
+         
         /**
          * @return the name shown in project configuration pages.
          * @see hudson.model.Descriptor#getDisplayName()
@@ -209,6 +215,14 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         public String getDisplayName() {
             return Messages.SpecificUsersAuthorizationStrategy_DisplayName();
         }
+
+        @Override
+        public void configureFromGlobalSecurity(StaplerRequest req, JSONObject json) throws FormException {
+            this.credentialsCheckEnabled = json.getBoolean("credentialsCheckEnabled");
+            this.userIdCheckEnabled = json.getBoolean("userIdCheckEnabled");
+            save();
+        }
+        
         
         /**
          * Create a new instance. No authentication is performed.
@@ -341,11 +355,24 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
          * @return
          */
         public FormValidation doCheckUserid(@QueryParameter String userid) {
+            if (!userIdCheckEnabled) {
+                return FormValidation.warning(Messages.SpecificUsersAuthorizationStrategy_userid_validationDisabled());
+            }
             if (StringUtils.isBlank(userid)) {
                 return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_userid_required());
             }
+            if (User.get(userid, false, Collections.emptyMap()) == null) {
+                return FormValidation.warning(Messages.SpecificUsersAuthorizationStrategy_userid_unregisteredUser());
+            }
             return FormValidation.ok();
         }
+        
+        public FormValidation doCheckCredentials() {
+            if (!credentialsCheckEnabled) {
+                return FormValidation.warning(Messages.SpecificUsersAuthorizationStrategy_credentials_validationDisabled());
+            }
+            return FormValidation.ok();
+        } 
         
         /**
          * @param req

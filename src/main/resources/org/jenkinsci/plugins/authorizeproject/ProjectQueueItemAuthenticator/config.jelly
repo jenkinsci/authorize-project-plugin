@@ -26,6 +26,7 @@ THE SOFTWARE.
 <!-- configurations for AuthorizeProjectStrategy -->
 <j:forEach var="d" items="${descriptor.descriptorsForGlobalSecurityConfigPage}">
   <j:set var="instance" value="${d}" />
+  <j:set var="descriptor" value="${d}" />
   <f:rowSet name="${d.jsonSafeClassName}">
     <st:include page="${d.globalSecurityConfigPage}" from="${d}" />
   </f:rowSet>
