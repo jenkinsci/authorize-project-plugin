@@ -53,7 +53,7 @@ import org.kohsuke.stapler.StaplerRequest;
  * Run builds as a user specified in project configuration pages.
  */
 public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy {
-    private static Logger LOGGER = Logger.getLogger(SpecificUsersAuthorizationStrategy.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(SpecificUsersAuthorizationStrategy.class.getName());
     private final String userid;
     
     /**
