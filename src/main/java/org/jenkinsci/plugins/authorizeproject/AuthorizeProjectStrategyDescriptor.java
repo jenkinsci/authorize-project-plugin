@@ -42,6 +42,7 @@ public abstract class AuthorizeProjectStrategyDescriptor extends Descriptor<Auth
      */
     public AuthorizeProjectStrategyDescriptor() {
         super();
+        load();
     }
     
     /**
@@ -49,9 +50,9 @@ public abstract class AuthorizeProjectStrategyDescriptor extends Descriptor<Auth
      */
     public AuthorizeProjectStrategyDescriptor(Class<? extends AuthorizeProjectStrategy> clazz) {
         super(clazz);
+        load();
     }
-    
-    
+     
     /**
      * @return return a page to shown in "Configure Global Security" as a child of {@link ProjectQueueItemAuthenticator}.
      */
