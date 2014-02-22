@@ -306,7 +306,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
          * @return the URL to check password field is required.
          */
         public String calcCheckPasswordRequestedUrl() {
-            return String.format("'%s/%s/checkPasswordRequested' + qs(this).nearBy('userid').nearBy('password').nearBy('noNeedReauthentication')",
+            return String.format("'%s/%s/checkPasswordRequested' + qs(this).nearBy('userid').nearBy('noNeedReauthentication')",
                     getCurrentDescriptorByNameUrl(),
                     getDescriptorUrl()
             );
@@ -319,14 +319,12 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
          * 
          * @param req
          * @param userid
-         * @param password
          * @param noNeedReauthentication
          * @return "true" if password fiels is required. this should be evaluated as JavaScript.
          */
         public String doCheckPasswordRequested(
                 StaplerRequest req,
                 @QueryParameter String userid,
-                @QueryParameter String password,
                 @QueryParameter boolean noNeedReauthentication
         ) {
             SpecificUsersAuthorizationStrategy newStrategy = new SpecificUsersAuthorizationStrategy(userid, noNeedReauthentication);
