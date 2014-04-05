@@ -25,20 +25,43 @@
 package org.jenkinsci.plugins.authorizeproject.strategy;
 
 import static org.junit.Assert.*;
+
+import java.io.ByteArrayInputStream;
+import java.io.StringWriter;
+import java.util.Arrays;
+
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
 import jenkins.model.Jenkins;
+import hudson.cli.CLI;
+import hudson.model.Item;
 import hudson.model.FreeStyleProject;
 import hudson.model.ParametersDefinitionProperty;
 import hudson.model.StringParameterDefinition;
 import hudson.model.User;
 import hudson.security.ACL;
+import hudson.security.GlobalMatrixAuthorizationStrategy;
 
+import org.apache.commons.io.input.NullInputStream;
+import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizationCheckBuilder;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.JenkinsRule.WebClient;
 import org.jvnet.hudson.test.recipes.LocalData;
+import org.w3c.dom.Document;
+
+import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
+import com.gargoylesoftware.htmlunit.HttpMethod;
+import com.gargoylesoftware.htmlunit.WebRequestSettings;
+import com.gargoylesoftware.htmlunit.xml.XmlPage;
 
 /**
  *
@@ -46,6 +69,23 @@ import org.jvnet.hudson.test.recipes.LocalData;
 public class SpecificUsersAuthorizationStrategyTest {
     @Rule
     public JenkinsRule j = new AuthorizeProjectJenkinsRule();
+    
+    private void prepareSecurity() {
+        // This allows any users authenticate name == password
+        j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
+        
+        GlobalMatrixAuthorizationStrategy authorization = new GlobalMatrixAuthorizationStrategy();
+        authorization.add(Jenkins.ADMINISTER, "admin");
+        authorization.add(Jenkins.READ, "test1");
+        authorization.add(Item.READ, "test1");
+        authorization.add(Item.CONFIGURE, "test1");
+        
+        // This is required for CLI, JENKINS-12543.
+        authorization.add(Jenkins.READ, "anonymous");
+        authorization.add(Item.READ, "anonymous");
+        
+        j.jenkins.setAuthorizationStrategy(authorization);
+    }
     
     @Test
     @LocalData
@@ -363,4 +403,313 @@ public class SpecificUsersAuthorizationStrategyTest {
             assertEquals(Jenkins.ANONYMOUS, checker.authentication);
         }
     }
+    
+    @Test
+    @LocalData
+    public void testLoadOnStart() throws Exception {
+        // verify that SpecificUserAuthorizationStrategy is loaded correctly from the disk on startup.
+        {
+            FreeStyleProject p = j.jenkins.getItemByFullName("test", FreeStyleProject.class);
+            assertNotNull(p);
+            AuthorizeProjectProperty prop = p.getProperty(AuthorizeProjectProperty.class);
+            assertNotNull(prop);
+            assertEquals(SpecificUsersAuthorizationStrategy.class, prop.getStrategy().getClass());
+            SpecificUsersAuthorizationStrategy strategy = (SpecificUsersAuthorizationStrategy)prop.getStrategy();
+            assertEquals("test1", strategy.getUserid());
+        }
+        
+        j.jenkins.reload();
+        
+        // verify that SpecificUserAuthorizationStrategy is reloaded correctly from the disk.
+        {
+            FreeStyleProject p = j.jenkins.getItemByFullName("test", FreeStyleProject.class);
+            assertNotNull(p);
+            AuthorizeProjectProperty prop = p.getProperty(AuthorizeProjectProperty.class);
+            assertNotNull(prop);
+            assertEquals(SpecificUsersAuthorizationStrategy.class, prop.getStrategy().getClass());
+            SpecificUsersAuthorizationStrategy strategy = (SpecificUsersAuthorizationStrategy)prop.getStrategy();
+            assertEquals("test1", strategy.getUserid());
+        }
+    }
+    
+    private String getConfigXml(XmlPage page) throws TransformerException {
+        // {@link XmlPage#asXml} does unneccessary indentations.
+        Document doc = page.getXmlDocument();
+        TransformerFactory tfactory = TransformerFactory.newInstance(); 
+        Transformer transformer = tfactory.newTransformer(); 
+        
+        StringWriter sw = new StringWriter();
+        transformer.transform(new DOMSource(doc), new StreamResult(sw)); 
+        
+        return sw.toString();
+    }
+    
+    @Test
+    public void testRestInterfaceSuccess() throws Exception {
+        prepareSecurity();
+        
+        FreeStyleProject srcProject = j.createFreeStyleProject();
+        srcProject.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1", false)));
+        srcProject.save();
+        
+        WebClient wc = j.createWebClient();
+        wc.login("test1", "test1");
+        
+        // GET config.xml of srcProject (userid is set to test1)
+        String configXml = getConfigXml(wc.goToXml(String.format("%s/config.xml", srcProject.getUrl())));
+        
+        // POST config.xml of srcProject (userid is set to test1) to a new project.
+        // This should success.
+        FreeStyleProject destProject = j.createFreeStyleProject();
+        destProject.save();
+        String projectName = destProject.getFullName();
+        
+        WebRequestSettings req = new WebRequestSettings(
+                wc.createCrumbedUrl(String.format("%s/config.xml", destProject.getUrl())),
+                HttpMethod.POST
+        );
+        req.setRequestBody(configXml);
+        wc.getPage(req);
+        
+        {
+            FreeStyleProject p = j.jenkins.getItemByFullName(projectName, FreeStyleProject.class);
+            assertNotNull(p);
+            AuthorizeProjectProperty prop = p.getProperty(AuthorizeProjectProperty.class);
+            assertNotNull(prop);
+            assertEquals(SpecificUsersAuthorizationStrategy.class, prop.getStrategy().getClass());
+            SpecificUsersAuthorizationStrategy strategy = (SpecificUsersAuthorizationStrategy)prop.getStrategy();
+            assertEquals("test1", strategy.getUserid());
+        }
+        
+        j.jenkins.reload();
+        
+        {
+            FreeStyleProject p = j.jenkins.getItemByFullName(projectName, FreeStyleProject.class);
+            assertNotNull(p);
+            AuthorizeProjectProperty prop = p.getProperty(AuthorizeProjectProperty.class);
+            assertNotNull(prop);
+            assertEquals(SpecificUsersAuthorizationStrategy.class, prop.getStrategy().getClass());
+            SpecificUsersAuthorizationStrategy strategy = (SpecificUsersAuthorizationStrategy)prop.getStrategy();
+            assertEquals("test1", strategy.getUserid());
+        }
+    }
+    
+    @Test
+    public void testRestInterfaceFailure() throws Exception {
+        prepareSecurity();
+        
+        FreeStyleProject srcProject = j.createFreeStyleProject();
+        srcProject.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin", false)));
+        srcProject.save();
+        
+        WebClient wc = j.createWebClient();
+        wc.login("test1", "test1");
+        
+        // GET config.xml of srcProject (userid is set to admin)
+        String configXml = getConfigXml(wc.goToXml(String.format("%s/config.xml", srcProject.getUrl())));
+        
+        // POST config.xml of srcProject (userid is set to admin) to a new project.
+        // This should fail.
+        FreeStyleProject destProject = j.createFreeStyleProject();
+        destProject.save();
+        String projectName = destProject.getFullName();
+        
+        WebRequestSettings req = new WebRequestSettings(
+                wc.createCrumbedUrl(String.format("%s/config.xml", destProject.getUrl())),
+                HttpMethod.POST
+        );
+        req.setRequestBody(configXml);
+        
+        try {
+            wc.getPage(req);
+            fail();
+        } catch(FailingHttpStatusCodeException e) {
+        }
+        
+        {
+            FreeStyleProject p = j.jenkins.getItemByFullName(projectName, FreeStyleProject.class);
+            assertNotNull(p);
+            AuthorizeProjectProperty prop = p.getProperty(AuthorizeProjectProperty.class);
+            assertTrue(
+                    prop == null
+                    || prop.getStrategy() == null
+            );
+        }
+        
+        j.jenkins.reload();
+        
+        {
+            FreeStyleProject p = j.jenkins.getItemByFullName(projectName, FreeStyleProject.class);
+            assertNotNull(p);
+            AuthorizeProjectProperty prop = p.getProperty(AuthorizeProjectProperty.class);
+            assertTrue(
+                    prop == null
+                    || prop.getStrategy() == null
+            );
+        }
+    }
+    
+    @Test
+    public void testCliSuccess() throws Exception {
+        prepareSecurity();
+        
+        FreeStyleProject srcProject = j.createFreeStyleProject();
+        srcProject.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1", false)));
+        srcProject.save();
+        
+        WebClient wc = j.createWebClient();
+        wc.login("test1", "test1");
+        
+        // GET config.xml of srcProject (userid is set to test1)
+        String configXml = null;
+        {
+            CLI cli = new CLI(j.getURL());
+            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+            int ret = cli.execute(Arrays.asList(
+                    "get-job",
+                    srcProject.getFullName(),
+                    "--username",
+                    "test1",
+                    "--password",
+                    "test1"
+                ),
+                new NullInputStream(0),
+                stdout,
+                stderr
+            );
+            assertEquals(stderr.toString(), 0, ret);
+            configXml = stdout.toString();
+        }
+        
+        // POST config.xml of srcProject (userid is set to test1) to a new project.
+        // This should success.
+        FreeStyleProject destProject = j.createFreeStyleProject();
+        destProject.save();
+        String projectName = destProject.getFullName();
+        
+        {
+            CLI cli = new CLI(j.getURL());
+            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+            int ret = cli.execute(Arrays.asList(
+                    "update-job",
+                    destProject.getFullName(),
+                    "--username",
+                    "test1",
+                    "--password",
+                    "test1"
+                ),
+                new ByteArrayInputStream(configXml.getBytes()),
+                stdout,
+                stderr
+            );
+            assertEquals(stderr.toString(), 0, ret);
+        }
+        
+        {
+            FreeStyleProject p = j.jenkins.getItemByFullName(projectName, FreeStyleProject.class);
+            assertNotNull(p);
+            AuthorizeProjectProperty prop = p.getProperty(AuthorizeProjectProperty.class);
+            assertNotNull(prop);
+            assertEquals(SpecificUsersAuthorizationStrategy.class, prop.getStrategy().getClass());
+            SpecificUsersAuthorizationStrategy strategy = (SpecificUsersAuthorizationStrategy)prop.getStrategy();
+            assertEquals("test1", strategy.getUserid());
+        }
+        
+        j.jenkins.reload();
+        
+        {
+            FreeStyleProject p = j.jenkins.getItemByFullName(projectName, FreeStyleProject.class);
+            assertNotNull(p);
+            AuthorizeProjectProperty prop = p.getProperty(AuthorizeProjectProperty.class);
+            assertNotNull(prop);
+            assertEquals(SpecificUsersAuthorizationStrategy.class, prop.getStrategy().getClass());
+            SpecificUsersAuthorizationStrategy strategy = (SpecificUsersAuthorizationStrategy)prop.getStrategy();
+            assertEquals("test1", strategy.getUserid());
+        }
+    }
+    
+    
+    @Test
+    public void testCliFailure() throws Exception {
+        prepareSecurity();
+        
+        FreeStyleProject srcProject = j.createFreeStyleProject();
+        srcProject.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin", false)));
+        srcProject.save();
+        
+        WebClient wc = j.createWebClient();
+        wc.login("test1", "test1");
+        
+        // GET config.xml of srcProject (userid is set to admin)
+        String configXml = null;
+        {
+            CLI cli = new CLI(j.getURL());
+            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+            int ret = cli.execute(Arrays.asList(
+                    "get-job",
+                    srcProject.getFullName(),
+                    "--username",
+                    "test1",
+                    "--password",
+                    "test1"
+                ),
+                new NullInputStream(0),
+                stdout,
+                stderr
+            );
+            assertEquals(stderr.toString(), 0, ret);
+            configXml = stdout.toString();
+        }
+        
+        // POST config.xml of srcProject (userid is set to admin) to a new project.
+        // This should fail.
+        FreeStyleProject destProject = j.createFreeStyleProject();
+        destProject.save();
+        String projectName = destProject.getFullName();
+        
+        {
+            CLI cli = new CLI(j.getURL());
+            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+            int ret = cli.execute(Arrays.asList(
+                    "update-job",
+                    destProject.getFullName(),
+                    "--username",
+                    "test1",
+                    "--password",
+                    "test1"
+                ),
+                new ByteArrayInputStream(configXml.getBytes()),
+                stdout,
+                stderr
+            );
+            assertNotEquals(0, ret);
+        }
+        
+        {
+            FreeStyleProject p = j.jenkins.getItemByFullName(projectName, FreeStyleProject.class);
+            assertNotNull(p);
+            AuthorizeProjectProperty prop = p.getProperty(AuthorizeProjectProperty.class);
+            assertTrue(
+                    prop == null
+                    || prop.getStrategy() == null
+            );
+        }
+        
+        j.jenkins.reload();
+        
+        {
+            FreeStyleProject p = j.jenkins.getItemByFullName(projectName, FreeStyleProject.class);
+            assertNotNull(p);
+            AuthorizeProjectProperty prop = p.getProperty(AuthorizeProjectProperty.class);
+            assertTrue(
+                    prop == null
+                    || prop.getStrategy() == null
+            );
+        }
+    }
+    
 }
