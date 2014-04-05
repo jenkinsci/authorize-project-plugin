@@ -36,9 +36,10 @@ import hudson.Extension;
 import hudson.model.Queue;
 import hudson.model.User;
 import hudson.model.AbstractProject;
+import hudson.model.Descriptor;
 import hudson.model.Descriptor.FormException;
+import hudson.security.ACL;
 import hudson.util.FormValidation;
-
 import net.sf.json.JSONObject;
 
 import org.acegisecurity.Authentication;
@@ -178,6 +179,29 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         }
         
         return (SpecificUsersAuthorizationStrategy)prop.getStrategy();
+    }
+    
+    /**
+     * Called when XSTREAM2 instantiates this from XML configuration.
+     * 
+     * When configured via REST/CLI, {@link Descriptor#newInstance(StaplerRequest, JSONObject)} is not called.
+     * Instead checks authentication here.
+     * 
+     * @return return myself.
+     * @throws IOException authentication failed.
+     */
+    private Object readResolve() throws IOException {
+        if (!ACL.SYSTEM.equals(Jenkins.getAuthentication())) {
+            // This is called via REST/CLI.
+            
+            // There's no way to retrieve current strategy.
+            if (isAuthenticateionRequired(this, null)) {
+                // As REST/CLI interface saves configuration after successfully load object from the XML,
+                // this prevents the new configuration saved.
+                throw new IOException(Messages.SpecificUsersAuthorizationStrategy_userid_readResolve());
+            }
+        }
+        return this;
     }
     
     /**
