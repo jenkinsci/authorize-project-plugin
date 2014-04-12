@@ -23,9 +23,8 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <st:adjunct includes="org.jenkinsci.plugins.authorizeproject.nestedHelp"/>
   <f:optionalBlock name="${descriptor.propertyName}" title="${descriptor.displayName}" checked="${instance != null}">
-    <f:entry title="${%Authorize Strategy}" field="strategy">
-      <f:hetero-radio field="strategy" descriptors="${descriptor.strategyList}" />
-    </f:entry>
+    <f:dropdownDescriptorSelector title="${%Authorize Strategy}" field="strategy" descriptors="${descriptor.strategyList}" />
   </f:optionalBlock>
 </j:jelly>
