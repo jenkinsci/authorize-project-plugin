@@ -64,7 +64,7 @@ Behaviour.specify(".specific-user-authorization", "checkPasswordRequired", 0, fu
     var url = useridField.getAttribute("checkPasswordRequestedUrl");
     url = eval(url);
     var ajax = new Ajax.Request(url, {
-      evalJS: false, // evaluate contents.
+      evalJS: false, // don't evaluate contents automatically.
       onSuccess: function(response) {
         var required = eval(response.responseText);
         if (required) {
