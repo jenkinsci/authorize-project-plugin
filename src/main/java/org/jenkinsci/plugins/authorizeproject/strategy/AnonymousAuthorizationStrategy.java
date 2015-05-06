@@ -26,8 +26,8 @@ package org.jenkinsci.plugins.authorizeproject.strategy;
 
 import jenkins.model.Jenkins;
 import hudson.Extension;
+import hudson.model.Job;
 import hudson.model.Queue;
-import hudson.model.AbstractProject;
 
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
@@ -51,10 +51,10 @@ public class AnonymousAuthorizationStrategy extends AuthorizeProjectStrategy {
      * @param project
      * @param item
      * @return anonymous authorization
-     * @see org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy#authenticate(hudson.model.AbstractProject, hudson.model.Queue.Item)
+     * @see org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy#authenticate(hudson.model.Job, hudson.model.Queue.Item)
      */
     @Override
-    public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
+    public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
         return Jenkins.ANONYMOUS;
     }
     

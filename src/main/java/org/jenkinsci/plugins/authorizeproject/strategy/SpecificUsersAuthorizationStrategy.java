@@ -38,6 +38,7 @@ import hudson.model.User;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.model.Descriptor.FormException;
+import hudson.model.Job;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
@@ -96,10 +97,10 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
      * @param project
      * @param item
      * @return
-     * @see org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy#authenticate(hudson.model.AbstractProject, hudson.model.Queue.Item)
+     * @see org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy#authenticate(hudson.model.Job, hudson.model.Queue.Item)
      */
     @Override
-    public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
+    public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
         User u = User.get(getUserid(), false, Collections.emptyMap());
         if (u == null) {
             // fallback to anonymous
@@ -164,7 +165,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
      * @param project
      * @return
      */
-    protected static SpecificUsersAuthorizationStrategy getCurrentStrategy(AbstractProject<?,?> project) {
+    protected static SpecificUsersAuthorizationStrategy getCurrentStrategy(Job<?,?> project) {
         if (project == null) {
             return null;
         }
@@ -179,6 +180,11 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         }
         
         return (SpecificUsersAuthorizationStrategy)prop.getStrategy();
+    }
+    
+    @Deprecated
+    protected static SpecificUsersAuthorizationStrategy getCurrentStrategy(AbstractProject<?,?> project) {
+        return getCurrentStrategy((Job<?,?>)project);
     }
     
     /**
@@ -315,7 +321,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             SpecificUsersAuthorizationStrategy strategy = newInstanceWithoutAuthentication(req, formData);
             
             SpecificUsersAuthorizationStrategy currentStrategy
-                = getCurrentStrategy(req.findAncestorObject(AbstractProject.class));
+                = getCurrentStrategy(req.findAncestorObject(Job.class));
             
             if (isAuthenticateionRequired(strategy, currentStrategy)) {
                 if (!authenticate(strategy, req, formData)) {
@@ -354,7 +360,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             SpecificUsersAuthorizationStrategy newStrategy = new SpecificUsersAuthorizationStrategy(userid, noNeedReauthentication);
             return Boolean.toString(isAuthenticateionRequired(
                     newStrategy,
-                    getCurrentStrategy(req.findAncestorObject(AbstractProject.class))
+                    getCurrentStrategy(req.findAncestorObject(Job.class))
             ));
         }
         
@@ -385,7 +391,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             SpecificUsersAuthorizationStrategy newStrategy = new SpecificUsersAuthorizationStrategy(userid, noNeedReauthentication);
             if (!isAuthenticateionRequired(
                     newStrategy,
-                    getCurrentStrategy(req.findAncestorObject(AbstractProject.class))
+                    getCurrentStrategy(req.findAncestorObject(Job.class))
             )) {
                 // authentication is not required.
                 return FormValidation.ok();

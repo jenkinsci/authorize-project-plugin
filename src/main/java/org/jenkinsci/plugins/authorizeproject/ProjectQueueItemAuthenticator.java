@@ -28,6 +28,7 @@ import java.util.List;
 
 import hudson.Extension;
 import hudson.model.AbstractProject;
+import hudson.model.Job;
 import hudson.model.Queue;
 
 import javax.annotation.CheckForNull;
@@ -61,11 +62,13 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
     @Override
     @CheckForNull
     public Authentication authenticate(Queue.Item item) {
-        if (!(item.task instanceof AbstractProject)) {
-            // This handles only AbstractProject.
+        if (!(item.task instanceof Job)) {
             return null;
         }
-        AbstractProject<?, ?> project = ((AbstractProject<?,?>)item.task).getRootProject();
+        Job<?, ?> project = (Job<?,?>)item.task;
+        if (project instanceof AbstractProject) {
+            project = ((AbstractProject<?,?>)project).getRootProject();
+        }
         AuthorizeProjectProperty prop = project.getProperty(AuthorizeProjectProperty.class);
         if (prop == null) {
             return null;

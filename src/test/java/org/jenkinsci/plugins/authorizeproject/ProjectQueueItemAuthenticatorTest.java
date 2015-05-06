@@ -32,7 +32,9 @@ import hudson.matrix.TextAxis;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.model.FreeStyleProject;
+import hudson.model.Job;
 import hudson.model.Queue;
+import hudson.model.User;
 import hudson.security.ACL;
 import net.sf.json.JSONObject;
 
@@ -60,7 +62,7 @@ public class ProjectQueueItemAuthenticatorTest {
     
     public static class NullAuthorizeProjectStrategy extends AuthorizeProjectStrategy {
         @Override
-        public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
+        public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
             return null;
         }
     }
@@ -172,7 +174,7 @@ public class ProjectQueueItemAuthenticatorTest {
      */
     public static class AuthorizeProjectStrategyExtendingBaseDescrptor extends AuthorizeProjectStrategy {
         @Override
-        public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
+        public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
             return null;
         }
         
@@ -190,7 +192,7 @@ public class ProjectQueueItemAuthenticatorTest {
      */
     public static class AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration extends AuthorizeProjectStrategy {
         @Override
-        public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
+        public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
             return null;
         }
         
@@ -215,7 +217,7 @@ public class ProjectQueueItemAuthenticatorTest {
      */
     public static class AuthorizeProjectStrategyWithGlobalSecurityConfiguration extends AuthorizeProjectStrategy {
         @Override
-        public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
+        public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
             return null;
         }
         
@@ -251,7 +253,7 @@ public class ProjectQueueItemAuthenticatorTest {
      */
     public static class AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration extends AuthorizeProjectStrategy {
         @Override
-        public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
+        public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
             return null;
         }
         
@@ -342,5 +344,32 @@ public class ProjectQueueItemAuthenticatorTest {
             assertEquals(alternateValue1, alternateField.getValueAttribute());
         }
         
+    }
+    
+    /**
+     * Test alternate file except global-security.jelly can be used.
+     */
+    public static class AuthorizeProjectStrategyWithOldSignature extends AuthorizeProjectStrategy {
+        private String name;
+        
+        public AuthorizeProjectStrategyWithOldSignature(String name) {
+            this.name = name;
+        }
+        
+        @Override
+        public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
+            return User.get(name).impersonate();
+        }
+    }
+    
+    @Test
+    public void testOldSignature() throws Exception {
+        FreeStyleProject p = j.createFreeStyleProject();
+        p.addProperty(new AuthorizeProjectProperty(new AuthorizeProjectStrategyWithOldSignature("test1")));
+        AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
+        p.getBuildersList().add(checker);
+        
+        j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        assertEquals("test1", checker.authentication.getName());
     }
 }
