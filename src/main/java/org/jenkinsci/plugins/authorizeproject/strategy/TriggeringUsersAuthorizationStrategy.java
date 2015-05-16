@@ -29,8 +29,8 @@ import hudson.Extension;
 import hudson.model.Cause;
 import hudson.model.Cause.UpstreamCause;
 import hudson.model.Cause.UserIdCause;
+import hudson.model.Job;
 import hudson.model.Queue;
-import hudson.model.AbstractProject;
 import hudson.model.Run;
 import hudson.model.User;
 import java.util.Collections;
@@ -55,10 +55,10 @@ public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrate
      * @param project
      * @param item
      * @return
-     * @see org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy#authenticate(hudson.model.AbstractProject, hudson.model.Queue.Item)
+     * @see org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy#authenticate(hudson.model.Job, hudson.model.Queue.Item)
      */
     @Override
-    public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
+    public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
         Cause.UserIdCause cause = getRootUserIdCause(item);
         if (cause != null) {
             User u = User.get(cause.getUserId(), false, Collections.emptyMap());

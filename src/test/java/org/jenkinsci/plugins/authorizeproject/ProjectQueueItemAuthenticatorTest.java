@@ -32,7 +32,9 @@ import hudson.matrix.TextAxis;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.model.FreeStyleProject;
+import hudson.model.Job;
 import hudson.model.Queue;
+import hudson.model.User;
 import hudson.security.ACL;
 import net.sf.json.JSONObject;
 
@@ -51,6 +53,24 @@ import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 
+/*
+// classes for workflowTest
+import java.io.IOException;
+import jenkins.tasks.SimpleBuildStep;
+import hudson.FilePath;
+import hudson.Launcher;
+import hudson.model.InvisibleAction;
+import hudson.model.TaskListener;
+import hudson.model.Run;
+import hudson.tasks.BuildStepDescriptor;
+import hudson.tasks.Builder;
+import org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.kohsuke.stapler.DataBoundConstructor;
+*/
+
 /**
  *
  */
@@ -60,7 +80,7 @@ public class ProjectQueueItemAuthenticatorTest {
     
     public static class NullAuthorizeProjectStrategy extends AuthorizeProjectStrategy {
         @Override
-        public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
+        public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
             return null;
         }
     }
@@ -172,7 +192,7 @@ public class ProjectQueueItemAuthenticatorTest {
      */
     public static class AuthorizeProjectStrategyExtendingBaseDescrptor extends AuthorizeProjectStrategy {
         @Override
-        public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
+        public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
             return null;
         }
         
@@ -190,7 +210,7 @@ public class ProjectQueueItemAuthenticatorTest {
      */
     public static class AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration extends AuthorizeProjectStrategy {
         @Override
-        public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
+        public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
             return null;
         }
         
@@ -215,7 +235,7 @@ public class ProjectQueueItemAuthenticatorTest {
      */
     public static class AuthorizeProjectStrategyWithGlobalSecurityConfiguration extends AuthorizeProjectStrategy {
         @Override
-        public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
+        public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
             return null;
         }
         
@@ -251,7 +271,7 @@ public class ProjectQueueItemAuthenticatorTest {
      */
     public static class AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration extends AuthorizeProjectStrategy {
         @Override
-        public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
+        public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
             return null;
         }
         
@@ -343,4 +363,103 @@ public class ProjectQueueItemAuthenticatorTest {
         }
         
     }
+    
+    /**
+     * Test alternate file except global-security.jelly can be used.
+     */
+    public static class AuthorizeProjectStrategyWithOldSignature extends AuthorizeProjectStrategy {
+        private String name;
+        
+        public AuthorizeProjectStrategyWithOldSignature(String name) {
+            this.name = name;
+        }
+        
+        @Override
+        public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
+            return User.get(name).impersonate();
+        }
+    }
+    
+    @Test
+    public void testOldSignature() throws Exception {
+        j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
+        FreeStyleProject p = j.createFreeStyleProject();
+        p.addProperty(new AuthorizeProjectProperty(new AuthorizeProjectStrategyWithOldSignature("test1")));
+        AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
+        p.getBuildersList().add(checker);
+        
+        j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        assertEquals("test1", checker.authentication.getName());
+    }
+    
+    /*
+    // A test for workflow plugin (which extends Job, not AbstractProject).
+    // This is disabled as workflow requires Jenkins >= 1.580.1
+    // but authorize-project targets Jenkins >= 1.532.
+    public static class AuthorizationRecordAction extends InvisibleAction {
+        public final Authentication authentication;
+        
+        public AuthorizationRecordAction(Authentication authentication) {
+            this.authentication = authentication;
+        }
+    }
+    
+    public static class AuthorizationCheckSimpleBuilder extends Builder implements SimpleBuildStep {
+        @DataBoundConstructor
+        public AuthorizationCheckSimpleBuilder() {
+        }
+        
+        @Override
+        public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener)
+                throws InterruptedException, IOException {
+            run.addAction(new AuthorizationRecordAction(Jenkins.getAuthentication()));
+        }
+        
+        @TestExtension("testWorkflow")
+        public static class DescriptorImpl extends BuildStepDescriptor<Builder> {
+            @Override
+            public boolean isApplicable(Class<? extends AbstractProject> jobType) {
+                return true;
+            }
+            
+            @Override
+            public String getDisplayName() {
+                return "AuthorizationCheckSimpleBuilder";
+            }
+        }
+    }
+    
+    @Test
+    public void testWorkflow() throws Exception {
+        j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
+        {
+            WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "test"+j.jenkins.getItems().size());
+            p.setDefinition(new CpsFlowDefinition("node{ step([$class: 'AuthorizationCheckSimpleBuilder']); }", true));
+            WorkflowRun b = p.scheduleBuild2(0).get();
+            j.assertBuildStatusSuccess(b);
+            assertEquals(ACL.SYSTEM, b.getAction(AuthorizationRecordAction.class).authentication);
+        }
+        
+        {
+            WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "test"+j.jenkins.getItems().size());
+            p.addProperty(new AuthorizeProjectProperty(new AuthorizeProjectStrategyWithOldSignature("test1")));
+            p.setDefinition(new CpsFlowDefinition("node{ step([$class: 'AuthorizationCheckSimpleBuilder']); }", true));
+            WorkflowRun b = p.scheduleBuild2(0).get();
+            j.assertBuildStatusSuccess(b);
+            
+            // Strategies with old signatures don't work for Jobs.
+            assertEquals(ACL.SYSTEM, b.getAction(AuthorizationRecordAction.class).authentication);
+        }
+        
+        {
+            WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "test"+j.jenkins.getItems().size());
+            p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1", true)));
+            User.get("test1");  // create
+            p.setDefinition(new CpsFlowDefinition("node{ step([$class: 'AuthorizationCheckSimpleBuilder']); }", true));
+            WorkflowRun b = p.scheduleBuild2(0).get();
+            j.assertBuildStatusSuccess(b);
+            assertEquals(User.get("test1").impersonate(), b.getAction(AuthorizationRecordAction.class).authentication);
+        }
+    }
+    */
 }

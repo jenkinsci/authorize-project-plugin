@@ -24,21 +24,27 @@
 
 package org.jenkinsci.plugins.authorizeproject;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.acegisecurity.Authentication;
 
 import jenkins.model.Jenkins;
 import hudson.DescriptorExtensionList;
 import hudson.ExtensionPoint;
+import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Queue;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
+import hudson.model.Job;
 
 /**
  * Extension point to define a new strategy to authorize builds configured in project configuration pages.
  */
 public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<AuthorizeProjectStrategy>
         implements ExtensionPoint {
+    private static final Logger LOGGER = Logger.getLogger(AuthorizeProjectStrategy.class.getName());
     /**
      * @return all the registered {@link AuthorizeProjectStrategy}.
      */
@@ -53,5 +59,35 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
      * @param item the item in queue, which will be a build.
      * @return
      */
-    public abstract Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item);
+    public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
+        if(!Util.isOverridden(
+                AuthorizeProjectStrategy.class,
+                getClass(),
+                "authenticate",
+                AbstractProject.class,
+                Queue.Item.class
+        )) {
+            throw new AbstractMethodError();
+        }
+        
+        if (!(project instanceof AbstractProject)) {
+            Descriptor<?> d = Jenkins.getInstance().getDescriptor(getClass());
+            LOGGER.log(
+                    Level.WARNING,
+                    "This authorization strategy ({0}) is designed for authorize-project < 1.1.0 and not applicable for non-AbstractProjects (like WorkflowJob). ignored.",
+                    (d != null)?d.getDisplayName():getClass().getName()
+            );
+            return null;
+        }
+        return authenticate((AbstractProject<?,?>)project, item);
+    }
+    
+    /**
+     * @deprecated use {@link #authenticate(hudson.model.Job, Queue.Item)} instead.
+     */
+    @Deprecated
+    public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
+        return authenticate((Job<?,?>)project, item);
+    }
+    
 }

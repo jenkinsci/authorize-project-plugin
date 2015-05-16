@@ -51,7 +51,7 @@ public class AuthorizeProjectJenkinsRule extends JenkinsRule {
         };
     }
     
-    protected void before() throws Throwable {
+    public void before() throws Throwable {
         super.before();
         QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new ProjectQueueItemAuthenticator());
     }

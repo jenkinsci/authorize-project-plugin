@@ -40,14 +40,13 @@ import hudson.model.Job;
 import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
 import hudson.model.Queue;
-import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.security.AuthorizationStrategy;
 
 /**
  * Specifies how to authorize its builds.
  */
-public class AuthorizeProjectProperty extends JobProperty<AbstractProject<?,?>> {
+public class AuthorizeProjectProperty extends JobProperty<Job<?,?>> {
     /**
      * Property name used for job configuration page.
      */
@@ -80,7 +79,7 @@ public class AuthorizeProjectProperty extends JobProperty<AbstractProject<?,?>> 
      * 
      * @param item the item in queue, which will be a build.
      * @return authorization for this build.
-     * @see AuthorizeProjectStrategy#authenticate(hudson.model.AbstractProject, hudson.model.Queue.Item)
+     * @see AuthorizeProjectStrategy#authenticate(hudson.model.Job, hudson.model.Queue.Item)
      */
     public Authentication authenticate(Queue.Item item) {
         if (getStrategy() == null) {
