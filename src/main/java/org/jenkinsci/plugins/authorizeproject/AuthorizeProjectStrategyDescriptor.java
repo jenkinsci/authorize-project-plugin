@@ -63,7 +63,7 @@ public abstract class AuthorizeProjectStrategyDescriptor extends Descriptor<Auth
     }
     
     /**
-     * @return return a page to shown in "Configure Global Security" as a child of {@link ProjectQueueItemAuthenticator}.
+     * @return descriptors with configuration views in "Configure Global Security" as a child of {@link ProjectQueueItemAuthenticator}.
      */
     public String getGlobalSecurityConfigPage() {
         for (String cand: getPossibleViewNames("global-security")) {
@@ -106,5 +106,12 @@ public abstract class AuthorizeProjectStrategyDescriptor extends Descriptor<Auth
      * @throws FormException
      */
     public void configureFromGlobalSecurity(StaplerRequest req, JSONObject js) throws FormException {
+    }
+    
+    /**
+     * @return this strategy can be enabled by default.
+     */
+    public boolean isEnabledByDefault() {
+        return true;
     }
 }
