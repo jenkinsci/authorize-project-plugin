@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.authorizeproject;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -61,8 +62,8 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
         this(Collections.<String, Boolean>emptyMap());
     }
     
-    public ProjectQueueItemAuthenticator(Map<String,Boolean> strategyEnableMap) {
-        this.strategyEnabledMap = strategyEnableMap;
+    public ProjectQueueItemAuthenticator(Map<String,Boolean> strategyEnabledMap) {
+        this.strategyEnabledMap = strategyEnabledMap;
     }
     
     public Object readResolve() {
@@ -146,16 +147,24 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
         public ProjectQueueItemAuthenticator newInstance(StaplerRequest req, JSONObject formData)
                 throws FormException
         {
-            ProjectQueueItemAuthenticator r = (ProjectQueueItemAuthenticator)super.newInstance(req, formData);
+            Map<String,Boolean> strategyEnabledMap = new HashMap<String, Boolean>();
             
-            for (AuthorizeProjectStrategyDescriptor d : getDescriptorsForGlobalSecurityConfigPage()) {
+            for (Descriptor<AuthorizeProjectStrategy> d : getAvailableDescriptorList()) {
                 String name = d.getJsonSafeClassName();
                 if (formData.has(name)) {
-                    d.configureFromGlobalSecurity(req, formData.getJSONObject(name));
+                    strategyEnabledMap.put(d.getId(), true);
+                    if (
+                            d instanceof AuthorizeProjectStrategyDescriptor
+                            && ((AuthorizeProjectStrategyDescriptor)d).getGlobalSecurityConfigPage() != null
+                    ) {
+                        ((AuthorizeProjectStrategyDescriptor)d).configureFromGlobalSecurity(req, formData.getJSONObject(name));
+                    }
+                } else {
+                    strategyEnabledMap.put(d.getId(), false);
                 }
             }
             
-            return r;
+            return new ProjectQueueItemAuthenticator(strategyEnabledMap);
         }
     }
     
