@@ -24,6 +24,9 @@
 
 package org.jenkinsci.plugins.authorizeproject;
 
+import java.util.Collections;
+import java.util.List;
+
 import jenkins.model.Jenkins;
 import jenkins.security.QueueItemAuthenticatorConfiguration;
 
@@ -36,6 +39,7 @@ import org.kohsuke.stapler.StaplerRequest;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.model.Describable;
+import hudson.model.DescriptorVisibilityFilter;
 import hudson.model.Job;
 import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
@@ -129,8 +133,20 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?,?>> {
         /**
          * @return all the registered {@link AuthorizeProjectStrategy}.
          */
+        @Deprecated
         public DescriptorExtensionList<AuthorizeProjectStrategy, Descriptor<AuthorizeProjectStrategy>> getStrategyList() {
             return AuthorizeProjectStrategy.all();
+        }
+        
+        /**
+         * @return enabled {@link AuthorizeProjectStrategy}, empty if authorize-project is not enabled.
+         */
+        public List<Descriptor<AuthorizeProjectStrategy>> getEnabledAuthorizeProjectStrategyDescriptorList() {
+            ProjectQueueItemAuthenticator authenticator = ProjectQueueItemAuthenticator.getConfigured();
+            if (authenticator == null) {
+                return Collections.emptyList();
+            }
+            return DescriptorVisibilityFilter.apply(authenticator, AuthorizeProjectStrategy.all());
         }
         
         /**

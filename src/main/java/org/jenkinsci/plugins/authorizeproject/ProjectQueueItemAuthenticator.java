@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 import hudson.Extension;
+import hudson.model.DescriptorVisibilityFilter;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.model.Job;
@@ -125,12 +126,16 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
             return Messages.ProjectQueueItemAuthenticator_DisplayName();
         }
         
+        @Deprecated
         public List<AuthorizeProjectStrategyDescriptor> getDescriptorsForGlobalSecurityConfigPage() {
             return AuthorizeProjectStrategyDescriptor.getDescriptorsForGlobalSecurityConfigPage();
         }
         
+        /**
+         * @return all installed {@link AuthorizeProjectStrategy}
+         */
         public List<Descriptor<AuthorizeProjectStrategy>> getAvailableDescriptorList() {
-            return Jenkins.getInstance().getDescriptorList(AuthorizeProjectStrategy.class);
+            return AuthorizeProjectStrategy.all();
         }
         
         /**
@@ -169,14 +174,35 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
     }
     
     /**
+     * @return instance configured in Global Security configuration.
+     */
+    public static ProjectQueueItemAuthenticator getConfigured() {
+        for (QueueItemAuthenticator authenticator: QueueItemAuthenticatorConfiguration.get().getAuthenticators()) {
+            if (authenticator instanceof ProjectQueueItemAuthenticator) {
+                return (ProjectQueueItemAuthenticator)authenticator;
+            }
+        }
+        return null;
+    }
+    
+    /**
      * @return whether Jenkins is configured to use {@link ProjectQueueItemAuthenticator}.
      */
     public static boolean isConfigured() {
-        for (QueueItemAuthenticator authenticator: QueueItemAuthenticatorConfiguration.get().getAuthenticators()) {
-            if (authenticator instanceof ProjectQueueItemAuthenticator) {
+        return getConfigured() != null;
+    }
+    
+    @Extension
+    public static class DescriptorVisibilityFilterImpl extends DescriptorVisibilityFilter
+    {
+        @Override
+        public boolean filter(Object context, @SuppressWarnings("rawtypes") Descriptor descriptor)
+        {
+            if(!(context instanceof ProjectQueueItemAuthenticator))
+            {
                 return true;
             }
+            return ((ProjectQueueItemAuthenticator)context).isStrategyEnabled(descriptor);
         }
-        return false;
     }
 }
