@@ -24,6 +24,13 @@
 
 package org.jenkinsci.plugins.authorizeproject.testutil;
 
+import hudson.model.Describable;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import jenkins.security.QueueItemAuthenticatorConfiguration;
 
 import org.jenkinsci.plugins.authorizeproject.ProjectQueueItemAuthenticator;
@@ -35,6 +42,23 @@ import com.gargoylesoftware.htmlunit.WebResponse;
  *
  */
 public class AuthorizeProjectJenkinsRule extends JenkinsRule {
+    private Map<Class<? extends Describable<?>>, Boolean> strategyEnabledMapByClass;
+    
+    public AuthorizeProjectJenkinsRule() {
+        this(Collections.<Class<? extends Describable<?>>, Boolean>emptyMap());
+    }
+    
+    public AuthorizeProjectJenkinsRule(Class<? extends Describable<?>>... strategiesToEnabled) {
+        this(new HashMap<Class<? extends Describable<?>>, Boolean>());
+        for(Class<? extends Describable<?>> strategy: strategiesToEnabled) {
+            this.strategyEnabledMapByClass.put(strategy, true);
+        }
+    }
+    
+    public AuthorizeProjectJenkinsRule(Map<Class<? extends Describable<?>>, Boolean> strategyEnabledMapByClass) {
+        this.strategyEnabledMapByClass = strategyEnabledMapByClass;
+    }
+    
     @Override
     public WebClient createWebClient() {
         return new WebClient() {
@@ -53,6 +77,13 @@ public class AuthorizeProjectJenkinsRule extends JenkinsRule {
     
     public void before() throws Throwable {
         super.before();
-        QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new ProjectQueueItemAuthenticator());
+        Map<String, Boolean> strategyEnabledMap = new HashMap<String, Boolean>();
+        for(Entry<Class<? extends Describable<?>>, Boolean> e: strategyEnabledMapByClass.entrySet()) {
+            strategyEnabledMap.put(
+                    jenkins.getDescriptor(e.getKey()).getId(),
+                    e.getValue()
+            );
+        }
+        QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new ProjectQueueItemAuthenticator(strategyEnabledMap));
     }
 }

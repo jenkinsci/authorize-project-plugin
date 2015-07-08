@@ -83,6 +83,15 @@ public class ProjectQueueItemAuthenticatorTest {
         public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
             return null;
         }
+        
+        @TestExtension
+        public static class DescriptorImpl extends AuthorizeProjectStrategyDescriptor {
+            @Override
+            public String getDisplayName() {
+                return "AuthorizeProjectStrategyWithOldSignature";
+            }
+            
+        }
     }
     
     @Test
@@ -377,6 +386,15 @@ public class ProjectQueueItemAuthenticatorTest {
         @Override
         public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
             return User.get(name).impersonate();
+        }
+        
+        @TestExtension("testOldSignature")
+        public static class DescriptorImpl extends AuthorizeProjectStrategyDescriptor {
+            @Override
+            public String getDisplayName() {
+                return "AuthorizeProjectStrategyWithOldSignature";
+            }
+            
         }
     }
     
