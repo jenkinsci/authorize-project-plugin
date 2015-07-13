@@ -25,11 +25,18 @@
 package org.jenkinsci.plugins.authorizeproject;
 
 import static org.junit.Assert.*;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import jenkins.model.Jenkins;
+import jenkins.security.QueueItemAuthenticatorConfiguration;
 import hudson.matrix.AxisList;
 import hudson.matrix.MatrixProject;
 import hudson.matrix.TextAxis;
 import hudson.model.AbstractProject;
+import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.FreeStyleProject;
 import hudson.model.Job;
@@ -47,6 +54,7 @@ import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.JenkinsRule.WebClient;
 import org.jvnet.hudson.test.TestExtension;
+import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
@@ -79,6 +87,10 @@ public class ProjectQueueItemAuthenticatorTest {
     public JenkinsRule j = new AuthorizeProjectJenkinsRule();
     
     public static class NullAuthorizeProjectStrategy extends AuthorizeProjectStrategy {
+        @DataBoundConstructor
+        public NullAuthorizeProjectStrategy() {
+        }
+        
         @Override
         public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
             return null;
@@ -194,6 +206,58 @@ public class ProjectQueueItemAuthenticatorTest {
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
             assertEquals(ACL.SYSTEM, checker.authentication);
         }
+    }
+    
+    @Test
+    public void testDisabledInProjectConfiguration() throws Exception {
+        FreeStyleProject p = j.createFreeStyleProject();
+        p.addProperty(new AuthorizeProjectProperty(new AnonymousAuthorizationStrategy()));
+        
+        assertTrue(ProjectQueueItemAuthenticator.getConfigured().isStrategyEnabled(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class)));
+        
+        j.configRoundtrip(p);
+        
+        // can be reconfigured if it is enabled.
+        assertEquals(AnonymousAuthorizationStrategy.class, p.getProperty(AuthorizeProjectProperty.class).getStrategy().getClass());
+        
+        Map<String, Boolean> strategyEnabledMap = new HashMap<String, Boolean>();
+        strategyEnabledMap.put(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class).getId(), false);
+        
+        QueueItemAuthenticatorConfiguration.get().getAuthenticators().clear();
+        QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new ProjectQueueItemAuthenticator(strategyEnabledMap));
+        
+        assertFalse(ProjectQueueItemAuthenticator.getConfigured().isStrategyEnabled(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class)));
+        
+        j.configRoundtrip(p);
+        
+        // cannot be reconfigured if it is disabled.
+        assertNotEquals(AnonymousAuthorizationStrategy.class, p.getProperty(AuthorizeProjectProperty.class).getStrategy().getClass());
+    }
+    
+    @Test
+    public void testDisabledAtRuntime() throws Exception {
+        FreeStyleProject p = j.createFreeStyleProject();
+        AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
+        p.getBuildersList().add(checker);
+        p.addProperty(new AuthorizeProjectProperty(new AnonymousAuthorizationStrategy()));
+        
+        assertTrue(ProjectQueueItemAuthenticator.getConfigured().isStrategyEnabled(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class)));
+        
+        // strategy works if it is enabled
+        j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        assertEquals(Jenkins.ANONYMOUS, checker.authentication);
+        
+        Map<String, Boolean> strategyEnabledMap = new HashMap<String, Boolean>();
+        strategyEnabledMap.put(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class).getId(), false);
+        
+        QueueItemAuthenticatorConfiguration.get().getAuthenticators().clear();
+        QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new ProjectQueueItemAuthenticator(strategyEnabledMap));
+        
+        assertFalse(ProjectQueueItemAuthenticator.getConfigured().isStrategyEnabled(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class)));
+        
+        // strategy doesn't work if it is disabled even when it is configured
+        j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        assertEquals(ACL.SYSTEM, checker.authentication);
     }
     
     /**
@@ -371,6 +435,43 @@ public class ProjectQueueItemAuthenticatorTest {
             assertEquals(alternateValue1, alternateField.getValueAttribute());
         }
         
+        // enabled / disabled preservation
+        // all are enabled
+        Map<String, Boolean> strategyEnabledMap = new HashMap<String, Boolean>();
+        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyExtendingBaseDescrptor.class).getId(), true);
+        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration.class).getId(), true);
+        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class).getId(), true);
+        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class).getId(), true);
+        assertStrategyEnablingConfigurationPreserved(strategyEnabledMap);
+        
+        // all are disabled
+        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyExtendingBaseDescrptor.class).getId(), false);
+        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration.class).getId(), false);
+        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class).getId(), false);
+        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class).getId(), false);
+        assertStrategyEnablingConfigurationPreserved(strategyEnabledMap);
+        
+        // mixed
+        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyExtendingBaseDescrptor.class).getId(), true);
+        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration.class).getId(), false);
+        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class).getId(), true);
+        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class).getId(), false);
+        assertStrategyEnablingConfigurationPreserved(strategyEnabledMap);
+    }
+    
+    public void assertStrategyEnablingConfigurationPreserved(Map<String, Boolean> strategyEnabledMap) throws Exception {
+        QueueItemAuthenticatorConfiguration.get().getAuthenticators().clear();
+        QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new ProjectQueueItemAuthenticator(strategyEnabledMap));
+        j.submit(j.createWebClient().goTo("configureSecurity").getFormByName("config"));
+        for (Entry<String, Boolean> entry: strategyEnabledMap.entrySet()) {
+            assertEquals(
+                    entry.getKey(),
+                    entry.getValue(),
+                    ProjectQueueItemAuthenticator.getConfigured().isStrategyEnabled(
+                            j.jenkins.getDescriptor(entry.getKey())
+                    )
+            );
+        }
     }
     
     /**
