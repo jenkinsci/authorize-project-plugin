@@ -37,6 +37,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import jenkins.model.Jenkins;
+import jenkins.security.ApiTokenProperty;
 import hudson.cli.CLI;
 import hudson.model.Item;
 import hudson.model.FreeStyleProject;
@@ -61,6 +62,10 @@ import org.w3c.dom.Document;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.HttpMethod;
 import com.gargoylesoftware.htmlunit.WebRequestSettings;
+import com.gargoylesoftware.htmlunit.html.HtmlCheckBoxInput;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.html.HtmlPasswordInput;
+import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 import com.gargoylesoftware.htmlunit.xml.XmlPage;
 
 /**
@@ -79,6 +84,9 @@ public class SpecificUsersAuthorizationStrategyTest {
         authorization.add(Jenkins.READ, "test1");
         authorization.add(Item.READ, "test1");
         authorization.add(Item.CONFIGURE, "test1");
+        authorization.add(Jenkins.READ, "test2");
+        authorization.add(Item.READ, "test2");
+        authorization.add(Item.CONFIGURE, "test2");
         
         // This is required for CLI, JENKINS-12543.
         authorization.add(Jenkins.READ, "anonymous");
@@ -339,6 +347,19 @@ public class SpecificUsersAuthorizationStrategyTest {
         assertFalse(d.authenticate(new SpecificUsersAuthorizationStrategy(null, false), "test2"));
     }
     
+    @Test
+    public void testDescriptorAuthenticateWithApitoken() throws Exception {
+        prepareSecurity();
+        String apitokenForTest1 = User.get("test1").getProperty(ApiTokenProperty.class).getApiToken();
+        
+        AuthenticateDescriptorImpl d = new AuthenticateDescriptorImpl();
+        assertTrue(d.authenticateWithApitoken(new SpecificUsersAuthorizationStrategy("test1", false), apitokenForTest1));
+        assertFalse(d.authenticateWithApitoken(new SpecificUsersAuthorizationStrategy("test1", false), apitokenForTest1 + "xxx"));
+        assertFalse(d.authenticateWithApitoken(new SpecificUsersAuthorizationStrategy("test1", false), ""));
+        assertFalse(d.authenticateWithApitoken(new SpecificUsersAuthorizationStrategy("", false), apitokenForTest1));
+        assertFalse(d.authenticateWithApitoken(new SpecificUsersAuthorizationStrategy("test1", false), null));
+        assertFalse(d.authenticateWithApitoken(new SpecificUsersAuthorizationStrategy(null, false), apitokenForTest1));
+    }
     @Test
     @LocalData
     public void testAuthenticate() throws Exception {
@@ -712,4 +733,191 @@ public class SpecificUsersAuthorizationStrategyTest {
         }
     }
     
+    @Test
+    public void testConfigurationAuthentication() throws Exception {
+        prepareSecurity();
+        
+        FreeStyleProject p = j.createFreeStyleProject();
+        
+        WebClient wc = j.createWebClient();
+        wc.login("test1");
+        
+        // Reauthentication is not required if No need for re-authentication is checked
+        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin", true)));
+        j.submit(wc.getPage(p, "configure").getFormByName("config"));
+        
+        // Reauthentication is required if No need for re-authentication is checked
+        p.removeProperty(AuthorizeProjectProperty.class);
+        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin", false)));
+        try {
+            j.submit(wc.getPage(p, "configure").getFormByName("config"));
+            fail();
+        } catch (FailingHttpStatusCodeException e) {
+            assertEquals(400, e.getStatusCode());
+        }
+        
+        // No authentication is required if oneself.
+        {
+            HtmlPage page = wc.getPage(p, "configure");
+            HtmlTextInput userid = page.<HtmlTextInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'userid') and @type='text']");
+            userid.setValueAttribute("test1");
+            j.submit(page.getFormByName("config"));
+            
+            assertEquals("test1", ((SpecificUsersAuthorizationStrategy)p.getProperty(AuthorizeProjectProperty.class).getStrategy()).getUserid());
+        }
+        
+        // Reauthentication is required to change userid even if No need for re-authentication is checked
+        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin", true)));
+        {
+            HtmlPage page = wc.getPage(p, "configure");
+            HtmlTextInput userid = page.<HtmlTextInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'userid') and @type='text']");
+            userid.setValueAttribute("test2");
+            try {
+                j.submit(page.getFormByName("config"));
+                fail();
+            } catch (FailingHttpStatusCodeException e) {
+                assertEquals(400, e.getStatusCode());
+            }
+        }
+    }
+    
+    @Test
+    public void testConfigurePassword() throws Exception {
+        prepareSecurity();
+        
+        FreeStyleProject p = j.createFreeStyleProject();
+        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test2", false)));
+        
+        WebClient wc = j.createWebClient();
+        wc.login("test1");
+        
+        // authentication fails without password
+        {
+            HtmlPage page = wc.getPage(p, "configure");
+            HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
+            useApitoken.setChecked(false);
+            try {
+                j.submit(page.getFormByName("config"));
+                fail();
+            } catch (FailingHttpStatusCodeException e) {
+                assertEquals(400, e.getStatusCode());
+            }
+        }
+        
+        // authentication succeeds with the good password
+        {
+            HtmlPage page = wc.getPage(p, "configure");
+            HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
+            useApitoken.setChecked(false);
+            HtmlPasswordInput password = page.<HtmlPasswordInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password') and @type='password']");
+            password.setValueAttribute("test2");
+            j.submit(page.getFormByName("config"));
+            
+            assertEquals("test2", ((SpecificUsersAuthorizationStrategy)p.getProperty(AuthorizeProjectProperty.class).getStrategy()).getUserid());
+        }
+        
+        // authentication fails with a bad password
+        {
+            HtmlPage page = wc.getPage(p, "configure");
+            HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
+            useApitoken.setChecked(false);
+            HtmlPasswordInput password = page.<HtmlPasswordInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password') and @type='password']");
+            password.setValueAttribute("badpassword");
+            try {
+                j.submit(page.getFormByName("config"));
+                fail();
+            } catch (FailingHttpStatusCodeException e) {
+                assertEquals(400, e.getStatusCode());
+            }
+        }
+        
+        // authentication fails if the password is used for apitoken
+        {
+            HtmlPage page = wc.getPage(p, "configure");
+            HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
+            useApitoken.setChecked(true);
+            HtmlPasswordInput password = page.<HtmlPasswordInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password') and @type='password']");
+            password.setValueAttribute("test2");
+            HtmlTextInput apitoken = page.<HtmlTextInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
+            apitoken.setValueAttribute("test2");
+            try {
+                j.submit(page.getFormByName("config"));
+                fail();
+            } catch (FailingHttpStatusCodeException e) {
+                assertEquals(400, e.getStatusCode());
+            }
+        }
+    }
+    
+    @Test
+    public void testConfigureApitoken() throws Exception {
+        prepareSecurity();
+        
+        FreeStyleProject p = j.createFreeStyleProject();
+        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test2", false)));
+        
+        WebClient wc = j.createWebClient();
+        wc.login("test1");
+        
+        String apitokenForTest2 = User.get("test2").getProperty(ApiTokenProperty.class).getApiToken();
+        assertNotNull(apitokenForTest2);
+        assertNotEquals("", apitokenForTest2);
+        
+        // authentication fails without apitoken
+        {
+            HtmlPage page = wc.getPage(p, "configure");
+            HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
+            useApitoken.setChecked(true);
+            try {
+                j.submit(page.getFormByName("config"));
+                fail();
+            } catch (FailingHttpStatusCodeException e) {
+                assertEquals(400, e.getStatusCode());
+            }
+        }
+        
+        // authentication succeeds with the good apitoken
+        {
+            HtmlPage page = wc.getPage(p, "configure");
+            HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
+            useApitoken.setChecked(true);
+            HtmlTextInput apitoken = page.<HtmlTextInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
+            apitoken.setValueAttribute(apitokenForTest2);
+            j.submit(page.getFormByName("config"));
+            
+            assertEquals("test2", ((SpecificUsersAuthorizationStrategy)p.getProperty(AuthorizeProjectProperty.class).getStrategy()).getUserid());
+        }
+        
+        // authentication fails with a bad apitoken
+        {
+            HtmlPage page = wc.getPage(p, "configure");
+            HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
+            useApitoken.setChecked(true);
+            HtmlTextInput apitoken = page.<HtmlTextInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
+            apitoken.setValueAttribute(apitokenForTest2 + "xxx");
+            try {
+                j.submit(page.getFormByName("config"));
+                fail();
+            } catch (FailingHttpStatusCodeException e) {
+                assertEquals(400, e.getStatusCode());
+            }
+        }
+        
+        // authentication fails if the apitoken is used for password
+        {
+            HtmlPage page = wc.getPage(p, "configure");
+            HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
+            useApitoken.setChecked(false);
+            HtmlPasswordInput password = page.<HtmlPasswordInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password') and @type='password']");
+            password.setValueAttribute(apitokenForTest2);
+            HtmlTextInput apitoken = page.<HtmlTextInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
+            apitoken.setValueAttribute(apitokenForTest2);
+            try {
+                j.submit(page.getFormByName("config"));
+                fail();
+            } catch (FailingHttpStatusCodeException e) {
+                assertEquals(400, e.getStatusCode());
+            }
+        }
+    }
 }
