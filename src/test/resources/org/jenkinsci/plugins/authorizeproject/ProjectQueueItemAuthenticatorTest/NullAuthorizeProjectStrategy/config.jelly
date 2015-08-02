@@ -1,7 +1,7 @@
 <!--
 The MIT License
 
-Copyright (c) 2013 IKEDA Yasuyuki
+Copyright (c) 2015 IKEDA Yasuyuki
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,16 +23,5 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-<!-- configurations for AuthorizeProjectStrategy -->
-<j:forEach var="d" items="${descriptor.availableDescriptorList}">
-<j:scope>
-  <j:set var="checked" value="${instance.isStrategyEnabled(d)}" />
-  <j:set var="instance" value="${d}" />
-  <j:set var="descriptor" value="${d}" />
-  <f:optionalBlock name="${d.jsonSafeClassName}" checked="${checked}" help="${d.helpFile}" title="${d.displayName}">
-  <j:set var="instance" value="${d}" />
-    <st:include page="${d.globalSecurityConfigPage}" class="${d.clazz}" optional="true" />
-  </f:optionalBlock>
-</j:scope>
-</j:forEach>
+  <!-- dropdownDescriptorSelector causes exception without config.jelly -->
 </j:jelly>

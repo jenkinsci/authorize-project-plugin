@@ -25,6 +25,6 @@ THE SOFTWARE.
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
   <st:adjunct includes="org.jenkinsci.plugins.authorizeproject.nestedHelp"/>
   <f:optionalBlock name="${descriptor.propertyName}" title="${descriptor.displayName}" checked="${instance != null}">
-    <f:dropdownDescriptorSelector title="${%Authorize Strategy}" field="strategy" descriptors="${descriptor.strategyList}" />
+    <f:dropdownDescriptorSelector title="${%Authorize Strategy}" field="strategy" descriptors="${descriptor.enabledAuthorizeProjectStrategyDescriptorList}" />
   </f:optionalBlock>
 </j:jelly>

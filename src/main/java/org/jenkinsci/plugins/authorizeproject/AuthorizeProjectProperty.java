@@ -24,6 +24,12 @@
 
 package org.jenkinsci.plugins.authorizeproject;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import jenkins.model.Jenkins;
 import jenkins.security.QueueItemAuthenticatorConfiguration;
 
@@ -36,6 +42,7 @@ import org.kohsuke.stapler.StaplerRequest;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.model.Describable;
+import hudson.model.DescriptorVisibilityFilter;
 import hudson.model.Job;
 import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
@@ -51,6 +58,8 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?,?>> {
      * Property name used for job configuration page.
      */
     public static final String PROPERTYNAME = "authorize_project_property";
+    
+    private static final Logger LOGGER = Logger.getLogger(AuthorizeProjectProperty.class.getName());
     
     private AuthorizeProjectStrategy strategy;
     
@@ -75,6 +84,28 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?,?>> {
     }
     
     /**
+     * @return strategy only when it's enabled. null otherwise.
+     */
+    public AuthorizeProjectStrategy getEnabledStrategy() {
+        AuthorizeProjectStrategy strategy = getStrategy();
+        if(strategy == null) {
+            return null;
+        }
+        if(DescriptorVisibilityFilter.apply(
+                ProjectQueueItemAuthenticator.getConfigured(),
+                Arrays.asList(strategy.getDescriptor())
+        ).isEmpty()) {
+            LOGGER.log(
+                    Level.WARNING,
+                    "{0} is configured but disabled in the globel-security configuration.",
+                    strategy.getDescriptor().getDisplayName()
+            );
+            return null;
+        }
+        return strategy;
+    }
+    
+    /**
      * Return the authorization for a build.
      * 
      * @param item the item in queue, which will be a build.
@@ -82,10 +113,11 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?,?>> {
      * @see AuthorizeProjectStrategy#authenticate(hudson.model.Job, hudson.model.Queue.Item)
      */
     public Authentication authenticate(Queue.Item item) {
-        if (getStrategy() == null) {
+        AuthorizeProjectStrategy strategy = getEnabledStrategy();
+        if (strategy == null) {
             return null;
         }
-        return getStrategy().authenticate(owner, item);
+        return strategy.authenticate(owner, item);
     }
     
     /**
@@ -129,8 +161,20 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?,?>> {
         /**
          * @return all the registered {@link AuthorizeProjectStrategy}.
          */
+        @Deprecated
         public DescriptorExtensionList<AuthorizeProjectStrategy, Descriptor<AuthorizeProjectStrategy>> getStrategyList() {
             return AuthorizeProjectStrategy.all();
+        }
+        
+        /**
+         * @return enabled {@link AuthorizeProjectStrategy}, empty if authorize-project is not enabled.
+         */
+        public List<Descriptor<AuthorizeProjectStrategy>> getEnabledAuthorizeProjectStrategyDescriptorList() {
+            ProjectQueueItemAuthenticator authenticator = ProjectQueueItemAuthenticator.getConfigured();
+            if (authenticator == null) {
+                return Collections.emptyList();
+            }
+            return DescriptorVisibilityFilter.apply(authenticator, AuthorizeProjectStrategy.all());
         }
         
         /**

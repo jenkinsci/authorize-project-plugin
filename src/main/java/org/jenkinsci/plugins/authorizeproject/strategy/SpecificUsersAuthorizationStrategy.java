@@ -424,5 +424,15 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             }
             return FormValidation.ok();
         }
+        
+        /**
+         * {@link SpecificUsersAuthorizationStrategy} should be disabled by default for JENKINS-28298
+         * @return false
+         * @see org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategyDescriptor#isEnabledByDefault()
+         */
+        @Override
+        public boolean isEnabledByDefault() {
+            return false;
+        }
     }
 }

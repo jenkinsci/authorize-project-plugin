@@ -68,7 +68,7 @@ import com.gargoylesoftware.htmlunit.xml.XmlPage;
  */
 public class SpecificUsersAuthorizationStrategyTest {
     @Rule
-    public JenkinsRule j = new AuthorizeProjectJenkinsRule();
+    public JenkinsRule j = new AuthorizeProjectJenkinsRule(SpecificUsersAuthorizationStrategy.class);
     
     private void prepareSecurity() {
         // This allows any users authenticate name == password

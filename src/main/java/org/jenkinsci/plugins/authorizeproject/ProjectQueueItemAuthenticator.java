@@ -24,10 +24,15 @@
 
 package org.jenkinsci.plugins.authorizeproject;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import hudson.Extension;
+import hudson.model.DescriptorVisibilityFilter;
 import hudson.model.AbstractProject;
+import hudson.model.Descriptor;
 import hudson.model.Job;
 import hudson.model.Queue;
 
@@ -39,6 +44,7 @@ import org.acegisecurity.Authentication;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
+import jenkins.model.Jenkins;
 import jenkins.security.QueueItemAuthenticatorConfiguration;
 import jenkins.security.QueueItemAuthenticatorDescriptor;
 import jenkins.security.QueueItemAuthenticator;
@@ -47,11 +53,25 @@ import jenkins.security.QueueItemAuthenticator;
  * Authorize builds of projects configured with {@link AuthorizeProjectProperty}.
  */
 public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
+    private final Map<String,Boolean> strategyEnabledMap;
+    
     /**
      * 
      */
-    @DataBoundConstructor
+    @Deprecated
     public ProjectQueueItemAuthenticator() {
+        this(Collections.<String, Boolean>emptyMap());
+    }
+    
+    public ProjectQueueItemAuthenticator(Map<String,Boolean> strategyEnabledMap) {
+        this.strategyEnabledMap = strategyEnabledMap;
+    }
+    
+    public Object readResolve() {
+        if(strategyEnabledMap == null) {
+            return new ProjectQueueItemAuthenticator(Collections.<String, Boolean>emptyMap());
+        }
+        return this;
     }
     
     /**
@@ -76,6 +96,22 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
         return prop.authenticate(item);
     }
     
+    public Map<String, Boolean> getStrategyEnabledMap() {
+        return strategyEnabledMap;
+    }
+    
+    public boolean isStrategyEnabled(Descriptor<?> d)
+    {
+        Boolean b = getStrategyEnabledMap().get(d.getId());
+        if(b != null) {
+            return b.booleanValue();
+        }
+        if(!(d instanceof AuthorizeProjectStrategyDescriptor)) {
+            return true;
+        }
+        return ((AuthorizeProjectStrategyDescriptor)d).isEnabledByDefault();
+    }
+    
     /**
      *
      */
@@ -90,8 +126,16 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
             return Messages.ProjectQueueItemAuthenticator_DisplayName();
         }
         
+        @Deprecated
         public List<AuthorizeProjectStrategyDescriptor> getDescriptorsForGlobalSecurityConfigPage() {
             return AuthorizeProjectStrategyDescriptor.getDescriptorsForGlobalSecurityConfigPage();
+        }
+        
+        /**
+         * @return all installed {@link AuthorizeProjectStrategy}
+         */
+        public List<Descriptor<AuthorizeProjectStrategy>> getAvailableDescriptorList() {
+            return AuthorizeProjectStrategy.all();
         }
         
         /**
@@ -108,27 +152,57 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
         public ProjectQueueItemAuthenticator newInstance(StaplerRequest req, JSONObject formData)
                 throws FormException
         {
-            ProjectQueueItemAuthenticator r = (ProjectQueueItemAuthenticator)super.newInstance(req, formData);
+            Map<String,Boolean> strategyEnabledMap = new HashMap<String, Boolean>();
             
-            for (AuthorizeProjectStrategyDescriptor d : getDescriptorsForGlobalSecurityConfigPage()) {
+            for (Descriptor<AuthorizeProjectStrategy> d : getAvailableDescriptorList()) {
                 String name = d.getJsonSafeClassName();
-                JSONObject js = formData.has(name) ? formData.getJSONObject(name) : new JSONObject();
-                d.configureFromGlobalSecurity(req, js);
+                if (formData.has(name)) {
+                    strategyEnabledMap.put(d.getId(), true);
+                    if (
+                            d instanceof AuthorizeProjectStrategyDescriptor
+                            && ((AuthorizeProjectStrategyDescriptor)d).getGlobalSecurityConfigPage() != null
+                    ) {
+                        ((AuthorizeProjectStrategyDescriptor)d).configureFromGlobalSecurity(req, formData.getJSONObject(name));
+                    }
+                } else {
+                    strategyEnabledMap.put(d.getId(), false);
+                }
             }
             
-            return r;
+            return new ProjectQueueItemAuthenticator(strategyEnabledMap);
         }
+    }
+    
+    /**
+     * @return instance configured in Global Security configuration.
+     */
+    public static ProjectQueueItemAuthenticator getConfigured() {
+        for (QueueItemAuthenticator authenticator: QueueItemAuthenticatorConfiguration.get().getAuthenticators()) {
+            if (authenticator instanceof ProjectQueueItemAuthenticator) {
+                return (ProjectQueueItemAuthenticator)authenticator;
+            }
+        }
+        return null;
     }
     
     /**
      * @return whether Jenkins is configured to use {@link ProjectQueueItemAuthenticator}.
      */
     public static boolean isConfigured() {
-        for (QueueItemAuthenticator authenticator: QueueItemAuthenticatorConfiguration.get().getAuthenticators()) {
-            if (authenticator instanceof ProjectQueueItemAuthenticator) {
+        return getConfigured() != null;
+    }
+    
+    @Extension
+    public static class DescriptorVisibilityFilterImpl extends DescriptorVisibilityFilter
+    {
+        @Override
+        public boolean filter(Object context, @SuppressWarnings("rawtypes") Descriptor descriptor)
+        {
+            if(!(context instanceof ProjectQueueItemAuthenticator))
+            {
                 return true;
             }
+            return ((ProjectQueueItemAuthenticator)context).isStrategyEnabled(descriptor);
         }
-        return false;
     }
 }
