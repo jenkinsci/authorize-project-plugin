@@ -32,7 +32,13 @@ THE SOFTWARE.
     <f:textbox checkPasswordRequestedUrl="${descriptor.calcCheckPasswordRequestedUrl()}" />
   </f:entry>
   <f:entry title="${%Password}" field="password">
-    <f:password />
+    <div class="specific-user-authorization-password">
+      <f:password />
+    </div>
+    <div class="specific-user-authorization-apitoken">
+      <f:textbox field="apitoken" />
+    </div>
+    <f:checkbox field="useApitoken" checked="${descriptor.useApitoken}" title="${%Use API Token for authentication}" />
   </f:entry>
   <f:entry title="${%No need for re-authentication}" field="noNeedReauthentication">
     <f:checkbox />
@@ -40,5 +46,6 @@ THE SOFTWARE.
   </table></f:block>
   <st:once>
     <st:adjunct includes="org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy.checkPasswordRequested" />
+    <st:adjunct includes="org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy.passwordApitokenSwitch" />
   </st:once>
 </j:jelly>

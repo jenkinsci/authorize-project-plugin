@@ -32,6 +32,7 @@ import java.util.logging.Logger;
 import javax.servlet.ServletException;
 
 import jenkins.model.Jenkins;
+import jenkins.security.ApiTokenProperty;
 import hudson.Extension;
 import hudson.model.Queue;
 import hudson.model.User;
@@ -40,6 +41,7 @@ import hudson.model.Descriptor;
 import hudson.model.Descriptor.FormException;
 import hudson.model.Job;
 import hudson.security.ACL;
+import hudson.security.AbstractPasswordBasedSecurityRealm;
 import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
 
@@ -290,6 +292,28 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         }
         
         /**
+         * Authenticate the specified user with Apitoken.
+         * 
+         * @param strategy
+         * @param apitoken
+         * @return true if the authentication is succeeded.
+         */
+        protected boolean authenticateWithApitoken(
+                SpecificUsersAuthorizationStrategy strategy, 
+                String apitoken
+        ) {
+            User u = User.get(strategy.getUserid(), false, Collections.emptyMap());
+            if (u == null) {
+                return false;
+            }
+            ApiTokenProperty p = u.getProperty(ApiTokenProperty.class);
+            if (p == null) {
+                return false;
+            }
+            return p.matchesPassword(apitoken);
+        }
+        
+        /**
          * Authenticate the specified user.
          * 
          * Checks whether the user has privilege to specify that authorization.
@@ -304,7 +328,11 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
                 StaplerRequest req,
                 JSONObject formData
         ) {
-            return authenticate(strategy, formData.getString("password"));
+            boolean useApitoken = formData.optBoolean("useApitoken");
+            
+            return useApitoken
+                    ?authenticateWithApitoken(strategy, formData.getString("apitoken"))
+                    :authenticate(strategy, formData.getString("password"));
         }
         
         /**
@@ -386,6 +414,8 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
                 StaplerRequest req,
                 @QueryParameter String userid,
                 @QueryParameter String password,
+                @QueryParameter String apitoken,
+                @QueryParameter boolean useApitoken,
                 @QueryParameter boolean noNeedReauthentication
         ) {
             SpecificUsersAuthorizationStrategy newStrategy = new SpecificUsersAuthorizationStrategy(userid, noNeedReauthentication);
@@ -397,7 +427,10 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
                 return FormValidation.ok();
             }
             
-            if (StringUtils.isBlank(password)) {
+            if (
+                    (!useApitoken && StringUtils.isBlank(password))
+                    || (useApitoken && StringUtils.isBlank(apitoken))
+            ) {
                 return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_password_required());
             }
             
@@ -406,7 +439,10 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
              * is used for brute force attack.
              * Authentication is done only in saving the configuration
              * (that is, in DescriptorImpl#newInstance)
-            if (!authenticate(newStrategy, password)) {
+            if (
+                    (!useApitoken && !authenticate(newStrategy, password))
+                    (useApitoken && authenticateWithApitoken(newStrategy, apitoken))
+            ) {
                 return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_password_invalid());
             }
             */
@@ -423,6 +459,10 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
                 return FormValidation.warning(Messages.SpecificUsersAuthorizationStrategy_noNeedReauthentication_usage());
             }
             return FormValidation.ok();
+        }
+        
+        public boolean isUseApitoken() {
+            return !(Jenkins.getInstance().getSecurityRealm() instanceof AbstractPasswordBasedSecurityRealm);
         }
         
         /**
