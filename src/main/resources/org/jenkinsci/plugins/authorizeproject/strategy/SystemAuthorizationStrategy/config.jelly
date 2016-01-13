@@ -1,7 +1,7 @@
 <!--
 The MIT License
 
-Copyright (c) 2014 IKEDA Yasuyuki
+Copyright (c) 2016 Stephen Connolly
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,5 +23,33 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-  <!-- dropdownDescriptorSelector causes exception without config.jelly -->
+  <j:choose>
+    <j:when test="${!descriptor.isJob(it)}">
+      <!-- not a job so don't give job specific notices -->
+    </j:when>
+    <j:when test="${descriptor.permitReconfiguration and app.hasPermission(app.ADMINISTER)}">
+      <f:block>
+        <div class="warning">
+          ${%Any non-administrators with permission to configure this job can retain this strategy while otherwise reconfiguring this job}
+        </div>
+      </f:block>
+    </j:when>
+    <j:when test="${instance == null and app.hasPermission(app.ADMINISTER)}">
+      <f:block>
+        <div class="warning">
+          ${%Only users with administrator permissions will be able to reconfigure this job while retaining this strategy}
+        </div>
+      </f:block>
+    </j:when>
+    <j:when test="${instance == null}">
+      <f:block>
+        <div class="${it.hasPermission(app.ADMINISTER)?'warning':'error'}">
+          ${%Only users with administrator permissions can select this strategy}
+        </div>
+      </f:block>
+    </j:when>
+    <j:otherwise>
+      <!-- don't advertise to the user that they can use this job to run as SYSTEM -->
+    </j:otherwise>
+  </j:choose>
 </j:jelly>
