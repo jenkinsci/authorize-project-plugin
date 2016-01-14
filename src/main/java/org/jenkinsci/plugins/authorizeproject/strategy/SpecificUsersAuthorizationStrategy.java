@@ -261,7 +261,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
                 throw new FormException("userid must be specified", "userid");
             }
             if (userid.equals(ACL.SYSTEM.getPrincipal())) {
-                return FormException(Messages.SpecificUsersAuthorizationStrategy_userid_notSystem(), "userid");
+                throw new FormException(Messages.SpecificUsersAuthorizationStrategy_userid_notSystem(), "userid");
             }
 
             return new SpecificUsersAuthorizationStrategy(
