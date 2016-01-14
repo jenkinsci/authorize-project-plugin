@@ -260,7 +260,10 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             if (StringUtils.isBlank(userid)) {
                 throw new FormException("userid must be specified", "userid");
             }
-            
+            if (userid.equals(ACL.SYSTEM.getPrincipal())) {
+                return FormException(Messages.SpecificUsersAuthorizationStrategy_userid_notSystem(), "userid");
+            }
+
             return new SpecificUsersAuthorizationStrategy(
                     userid, 
                     noNeedReauthentication
@@ -399,6 +402,9 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         public FormValidation doCheckUserid(@QueryParameter String userid) {
             if (StringUtils.isBlank(userid)) {
                 return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_userid_required());
+            }
+            if (userid.equals(ACL.SYSTEM.getPrincipal())) {
+                return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_userid_notSystem());
             }
             return FormValidation.ok();
         }
