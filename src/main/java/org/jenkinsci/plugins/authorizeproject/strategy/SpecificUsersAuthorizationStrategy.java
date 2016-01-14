@@ -260,6 +260,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             if (StringUtils.isBlank(userid)) {
                 throw new FormException("userid must be specified", "userid");
             }
+            // TODO use Jenkins.getInstance().getSecurityRealm().getUserIdStrategy().equals(userid, ACL.SYSTEM.getPrincipal().toString())) once Jenkins 1.566+
             if (userid.equals(ACL.SYSTEM.getPrincipal())) {
                 throw new FormException(Messages.SpecificUsersAuthorizationStrategy_userid_notSystem(), "userid");
             }
@@ -403,6 +404,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             if (StringUtils.isBlank(userid)) {
                 return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_userid_required());
             }
+            // TODO use Jenkins.getInstance().getSecurityRealm().getUserIdStrategy().equals(userid, ACL.SYSTEM.getPrincipal().toString())) once Jenkins 1.566+
             if (userid.equals(ACL.SYSTEM.getPrincipal())) {
                 return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_userid_notSystem());
             }
