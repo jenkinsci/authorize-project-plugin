@@ -54,7 +54,7 @@ import jenkins.security.QueueItemAuthenticator;
  */
 public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
     private final Map<String,Boolean> strategyEnabledMap;
-    
+
     /**
      * 
      */
@@ -73,7 +73,6 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
         }
         return this;
     }
-    
     /**
      * @param item
      * @return
