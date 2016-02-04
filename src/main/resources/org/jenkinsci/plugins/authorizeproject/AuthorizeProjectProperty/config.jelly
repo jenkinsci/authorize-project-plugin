@@ -22,9 +22,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:hack="/org/jenkinsci/plugins/authorizeproject/form">
   <st:adjunct includes="org.jenkinsci.plugins.authorizeproject.nestedHelp"/>
   <f:optionalBlock name="${descriptor.propertyName}" title="${descriptor.displayName}" checked="${instance != null}">
-    <f:dropdownDescriptorSelector title="${%Authorize Strategy}" field="strategy" descriptors="${descriptor.enabledAuthorizeProjectStrategyDescriptorList}" />
+    <!--
+        What fun that dropdownDescriptorSelector doesn't add 'it' to the render on demand captured variables
+    -->
+    <hack:dropdownDescriptorSelector title="${%Authorize Strategy}" field="strategy" descriptors="${descriptor.enabledAuthorizeProjectStrategyDescriptorList}" />
   </f:optionalBlock>
 </j:jelly>
