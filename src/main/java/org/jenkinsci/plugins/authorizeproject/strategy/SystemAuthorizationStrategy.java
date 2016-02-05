@@ -37,14 +37,14 @@ import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategyDescriptor;
-import org.jenkinsci.plugins.authorizeproject.GlobalQueueItemAuthenticator;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
- * Run builds as {@link ACL#SYSTEM}. Using this strategy becomes important when {@link GlobalQueueItemAuthenticator}
+ * Run builds as {@link ACL#SYSTEM}. Using this strategy becomes important when
+ * {@link org.jenkinsci.plugins.authorizeproject.GlobalQueueItemAuthenticator}
  * is forcing jobs to a user other than {@link ACL#SYSTEM}.
  *
  * @since 1.1.1
