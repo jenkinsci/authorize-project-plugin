@@ -98,7 +98,7 @@ public class SystemAuthorizationStrategy extends AuthorizeProjectStrategy {
      */
     private Object readResolve() throws IOException {
         Jenkins instance = Jenkins.getInstance();
-        if (instance == null || !instance.hasPermission(Jenkins.ADMINISTER)) {
+        if (instance == null || !instance.hasPermission(Jenkins.RUN_SCRIPTS)) {
             // This is called via REST/CLI.
             // As REST/CLI interface saves configuration after successfully load object from the XML,
             // this prevents the new configuration saved.
@@ -206,10 +206,10 @@ public class SystemAuthorizationStrategy extends AuthorizeProjectStrategy {
                 throws FormException {
             SystemAuthorizationStrategy result = (SystemAuthorizationStrategy) super.newInstance(req, formData);
             Jenkins instance = Jenkins.getInstance();
-            if (instance == null || !instance.hasPermission(Jenkins.ADMINISTER)) {
+            if (instance == null || !instance.hasPermission(Jenkins.RUN_SCRIPTS)) {
                 Job job = req.findAncestorObject(Job.class);
                 if (job != null) {
-                    if (!(permitReconfiguration && result.equals(getCurrentStrategy(job)))) {
+                    if (!(permitReconfiguration && getCurrentStrategy(job) != null)) {
                         throw new FormException(Messages.SystemAuthorizationStrategy_administersOnly(), "strategy");
                     }
                 }
