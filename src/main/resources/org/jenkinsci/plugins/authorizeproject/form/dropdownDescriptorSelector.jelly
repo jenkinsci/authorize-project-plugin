@@ -28,6 +28,10 @@ THE SOFTWARE.
     Renders a single &lt;select> control for choosing a Describable.
     Depending on the currently selected value, its config.jelly will be
     rendered below &lt;select, allowing the user to configure Describable.
+    NOTE: This is almost the same as the built-in dropdownDescriptorSelector
+    but allows controlling the @capture of the &lt;renderOnDemand> tag.
+    This tag can be restored to the built-in dropdownDescriptorSelector
+    once the baseline Jenkins is 1.645+
 
     <st:attribute name="field" use="required">
       form field name. Used for databinding.
