@@ -6,7 +6,7 @@ import hudson.model.Queue;
 import jenkins.security.QueueItemAuthenticator;
 import jenkins.security.QueueItemAuthenticatorDescriptor;
 import org.acegisecurity.Authentication;
-import org.jenkinsci.plugins.authorizeproject.strategy.SystemAuthorizationStrategy;
+import org.jenkinsci.plugins.authorizeproject.strategy.AnonymousAuthorizationStrategy;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -18,8 +18,8 @@ public class GlobalQueueItemAuthenticator extends QueueItemAuthenticator {
     private final AuthorizeProjectStrategy strategy;
 
     @DataBoundConstructor
-    public GlobalQueueItemAuthenticator(AuthorizeProjectStrategy defaultStrategy) {
-        this.strategy = defaultStrategy;
+    public GlobalQueueItemAuthenticator(AuthorizeProjectStrategy strategy) {
+        this.strategy = strategy;
     }
 
     public AuthorizeProjectStrategy getStrategy() {
@@ -28,7 +28,7 @@ public class GlobalQueueItemAuthenticator extends QueueItemAuthenticator {
 
     @Override
     public Authentication authenticate(Queue.Item item) {
-        return item.task instanceof Job ? strategy.authenticate((Job<?, ?>) item.task, item) : null;
+        return strategy != null && item.task instanceof Job ? strategy.authenticate((Job<?, ?>) item.task, item) : null;
     }
 
     @Extension
@@ -42,8 +42,7 @@ public class GlobalQueueItemAuthenticator extends QueueItemAuthenticator {
         }
 
         public AuthorizeProjectStrategy getDefaultStrategy() {
-            return new SystemAuthorizationStrategy();
+            return new AnonymousAuthorizationStrategy();
         }
     }
-
 }
