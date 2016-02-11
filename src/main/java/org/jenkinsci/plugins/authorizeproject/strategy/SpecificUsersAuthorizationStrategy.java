@@ -138,6 +138,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         }
         
         User u = User.current();
+        // TODO use Jenkins.getInstance().getSecurityRealm().getUserIdStrategy().equals() once Jenkins 1.566+
         if (u != null && u.getId() != null && u.getId().equals(newStrategy.getUserid())) {
             // Any user can specify oneself.
             return false;
@@ -147,7 +148,8 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             // if currentStrategy is null, authentication is always required.
             return true;
         }
-        
+
+        // TODO use Jenkins.getInstance().getSecurityRealm().getUserIdStrategy().equals() once Jenkins 1.566+
         if (
                 currentStrategy.isNoNeedReauthentication()
                 && currentStrategy.getUserid() != null
@@ -260,7 +262,11 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             if (StringUtils.isBlank(userid)) {
                 throw new FormException("userid must be specified", "userid");
             }
-            
+            // TODO use Jenkins.getInstance().getSecurityRealm().getUserIdStrategy().equals(userid, ACL.SYSTEM.getPrincipal().toString())) once Jenkins 1.566+
+            if (userid.equals(ACL.SYSTEM.getPrincipal())) {
+                throw new FormException(Messages.SpecificUsersAuthorizationStrategy_userid_notSystem(), "userid");
+            }
+
             return new SpecificUsersAuthorizationStrategy(
                     userid, 
                     noNeedReauthentication
@@ -399,6 +405,10 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         public FormValidation doCheckUserid(@QueryParameter String userid) {
             if (StringUtils.isBlank(userid)) {
                 return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_userid_required());
+            }
+            // TODO use Jenkins.getInstance().getSecurityRealm().getUserIdStrategy().equals(userid, ACL.SYSTEM.getPrincipal().toString())) once Jenkins 1.566+
+            if (userid.equals(ACL.SYSTEM.getPrincipal())) {
+                return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_userid_notSystem());
             }
             return FormValidation.ok();
         }
