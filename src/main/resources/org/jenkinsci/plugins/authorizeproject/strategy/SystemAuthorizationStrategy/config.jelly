@@ -1,0 +1,55 @@
+<!--
+The MIT License
+
+Copyright (c) 2016 Stephen Connolly
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+-->
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <j:choose>
+    <j:when test="${!descriptor.isJob(it)}">
+      <!-- not a job so don't give job specific notices -->
+    </j:when>
+    <j:when test="${descriptor.permitReconfiguration and app.hasPermission(app.RUN_SCRIPTS)}">
+      <f:block>
+        <div class="warning">
+          ${%Any non-administrators with permission to configure this job can retain this strategy while otherwise reconfiguring this job}
+        </div>
+      </f:block>
+    </j:when>
+    <j:when test="${instance == null and app.hasPermission(app.RUN_SCRIPTS)}">
+      <f:block>
+        <div class="warning">
+          ${%Only users with administrator permissions will be able to reconfigure this job while retaining this strategy}
+        </div>
+      </f:block>
+    </j:when>
+    <j:when test="${instance == null}">
+      <f:block>
+        <div class="${it.hasPermission(app.RUN_SCRIPTS)?'warning':'error'}">
+          ${%Only users with administrator permissions can select this strategy}
+        </div>
+      </f:block>
+    </j:when>
+    <j:otherwise>
+      <!-- don't advertise to the user that they can use this job to run as SYSTEM -->
+    </j:otherwise>
+  </j:choose>
+</j:jelly>
