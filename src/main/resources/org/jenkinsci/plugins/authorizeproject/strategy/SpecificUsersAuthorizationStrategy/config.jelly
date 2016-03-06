@@ -31,6 +31,7 @@ THE SOFTWARE.
   <f:entry title="${%User ID}" field="userid">
     <f:textbox checkPasswordRequestedUrl="${descriptor.calcCheckPasswordRequestedUrl()}" />
   </f:entry>
+  <j:if test="${authorizeProjectContext != 'global'}">
   <f:entry title="${%Password}" field="password">
     <div class="specific-user-authorization-password">
       <f:password />
@@ -43,9 +44,12 @@ THE SOFTWARE.
   <f:entry title="${%No need for re-authentication}" field="noNeedReauthentication">
     <f:checkbox />
   </f:entry>
+  </j:if> <!-- authorizeProjectContext -->
   </table></f:block>
+  <j:if test="${authorizeProjectContext != 'global'}">
   <st:once>
     <st:adjunct includes="org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy.checkPasswordRequested" />
     <st:adjunct includes="org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy.passwordApitokenSwitch" />
   </st:once>
+  </j:if> <!-- authorizeProjectContext -->
 </j:jelly>

@@ -257,7 +257,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
                 JSONObject formData
         ) throws FormException {
             String userid = formData.getString("userid");
-            boolean noNeedReauthentication = formData.getBoolean("noNeedReauthentication");
+            boolean noNeedReauthentication = formData.optBoolean("noNeedReauthentication", false);
             
             if (StringUtils.isBlank(userid)) {
                 throw new FormException("userid must be specified", "userid");

@@ -23,11 +23,16 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:hack="/org/jenkinsci/plugins/authorizeproject/form">
+<j:scope>
+  <j:set var="authorizeProjectContext" value="project" />
   <st:adjunct includes="org.jenkinsci.plugins.authorizeproject.nestedHelp"/>
   <f:optionalBlock name="${descriptor.propertyName}" title="${descriptor.displayName}" checked="${instance != null}">
     <!--
         What fun that dropdownDescriptorSelector doesn't add 'it' to the render on demand captured variables
     -->
-    <hack:dropdownDescriptorSelector title="${%Authorize Strategy}" field="strategy" descriptors="${descriptor.enabledAuthorizeProjectStrategyDescriptorList}" />
+    <hack:dropdownDescriptorSelector title="${%Authorize Strategy}" field="strategy" descriptors="${descriptor.enabledAuthorizeProjectStrategyDescriptorList}"
+      capture="authorizeProjectContext"
+    />
   </f:optionalBlock>
+</j:scope>
 </j:jelly>
