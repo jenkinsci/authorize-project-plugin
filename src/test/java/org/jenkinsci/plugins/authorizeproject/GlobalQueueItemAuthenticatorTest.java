@@ -111,9 +111,21 @@ public class GlobalQueueItemAuthenticatorTest {
         WebClient wc = j.createWebClient();
         j.submit(wc.goTo("configureSecurity").getFormByName("config"));
         
+        /*
+        // as SpecificUsersAuthorizationStrategy is not annotated with @DataBoundConstoctor,
+        // assertEqualDataBoundBeans is not applicable.
         j.assertEqualDataBoundBeans(
                 auth,
                 QueueItemAuthenticatorConfiguration.get().getAuthenticators().get(GlobalQueueItemAuthenticator.class)
         );
+        */
+        AuthorizeProjectStrategy strategy = QueueItemAuthenticatorConfiguration.get().getAuthenticators().get(GlobalQueueItemAuthenticator.class).getStrategy();
+        assertEquals(SpecificUsersAuthorizationStrategy.class, strategy.getClass());
+        assertEquals(
+                "admin",
+                ((SpecificUsersAuthorizationStrategy)strategy).getUserid()
+        );
+        // Don't care about noNeedReauthentication
+        // (It might be removed for GlobalQueueItemAuthenticator in future)
     }
 }
