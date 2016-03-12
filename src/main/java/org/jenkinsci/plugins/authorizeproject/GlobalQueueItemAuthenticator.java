@@ -5,9 +5,12 @@ import hudson.model.Job;
 import hudson.model.Queue;
 import jenkins.security.QueueItemAuthenticator;
 import jenkins.security.QueueItemAuthenticatorDescriptor;
+import net.sf.json.JSONObject;
+
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.authorizeproject.strategy.AnonymousAuthorizationStrategy;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * A global default authenticator to allow changing the default for all projects.
@@ -43,6 +46,29 @@ public class GlobalQueueItemAuthenticator extends QueueItemAuthenticator {
 
         public AuthorizeProjectStrategy getDefaultStrategy() {
             return new AnonymousAuthorizationStrategy();
+        }
+
+        /**
+         * Creates new {@link GlobalQueueItemAuthenticator} from inputs.
+         * This is required to call {@link hudson.model.Descriptor#newInstance(StaplerRequest, JSONObject)}
+         * of {@link AuthorizeProjectProperty}.
+         * 
+         * @param req
+         * @param formData
+         * @return
+         * @throws hudson.model.Descriptor.FormException
+         * @see hudson.model.Descriptor#newInstance(org.kohsuke.stapler.StaplerRequest, net.sf.json.JSONObject)
+         */
+        @Override
+        public GlobalQueueItemAuthenticator newInstance(StaplerRequest req, JSONObject formData)
+                throws FormException
+        {
+            if(formData == null || formData.isNullObject()) {
+                return null;
+            }
+            AuthorizeProjectStrategy strategy = AuthorizeProjectUtil.bindJSONWithDescriptor(req, formData, "strategy", AuthorizeProjectStrategy.class);
+            
+            return new GlobalQueueItemAuthenticator(strategy);
         }
     }
 }

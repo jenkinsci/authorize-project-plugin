@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import jenkins.model.Jenkins;
 import jenkins.security.QueueItemAuthenticatorConfiguration;
 
 import net.sf.json.JSONObject;
@@ -41,14 +40,12 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
-import hudson.model.Describable;
 import hudson.model.DescriptorVisibilityFilter;
 import hudson.model.Job;
 import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
 import hudson.model.Queue;
 import hudson.model.Descriptor;
-import hudson.security.AuthorizationStrategy;
 
 /**
  * Specifies how to authorize its builds.
@@ -197,55 +194,9 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?,?>> {
                 return null;
             }
             
-            AuthorizeProjectStrategy strategy = bindJSONWithDescriptor(req, form, "strategy", AuthorizeProjectStrategy.class);
+            AuthorizeProjectStrategy strategy = AuthorizeProjectUtil.bindJSONWithDescriptor(req, form, "strategy", AuthorizeProjectStrategy.class);
             
             return new AuthorizeProjectProperty(strategy);
-        }
-        
-        /**
-         * Create a new {@link Describable} object from user inputs.
-         * 
-         * @param req
-         * @param formData
-         * @param fieldName
-         * @param clazz
-         * @return
-         * @throws hudson.model.Descriptor.FormException
-         */
-        private <T extends Describable<?>> T bindJSONWithDescriptor(
-                StaplerRequest req,
-                JSONObject formData,
-                String fieldName,
-                Class<T> clazz
-        ) throws hudson.model.Descriptor.FormException {
-            formData = formData.getJSONObject(fieldName);
-            if (formData == null || formData.isNullObject()) {
-                return null;
-            }
-            String staplerClazzName = formData.optString("$class", null);
-            if (staplerClazzName == null) {
-              // Fall back on the legacy stapler-class attribute.
-              staplerClazzName = formData.optString("stapler-class", null);
-            }
-            if (staplerClazzName == null) {
-                throw new FormException("No $class is specified", fieldName);
-            }
-            try {
-                @SuppressWarnings("unchecked")
-                Class<? extends T> staplerClass = (Class<? extends T>)Jenkins.getInstance().getPluginManager().uberClassLoader.loadClass(staplerClazzName);
-                Descriptor<?> d = Jenkins.getInstance().getDescriptorOrDie(staplerClass);
-                
-                @SuppressWarnings("unchecked")
-                T instance = (T)d.newInstance(req, formData);
-                
-                return instance;
-            } catch(ClassNotFoundException e) {
-                throw new FormException(
-                        String.format("Failed to instantiate %s", staplerClazzName),
-                        e,
-                        fieldName
-                );
-            }
         }
     }
 }

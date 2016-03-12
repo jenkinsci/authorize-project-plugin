@@ -15,6 +15,7 @@ import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRu
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.JenkinsRule.WebClient;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -82,5 +83,49 @@ public class GlobalQueueItemAuthenticatorTest {
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
             assertEquals("bob", checker.authentication.getPrincipal());
         }
+    }
+    
+    @Test
+    public void testConfiguration() throws Exception {
+        GlobalQueueItemAuthenticator auth = new GlobalQueueItemAuthenticator(
+                new AnonymousAuthorizationStrategy()
+        );
+        QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(auth);
+        
+        WebClient wc = j.createWebClient();
+        j.submit(wc.goTo("configureSecurity").getFormByName("config"));
+        
+        j.assertEqualDataBoundBeans(
+                auth,
+                QueueItemAuthenticatorConfiguration.get().getAuthenticators().get(GlobalQueueItemAuthenticator.class)
+        );
+    }
+    
+    @Test
+    public void testConfigurationWithDescriptorNewInstance() throws Exception {
+        GlobalQueueItemAuthenticator auth = new GlobalQueueItemAuthenticator(
+                new SpecificUsersAuthorizationStrategy("admin", true)
+        );
+        QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(auth);
+        
+        WebClient wc = j.createWebClient();
+        j.submit(wc.goTo("configureSecurity").getFormByName("config"));
+        
+        /*
+        // as SpecificUsersAuthorizationStrategy is not annotated with @DataBoundConstoctor,
+        // assertEqualDataBoundBeans is not applicable.
+        j.assertEqualDataBoundBeans(
+                auth,
+                QueueItemAuthenticatorConfiguration.get().getAuthenticators().get(GlobalQueueItemAuthenticator.class)
+        );
+        */
+        AuthorizeProjectStrategy strategy = QueueItemAuthenticatorConfiguration.get().getAuthenticators().get(GlobalQueueItemAuthenticator.class).getStrategy();
+        assertEquals(SpecificUsersAuthorizationStrategy.class, strategy.getClass());
+        assertEquals(
+                "admin",
+                ((SpecificUsersAuthorizationStrategy)strategy).getUserid()
+        );
+        // Don't care about noNeedReauthentication
+        // (It might be removed for GlobalQueueItemAuthenticator in future)
     }
 }
