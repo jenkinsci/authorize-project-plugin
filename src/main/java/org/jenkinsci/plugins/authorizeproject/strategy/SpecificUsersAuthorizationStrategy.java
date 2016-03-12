@@ -29,8 +29,6 @@ import java.util.Collections;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.servlet.ServletException;
-
 import jenkins.model.Jenkins;
 import jenkins.security.ApiTokenProperty;
 import hudson.Extension;
@@ -38,7 +36,6 @@ import hudson.model.Queue;
 import hudson.model.User;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
-import hudson.model.Descriptor.FormException;
 import hudson.model.Job;
 import hudson.security.ACL;
 import hudson.security.AbstractPasswordBasedSecurityRealm;
@@ -46,17 +43,15 @@ import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
 
 import org.acegisecurity.Authentication;
-import org.acegisecurity.AuthenticationException;
-import org.acegisecurity.GrantedAuthority;
 import org.acegisecurity.providers.UsernamePasswordAuthenticationToken;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategyDescriptor;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
+import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectUtil;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
 
 /**
  * Run builds as a user specified in project configuration pages.
@@ -64,6 +59,11 @@ import org.kohsuke.stapler.StaplerResponse;
 public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy {
     private static Logger LOGGER = Logger.getLogger(SpecificUsersAuthorizationStrategy.class.getName());
     private final String userid;
+    
+    private final static Authentication[] BUILTIN_USERS = {
+            ACL.SYSTEM,
+            Jenkins.ANONYMOUS,
+    };
     
     /**
      * @return id of the user to run builds as.
@@ -138,8 +138,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         }
         
         User u = User.current();
-        // TODO use Jenkins.getInstance().getSecurityRealm().getUserIdStrategy().equals() once Jenkins 1.566+
-        if (u != null && u.getId() != null && u.getId().equals(newStrategy.getUserid())) {
+        if (u != null && u.getId() != null && AuthorizeProjectUtil.userIdEquals(u.getId(), newStrategy.getUserid())) {
             // Any user can specify oneself.
             return false;
         }
@@ -149,11 +148,10 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             return true;
         }
 
-        // TODO use Jenkins.getInstance().getSecurityRealm().getUserIdStrategy().equals() once Jenkins 1.566+
         if (
                 currentStrategy.isNoNeedReauthentication()
                 && currentStrategy.getUserid() != null
-                && currentStrategy.getUserid().equals(newStrategy.getUserid())
+                && AuthorizeProjectUtil.userIdEquals(currentStrategy.getUserid(), newStrategy.getUserid())
         ) {
             // the specified user is not changed, 
             // and specified that authentication is not required in that case.
@@ -262,9 +260,10 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             if (StringUtils.isBlank(userid)) {
                 throw new FormException("userid must be specified", "userid");
             }
-            // TODO use Jenkins.getInstance().getSecurityRealm().getUserIdStrategy().equals(userid, ACL.SYSTEM.getPrincipal().toString())) once Jenkins 1.566+
-            if (userid.equals(ACL.SYSTEM.getPrincipal())) {
-                throw new FormException(Messages.SpecificUsersAuthorizationStrategy_userid_notSystem(), "userid");
+            for (Authentication a: BUILTIN_USERS) {
+                if (AuthorizeProjectUtil.userIdEquals(userid, a.getPrincipal().toString())) {
+                    throw new FormException(Messages.SpecificUsersAuthorizationStrategy_userid_builtin(), "userid");
+                }
             }
 
             return new SpecificUsersAuthorizationStrategy(
@@ -406,9 +405,10 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             if (StringUtils.isBlank(userid)) {
                 return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_userid_required());
             }
-            // TODO use Jenkins.getInstance().getSecurityRealm().getUserIdStrategy().equals(userid, ACL.SYSTEM.getPrincipal().toString())) once Jenkins 1.566+
-            if (userid.equals(ACL.SYSTEM.getPrincipal())) {
-                return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_userid_notSystem());
+            for (Authentication a: BUILTIN_USERS) {
+                if (AuthorizeProjectUtil.userIdEquals(userid, a.getPrincipal().toString())) {
+                    return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_userid_builtin());
+                }
             }
             return FormValidation.ok();
         }

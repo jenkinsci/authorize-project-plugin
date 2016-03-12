@@ -35,7 +35,7 @@ import org.kohsuke.stapler.StaplerRequest;
 /**
  *
  */
-/*package*/ class AuthorizeProjectUtil {
+public class AuthorizeProjectUtil {
     /**
      * Create a new {@link Describable} object from user inputs.
      * 
@@ -80,5 +80,10 @@ import org.kohsuke.stapler.StaplerRequest;
                     fieldName
             );
         }
+    }
+    
+    public static boolean userIdEquals(String a, String b) {
+        // TODO use Jenkins.getInstance().getSecurityRealm().getUserIdStrategy().equals() once Jenkins 1.566+
+        return a.equals(b);
     }
 }
