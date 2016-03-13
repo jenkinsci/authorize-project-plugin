@@ -80,7 +80,7 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
  */
 public class ProjectQueueItemAuthenticatorTest {
     @Rule
-    public JenkinsRule j = new AuthorizeProjectJenkinsRule();
+    public JenkinsRule j = new AuthorizeProjectJenkinsRule(SpecificUsersAuthorizationStrategy.class);
     
     public static class NullAuthorizeProjectStrategy extends AuthorizeProjectStrategy {
         @DataBoundConstructor
@@ -485,7 +485,7 @@ public class ProjectQueueItemAuthenticatorTest {
             return User.get(name).impersonate();
         }
         
-        @TestExtension("testOldSignature")
+        @TestExtension
         public static class DescriptorImpl extends AuthorizeProjectStrategyDescriptor {
             @Override
             public String getDisplayName() {
