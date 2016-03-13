@@ -40,6 +40,7 @@ import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategyDescriptor
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
@@ -217,8 +218,8 @@ public class SystemAuthorizationStrategy extends AuthorizeProjectStrategy {
             return result;
         }
 
-        public FormValidation doCheckPermitReconfiguration(String value) {
-            if (!Boolean.parseBoolean(value)) {
+        public FormValidation doCheckPermitReconfiguration(@QueryParameter boolean value) {
+            if (!value) {
                 return FormValidation.warning(Messages.SystemAuthorizationStrategy_administersOnly());
             }
             return FormValidation.warning(Messages.SystemAuthorizationStrategy_userConfigurable());
