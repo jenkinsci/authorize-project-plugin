@@ -114,4 +114,12 @@ public abstract class AuthorizeProjectStrategyDescriptor extends Descriptor<Auth
     public boolean isEnabledByDefault() {
         return true;
     }
+    
+    /**
+     * @return whether configurable for {@link GlobalQueueItemAuthenticator}
+     * @since 1.1.1
+     */
+    public boolean isApplicableToGlobal() {
+        return true;
+    }
 }
