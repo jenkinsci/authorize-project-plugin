@@ -48,7 +48,7 @@ import org.kohsuke.stapler.StaplerRequest;
  * {@link org.jenkinsci.plugins.authorizeproject.GlobalQueueItemAuthenticator}
  * is forcing jobs to a user other than {@link ACL#SYSTEM}.
  *
- * @since 1.1.1
+ * @since 1.2.0
  */
 public class SystemAuthorizationStrategy extends AuthorizeProjectStrategy {
 
