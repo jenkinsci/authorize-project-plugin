@@ -66,6 +66,13 @@
       <version>${workflow.version}</version>
       <scope>test</scope>
     </dependency>
+    <!-- Required to avoid cyclic dependency -->
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>script-security</artifactId>
+      <version>1.13</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   
   <build>
