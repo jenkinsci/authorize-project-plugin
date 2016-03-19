@@ -109,10 +109,6 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             return Jenkins.ANONYMOUS;
         }
         Authentication a = u.impersonate();
-        if (a == null) {
-            // fallback to anonymous
-            return Jenkins.ANONYMOUS;
-        }
         return a;
     }
     
@@ -132,7 +128,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             return false;
         }
         
-        if (Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+        if (Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
             // Administrator can specify any user.
             return false;
         }
@@ -285,7 +281,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
                 String password
         ) {
             try {
-                Jenkins.getInstance().getSecurityRealm().getSecurityComponents().manager.authenticate(
+                Jenkins.getActiveInstance().getSecurityRealm().getSecurityComponents().manager.authenticate(
                         new UsernamePasswordAuthenticationToken(strategy.getUserid(), password)
                 );
             } catch (Exception e) { // handles any exception including NPE.
@@ -471,7 +467,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         }
         
         public boolean isUseApitoken() {
-            return !(Jenkins.getInstance().getSecurityRealm() instanceof AbstractPasswordBasedSecurityRealm);
+            return !(Jenkins.getActiveInstance().getSecurityRealm() instanceof AbstractPasswordBasedSecurityRealm);
         }
         
         /**

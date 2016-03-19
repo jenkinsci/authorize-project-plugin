@@ -44,6 +44,11 @@
   
   <dependencies>
     <dependency>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>annotations</artifactId>
+        <version>3.0.1</version>
+    </dependency>
+    <dependency>
       <groupId>org.jenkins-ci.plugins.workflow</groupId>
       <artifactId>workflow-job</artifactId>
       <version>${workflow.version}</version>

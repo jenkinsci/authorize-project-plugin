@@ -49,7 +49,7 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
      * @return all the registered {@link AuthorizeProjectStrategy}.
      */
     public static DescriptorExtensionList<AuthorizeProjectStrategy, Descriptor<AuthorizeProjectStrategy>> all() {
-        return Jenkins.getInstance().getDescriptorList(AuthorizeProjectStrategy.class);
+        return Jenkins.getActiveInstance().getDescriptorList(AuthorizeProjectStrategy.class);
     }
     
     /**
@@ -71,7 +71,7 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
         }
         
         if (!(project instanceof AbstractProject)) {
-            Descriptor<?> d = Jenkins.getInstance().getDescriptor(getClass());
+            Descriptor<?> d = Jenkins.getActiveInstance().getDescriptor(getClass());
             LOGGER.log(
                     Level.WARNING,
                     "This authorization strategy ({0}) is designed for authorize-project < 1.1.0 and not applicable for non-AbstractProjects (like WorkflowJob). ignored.",

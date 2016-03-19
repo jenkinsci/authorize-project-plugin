@@ -68,8 +68,8 @@ public class AuthorizeProjectUtil {
         }
         try {
             @SuppressWarnings("unchecked")
-            Class<? extends T> staplerClass = (Class<? extends T>)Jenkins.getInstance().getPluginManager().uberClassLoader.loadClass(staplerClazzName);
-            Descriptor<?> d = Jenkins.getInstance().getDescriptorOrDie(staplerClass);
+            Class<? extends T> staplerClass = (Class<? extends T>)Jenkins.getActiveInstance().getPluginManager().uberClassLoader.loadClass(staplerClazzName);
+            Descriptor<?> d = Jenkins.getActiveInstance().getDescriptorOrDie(staplerClass);
             
             @SuppressWarnings("unchecked")
             T instance = (T)d.newInstance(req, formData);
