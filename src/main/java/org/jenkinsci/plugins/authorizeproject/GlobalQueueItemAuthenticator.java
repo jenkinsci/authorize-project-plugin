@@ -19,7 +19,7 @@ import com.google.common.collect.Iterables;
 /**
  * A global default authenticator to allow changing the default for all projects.
  *
- * @since 1.1.1
+ * @since 1.2.0
  */
 public class GlobalQueueItemAuthenticator extends QueueItemAuthenticator {
     private final AuthorizeProjectStrategy strategy;
