@@ -43,6 +43,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * Run builds as {@link ACL#SYSTEM}. Using this strategy becomes important when
  * {@link org.jenkinsci.plugins.authorizeproject.GlobalQueueItemAuthenticator}
@@ -126,6 +128,7 @@ public class SystemAuthorizationStrategy extends AuthorizeProjectStrategy {
      * @param obj the object to test equality with.
      * @return {@code true} if and only if this is a equivalent {@link SystemAuthorizationStrategy} instance.
      */
+    @SuppressFBWarnings(value="EQ_GETCLASS_AND_CLASS_CONSTANT", justification="Should be the same class")
     @Override
     public final boolean equals(Object obj) {
         return obj != null && SystemAuthorizationStrategy.class == obj.getClass();

@@ -3,8 +3,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>1.532</version><!-- QueueItemAuthenticator is since 1.520 -->
-    <!--<version>1.580.1</version>--><!-- When you test the integration with workflow -->
+    <version>1.625</version><!-- for JENKINS-28298 -->
   </parent>
 
   <groupId>org.jenkins-ci.plugins</groupId>
@@ -44,8 +43,11 @@
   </properties>
   
   <dependencies>
-    <!-- When you test the integration with workflow -->
-    <!--
+    <dependency>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>annotations</artifactId>
+        <version>3.0.1</version>
+    </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins.workflow</groupId>
       <artifactId>workflow-job</artifactId>
@@ -64,7 +66,13 @@
       <version>${workflow.version}</version>
       <scope>test</scope>
     </dependency>
-    -->
+    <!-- Required to avoid cyclic dependency -->
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>script-security</artifactId>
+      <version>1.13</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   
   <build>

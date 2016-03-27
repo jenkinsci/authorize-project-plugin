@@ -109,10 +109,6 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             return Jenkins.ANONYMOUS;
         }
         Authentication a = u.impersonate();
-        if (a == null) {
-            // fallback to anonymous
-            return Jenkins.ANONYMOUS;
-        }
         return a;
     }
     
@@ -132,13 +128,13 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             return false;
         }
         
-        if (Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+        if (Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
             // Administrator can specify any user.
             return false;
         }
         
         User u = User.current();
-        if (u != null && u.getId() != null && AuthorizeProjectUtil.userIdEquals(u.getId(), newStrategy.getUserid())) {
+        if (u != null && AuthorizeProjectUtil.userIdEquals(u.getId(), newStrategy.getUserid())) {
             // Any user can specify oneself.
             return false;
         }
@@ -150,7 +146,6 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
 
         if (
                 currentStrategy.isNoNeedReauthentication()
-                && currentStrategy.getUserid() != null
                 && AuthorizeProjectUtil.userIdEquals(currentStrategy.getUserid(), newStrategy.getUserid())
         ) {
             // the specified user is not changed, 
@@ -261,7 +256,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
                 throw new FormException("userid must be specified", "userid");
             }
             for (Authentication a: BUILTIN_USERS) {
-                if (AuthorizeProjectUtil.userIdEquals(userid, a.getPrincipal().toString())) {
+                if (AuthorizeProjectUtil.userIdEquals(userid, (a.getPrincipal() != null)?a.getPrincipal().toString():null)) {
                     throw new FormException(Messages.SpecificUsersAuthorizationStrategy_userid_builtin(), "userid");
                 }
             }
@@ -286,7 +281,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
                 String password
         ) {
             try {
-                Jenkins.getInstance().getSecurityRealm().getSecurityComponents().manager.authenticate(
+                Jenkins.getActiveInstance().getSecurityRealm().getSecurityComponents().manager.authenticate(
                         new UsernamePasswordAuthenticationToken(strategy.getUserid(), password)
                 );
             } catch (Exception e) { // handles any exception including NPE.
@@ -472,7 +467,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         }
         
         public boolean isUseApitoken() {
-            return !(Jenkins.getInstance().getSecurityRealm() instanceof AbstractPasswordBasedSecurityRealm);
+            return !(Jenkins.getActiveInstance().getSecurityRealm() instanceof AbstractPasswordBasedSecurityRealm);
         }
         
         /**

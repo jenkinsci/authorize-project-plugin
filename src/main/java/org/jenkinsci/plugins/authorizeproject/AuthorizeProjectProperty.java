@@ -40,7 +40,10 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
+import hudson.init.InitMilestone;
+import hudson.init.Initializer;
 import hudson.model.DescriptorVisibilityFilter;
+import hudson.model.Items;
 import hudson.model.Job;
 import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
@@ -115,6 +118,11 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?,?>> {
             return null;
         }
         return strategy.authenticate(owner, item);
+    }
+    
+    @Initializer(after=InitMilestone.PLUGINS_STARTED)
+    public static void setStrategyCritical() {
+        Items.XSTREAM2.addCriticalField(AuthorizeProjectProperty.class, "strategy");
     }
     
     /**

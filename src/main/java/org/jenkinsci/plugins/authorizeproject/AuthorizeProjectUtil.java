@@ -24,6 +24,8 @@
 
 package org.jenkinsci.plugins.authorizeproject;
 
+import javax.annotation.CheckForNull;
+
 import jenkins.model.Jenkins;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
@@ -66,8 +68,8 @@ public class AuthorizeProjectUtil {
         }
         try {
             @SuppressWarnings("unchecked")
-            Class<? extends T> staplerClass = (Class<? extends T>)Jenkins.getInstance().getPluginManager().uberClassLoader.loadClass(staplerClazzName);
-            Descriptor<?> d = Jenkins.getInstance().getDescriptorOrDie(staplerClass);
+            Class<? extends T> staplerClass = (Class<? extends T>)Jenkins.getActiveInstance().getPluginManager().uberClassLoader.loadClass(staplerClazzName);
+            Descriptor<?> d = Jenkins.getActiveInstance().getDescriptorOrDie(staplerClass);
             
             @SuppressWarnings("unchecked")
             T instance = (T)d.newInstance(req, formData);
@@ -82,8 +84,13 @@ public class AuthorizeProjectUtil {
         }
     }
     
-    public static boolean userIdEquals(String a, String b) {
-        // TODO use Jenkins.getInstance().getSecurityRealm().getUserIdStrategy().equals() once Jenkins 1.566+
-        return a.equals(b);
+    public static boolean userIdEquals(@CheckForNull String a, @CheckForNull String b) {
+        if (a == null) {
+            return b == null;
+        }
+        if (b == null) {
+            return false;
+        }
+        return Jenkins.getActiveInstance().getSecurityRealm().getUserIdStrategy().equals(a, b);
     }
 }

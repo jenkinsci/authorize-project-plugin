@@ -61,8 +61,6 @@ import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 
-/*
-// classes for workflowTest
 import java.io.IOException;
 import jenkins.tasks.SimpleBuildStep;
 import hudson.FilePath;
@@ -76,15 +74,13 @@ import org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizatio
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.kohsuke.stapler.DataBoundConstructor;
-*/
 
 /**
  *
  */
 public class ProjectQueueItemAuthenticatorTest {
     @Rule
-    public JenkinsRule j = new AuthorizeProjectJenkinsRule();
+    public JenkinsRule j = new AuthorizeProjectJenkinsRule(SpecificUsersAuthorizationStrategy.class);
     
     public static class NullAuthorizeProjectStrategy extends AuthorizeProjectStrategy {
         @DataBoundConstructor
@@ -489,7 +485,7 @@ public class ProjectQueueItemAuthenticatorTest {
             return User.get(name).impersonate();
         }
         
-        @TestExtension("testOldSignature")
+        @TestExtension
         public static class DescriptorImpl extends AuthorizeProjectStrategyDescriptor {
             @Override
             public String getDisplayName() {
@@ -511,10 +507,6 @@ public class ProjectQueueItemAuthenticatorTest {
         assertEquals("test1", checker.authentication.getName());
     }
     
-    /*
-    // A test for workflow plugin (which extends Job, not AbstractProject).
-    // This is disabled as workflow requires Jenkins >= 1.580.1
-    // but authorize-project targets Jenkins >= 1.532.
     public static class AuthorizationRecordAction extends InvisibleAction {
         public final Authentication authentication;
         
@@ -580,5 +572,4 @@ public class ProjectQueueItemAuthenticatorTest {
             assertEquals(User.get("test1").impersonate(), b.getAction(AuthorizationRecordAction.class).authentication);
         }
     }
-    */
 }
