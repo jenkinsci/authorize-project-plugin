@@ -49,7 +49,7 @@ THE SOFTWARE.
   <j:if test="${authorizeProjectContext != 'global'}">
   <st:once>
     <st:adjunct includes="org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy.checkPasswordRequested" />
-    <st:adjunct includes="org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy.passwordApitokenSwitch" />
+    <st:adjunct includes="org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy.passwordApiTokenSwitch" />
   </st:once>
   </j:if> <!-- authorizeProjectContext -->
 </j:jelly>
