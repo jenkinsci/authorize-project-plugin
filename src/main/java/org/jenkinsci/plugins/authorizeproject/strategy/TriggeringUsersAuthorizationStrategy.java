@@ -34,8 +34,11 @@ import hudson.model.Queue;
 import hudson.model.Run;
 import hudson.model.User;
 import java.util.Collections;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.acegisecurity.Authentication;
+import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategyDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -44,6 +47,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * Run builds as a user who triggered the build.
  */
 public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrategy {
+    private static final Logger LOGGER = Logger.getLogger(TriggeringUsersAuthorizationStrategy.class.getName());
     /**
      * 
      */
@@ -65,7 +69,12 @@ public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrate
             if (u == null) {
                 return Jenkins.ANONYMOUS;
             }
-            return u.impersonate();
+            try {
+                return u.impersonate();
+            } catch (UsernameNotFoundException e) {
+                LOGGER.log(Level.WARNING, String.format("Invalid User %s. Falls back to anonymous.", cause.getUserId()), e);
+                return Jenkins.ANONYMOUS;
+            }
         }
         return null;
     }

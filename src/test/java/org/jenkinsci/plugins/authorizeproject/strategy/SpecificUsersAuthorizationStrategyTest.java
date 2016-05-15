@@ -29,6 +29,7 @@ import static org.junit.Assert.*;
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -52,6 +53,7 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizationCheckBuilder;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRule;
+import org.jenkinsci.plugins.authorizeproject.testutil.SecurityRealmWithUserFilter;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -423,6 +425,37 @@ public class SpecificUsersAuthorizationStrategyTest {
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
             assertEquals(Jenkins.ANONYMOUS, checker.authentication);
         }
+    }
+    
+    @Test
+    public void testUsernotFoundException() throws Exception {
+        j.jenkins.setSecurityRealm(new SecurityRealmWithUserFilter(
+                j.createDummySecurityRealm(),
+                Arrays.asList("validuser")
+        ));
+        
+        // Users should be created before the test.
+        User.get("validuser");
+        User.get("invaliduser");
+        
+        FreeStyleProject p = j.createFreeStyleProject();
+        AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
+        p.getBuildersList().add(checker);
+        
+        p.removeProperty(AuthorizeProjectProperty.class);
+        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("validuser", false)));
+        
+        j.assertBuildStatusSuccess(p.scheduleBuild2(0).get(1, TimeUnit.SECONDS));
+        assertEquals("validuser", checker.authentication.getName());
+        
+        // In case of specifying an invalid user,
+        // falls back to anonymous.
+        // And the build should not be blocked.
+        p.removeProperty(AuthorizeProjectProperty.class);
+        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("invaliduser", false)));
+        
+        j.assertBuildStatusSuccess(p.scheduleBuild2(0).get(1, TimeUnit.SECONDS));
+        assertEquals(Jenkins.ANONYMOUS, checker.authentication);
     }
     
     @Test
