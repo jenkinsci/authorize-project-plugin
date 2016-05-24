@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>1.625</version><!-- for JENKINS-28298 -->
+    <version>2.9</version>
   </parent>
 
   <groupId>org.jenkins-ci.plugins</groupId>
@@ -38,17 +38,12 @@
   </licenses>
   
   <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <workflow.version>1.0</workflow.version>
+    <jenkins.version>1.625</jenkins.version><!-- for JENKINS-28298 -->
+    <java.level>7</java.level>
+    <workflow.version>1.0</workflow.version> <!-- only for testing purpose -->
   </properties>
   
   <dependencies>
-    <dependency>
-        <groupId>com.google.code.findbugs</groupId>
-        <artifactId>annotations</artifactId>
-        <version>3.0.1</version>
-    </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins.workflow</groupId>
       <artifactId>workflow-job</artifactId>
@@ -74,6 +69,25 @@
       <version>1.13</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>matrix-project</artifactId>
+      <version>1.4.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>matrix-auth</artifactId>
+      <version>1.1</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- Required for matrix-project -->
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>junit</artifactId>
+      <version>1.2-beta-4</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   
   <build>
@@ -84,15 +98,6 @@
         <extensions>true</extensions>
         <configuration>
           <compatibleSinceVersion>1.1.0</compatibleSinceVersion>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>findbugs-maven-plugin</artifactId>
-        <version>3.0.1</version>
-        <configuration>
-          <xmlOutput>true</xmlOutput>
-          <failOnError>false</failOnError>
         </configuration>
       </plugin>
     </plugins>

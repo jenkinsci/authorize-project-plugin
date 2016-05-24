@@ -63,7 +63,7 @@ public class TriggeringUsersAuthorizationStrategyTest {
         // * A form to resend a request with POST method has no name attribute.
         // * A button to submit is differ from that of other forms in Jenkins.
         //   (other forms is with <BUTTON>, but this form is with <SUBMIT>.
-        wc.getPage(project, "build").getFormByName("").submit();
+        j.submit(wc.getPage(project, "build").getFormByName(""));
     }
     
     @Test

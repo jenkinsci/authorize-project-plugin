@@ -26,7 +26,7 @@ package org.jenkinsci.plugins.authorizeproject.strategy;
 
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.HttpMethod;
-import com.gargoylesoftware.htmlunit.WebRequestSettings;
+import com.gargoylesoftware.htmlunit.WebRequest;
 import com.gargoylesoftware.htmlunit.xml.XmlPage;
 import hudson.cli.CLI;
 import hudson.model.FreeStyleProject;
@@ -36,6 +36,7 @@ import hudson.model.StringParameterDefinition;
 import hudson.security.GlobalMatrixAuthorizationStrategy;
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
+import java.net.URL;
 import java.util.Arrays;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -185,9 +186,13 @@ public class SystemAuthorizationStrategyTest {
         destProject.save();
         String projectName = destProject.getFullName();
         
-        WebRequestSettings req = new WebRequestSettings(
-                wc.createCrumbedUrl(String.format("%s/config.xml", destProject.getUrl())),
+        WebRequest req = new WebRequest(
+                new URL(wc.getContextPath() + String.format("%s/config.xml", destProject.getUrl())),
                 HttpMethod.POST
+        );
+        req.setAdditionalHeader(
+                j.jenkins.getCrumbIssuer().getCrumbRequestField(),
+                j.jenkins.getCrumbIssuer().getCrumb(null)
         );
         req.setRequestBody(configXml);
         wc.getPage(req);
@@ -233,9 +238,13 @@ public class SystemAuthorizationStrategyTest {
         destProject.save();
         String projectName = destProject.getFullName();
         
-        WebRequestSettings req = new WebRequestSettings(
-                wc.createCrumbedUrl(String.format("%s/config.xml", destProject.getUrl())),
+        WebRequest req = new WebRequest(
+                new URL(wc.getContextPath() + String.format("%s/config.xml", destProject.getUrl())),
                 HttpMethod.POST
+        );
+        req.setAdditionalHeader(
+                j.jenkins.getCrumbIssuer().getCrumbRequestField(),
+                j.jenkins.getCrumbIssuer().getCrumb(null)
         );
         req.setRequestBody(configXml);
         
