@@ -155,7 +155,7 @@ public class ProjectQueueItemAuthenticatorTest {
     public void testWorkForMatrixProject() throws Exception {
         // if not configured, run in SYSTEM privilege.
         {
-            MatrixProject p = j.createMatrixProject();
+            MatrixProject p = j.createProject(MatrixProject.class);
             p.setAxes(new AxisList(new TextAxis("axis1", "value1")));
             AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
             p.getBuildersList().add(checker);
@@ -166,7 +166,7 @@ public class ProjectQueueItemAuthenticatorTest {
         
         // if configured, AuthorizeProjectStrategy takes effect
         {
-            MatrixProject p = j.createMatrixProject();
+            MatrixProject p = j.createProject(MatrixProject.class);
             p.setAxes(new AxisList(new TextAxis("axis1", "value1")));
             AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
             p.getBuildersList().add(checker);
@@ -179,7 +179,7 @@ public class ProjectQueueItemAuthenticatorTest {
         
         // if configured wrong, run in SYSTEM privilege.
         {
-            MatrixProject p = j.createMatrixProject();
+            MatrixProject p = j.createProject(MatrixProject.class);
             p.setAxes(new AxisList(new TextAxis("axis1", "value1")));
             AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
             p.getBuildersList().add(checker);
@@ -192,7 +192,7 @@ public class ProjectQueueItemAuthenticatorTest {
         
         // if the strategy returns null, run in SYSTEM privilege.
         {
-            MatrixProject p = j.createMatrixProject();
+            MatrixProject p = j.createProject(MatrixProject.class);
             p.setAxes(new AxisList(new TextAxis("axis1", "value1")));
             AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
             p.getBuildersList().add(checker);
@@ -397,12 +397,12 @@ public class ProjectQueueItemAuthenticatorTest {
             HtmlForm form = page.getFormByName("config");
             
             // verify global-security.jelly is displayed
-            HtmlTextInput valueField = form.getElementById("AuthorizeProjectStrategyWithGlobalSecurityConfigurationValueField");
+            HtmlTextInput valueField = form.getFirstByXPath("//input[@id='AuthorizeProjectStrategyWithGlobalSecurityConfigurationValueField']");
             assertNotNull(valueField);
             assertEquals("", valueField.getValueAttribute());
             
             // verify alternate.jelly is displayed
-            HtmlTextInput alternateField = form.getElementById("AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration");
+            HtmlTextInput alternateField = form.getFirstByXPath("//input[@id='AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration']");
             assertNotNull(alternateField);
             assertEquals("", alternateField.getValueAttribute());
             
@@ -421,12 +421,12 @@ public class ProjectQueueItemAuthenticatorTest {
             HtmlForm form = page.getFormByName("config");
             
             // verify global-security.jelly is displayed
-            HtmlTextInput valueField = form.getElementById("AuthorizeProjectStrategyWithGlobalSecurityConfigurationValueField");
+            HtmlTextInput valueField = form.getFirstByXPath("//input[@id='AuthorizeProjectStrategyWithGlobalSecurityConfigurationValueField']");
             assertNotNull(valueField);
             assertEquals(value1, valueField.getValueAttribute());
             
             // verify alternate.jelly is displayed
-            HtmlTextInput alternateField = form.getElementById("AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration");
+            HtmlTextInput alternateField = form.getFirstByXPath("//input[@id='AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration']");
             assertNotNull(alternateField);
             assertEquals(alternateValue1, alternateField.getValueAttribute());
         }

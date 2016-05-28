@@ -63,7 +63,7 @@ public class TriggeringUsersAuthorizationStrategyTest {
         // * A form to resend a request with POST method has no name attribute.
         // * A button to submit is differ from that of other forms in Jenkins.
         //   (other forms is with <BUTTON>, but this form is with <SUBMIT>.
-        wc.getPage(project, "build").getFormByName("").submit();
+        j.submit(wc.getPage(project, "build").getFormByName(""));
     }
     
     @Test
@@ -178,7 +178,7 @@ public class TriggeringUsersAuthorizationStrategyTest {
         
         SecurityContext orig = ACL.impersonate(new UsernamePasswordAuthenticationToken("validuser", "validuser"));
         try {
-            j.assertBuildStatusSuccess(p.scheduleBuild2(0, new Cause.UserIdCause()).get(1, TimeUnit.SECONDS));
+            j.assertBuildStatusSuccess(p.scheduleBuild2(0, new Cause.UserIdCause()).get(10, TimeUnit.SECONDS));
         } finally {
             SecurityContextHolder.setContext(orig);
         }
@@ -189,7 +189,7 @@ public class TriggeringUsersAuthorizationStrategyTest {
         // And the build should not be blocked.
         orig = ACL.impersonate(new UsernamePasswordAuthenticationToken("invaliduser", "invaliduser"));
         try {
-            j.assertBuildStatusSuccess(p.scheduleBuild2(0, new Cause.UserIdCause()).get(1, TimeUnit.SECONDS));
+            j.assertBuildStatusSuccess(p.scheduleBuild2(0, new Cause.UserIdCause()).get(10, TimeUnit.SECONDS));
         } finally {
             SecurityContextHolder.setContext(orig);
         }

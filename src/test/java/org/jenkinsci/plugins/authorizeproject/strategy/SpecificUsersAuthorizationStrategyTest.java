@@ -28,6 +28,7 @@ import static org.junit.Assert.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
@@ -63,7 +64,7 @@ import org.w3c.dom.Document;
 
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.HttpMethod;
-import com.gargoylesoftware.htmlunit.WebRequestSettings;
+import com.gargoylesoftware.htmlunit.WebRequest;
 import com.gargoylesoftware.htmlunit.html.HtmlCheckBoxInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlPasswordInput;
@@ -445,7 +446,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         p.removeProperty(AuthorizeProjectProperty.class);
         p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("validuser", false)));
         
-        j.assertBuildStatusSuccess(p.scheduleBuild2(0).get(1, TimeUnit.SECONDS));
+        j.assertBuildStatusSuccess(p.scheduleBuild2(0).get(10, TimeUnit.SECONDS));
         assertEquals("validuser", checker.authentication.getName());
         
         // In case of specifying an invalid user,
@@ -454,7 +455,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         p.removeProperty(AuthorizeProjectProperty.class);
         p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("invaliduser", false)));
         
-        j.assertBuildStatusSuccess(p.scheduleBuild2(0).get(1, TimeUnit.SECONDS));
+        j.assertBuildStatusSuccess(p.scheduleBuild2(0).get(10, TimeUnit.SECONDS));
         assertEquals(Jenkins.ANONYMOUS, checker.authentication);
     }
     
@@ -518,9 +519,13 @@ public class SpecificUsersAuthorizationStrategyTest {
         destProject.save();
         String projectName = destProject.getFullName();
         
-        WebRequestSettings req = new WebRequestSettings(
-                wc.createCrumbedUrl(String.format("%s/config.xml", destProject.getUrl())),
+        WebRequest req = new WebRequest(
+                new URL(wc.getContextPath() + String.format("%s/config.xml", destProject.getUrl())),
                 HttpMethod.POST
+        );
+        req.setAdditionalHeader(
+                j.jenkins.getCrumbIssuer().getCrumbRequestField(),
+                j.jenkins.getCrumbIssuer().getCrumb(null)
         );
         req.setRequestBody(configXml);
         wc.getPage(req);
@@ -568,9 +573,13 @@ public class SpecificUsersAuthorizationStrategyTest {
         destProject.save();
         String projectName = destProject.getFullName();
         
-        WebRequestSettings req = new WebRequestSettings(
-                wc.createCrumbedUrl(String.format("%s/config.xml", destProject.getUrl())),
+        WebRequest req = new WebRequest(
+                new URL(wc.getContextPath() + String.format("%s/config.xml", destProject.getUrl())),
                 HttpMethod.POST
+        );
+        req.setAdditionalHeader(
+                j.jenkins.getCrumbIssuer().getCrumbRequestField(),
+                j.jenkins.getCrumbIssuer().getCrumb(null)
         );
         req.setRequestBody(configXml);
         
