@@ -25,15 +25,25 @@
 package org.jenkinsci.plugins.authorizeproject.strategy;
 
 import static org.junit.Assert.*;
+
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+
 import jenkins.model.Jenkins;
 import hudson.model.FreeStyleBuild;
+import hudson.model.Cause;
 import hudson.model.FreeStyleProject;
+import hudson.model.User;
 import hudson.security.ACL;
 import hudson.tasks.BuildTrigger;
 
+import org.acegisecurity.context.SecurityContext;
+import org.acegisecurity.context.SecurityContextHolder;
+import org.acegisecurity.providers.UsernamePasswordAuthenticationToken;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizationCheckBuilder;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRule;
+import org.jenkinsci.plugins.authorizeproject.testutil.SecurityRealmWithUserFilter;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -149,4 +159,41 @@ public class TriggeringUsersAuthorizationStrategyTest {
             b.delete();
         }
     }
+    
+    @Test
+    public void testUsernotFoundException() throws Exception {
+        j.jenkins.setSecurityRealm(new SecurityRealmWithUserFilter(
+                j.createDummySecurityRealm(),
+                Arrays.asList("validuser")
+        ));
+        
+        // Users should be created before the test.
+        User.get("validuser");
+        User.get("invaliduser");
+        
+        FreeStyleProject p = j.createFreeStyleProject();
+        p.addProperty(new AuthorizeProjectProperty(new TriggeringUsersAuthorizationStrategy()));
+        AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
+        p.getBuildersList().add(checker);
+        
+        SecurityContext orig = ACL.impersonate(new UsernamePasswordAuthenticationToken("validuser", "validuser"));
+        try {
+            j.assertBuildStatusSuccess(p.scheduleBuild2(0, new Cause.UserIdCause()).get(1, TimeUnit.SECONDS));
+        } finally {
+            SecurityContextHolder.setContext(orig);
+        }
+        assertEquals("validuser", checker.authentication.getName());
+        
+        // In case of specifying an invalid user,
+        // falls back to anonymous.
+        // And the build should not be blocked.
+        orig = ACL.impersonate(new UsernamePasswordAuthenticationToken("invaliduser", "invaliduser"));
+        try {
+            j.assertBuildStatusSuccess(p.scheduleBuild2(0, new Cause.UserIdCause()).get(1, TimeUnit.SECONDS));
+        } finally {
+            SecurityContextHolder.setContext(orig);
+        }
+        assertEquals(Jenkins.ANONYMOUS, checker.authentication);
+    }
+    
 }

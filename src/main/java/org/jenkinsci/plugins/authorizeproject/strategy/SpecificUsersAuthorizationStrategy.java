@@ -44,6 +44,7 @@ import net.sf.json.JSONObject;
 
 import org.acegisecurity.Authentication;
 import org.acegisecurity.providers.UsernamePasswordAuthenticationToken;
+import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategyDescriptor;
@@ -108,8 +109,13 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             // fallback to anonymous
             return Jenkins.ANONYMOUS;
         }
-        Authentication a = u.impersonate();
-        return a;
+        try {
+            Authentication a = u.impersonate();
+            return a;
+        } catch (UsernameNotFoundException e) {
+            LOGGER.log(Level.WARNING, String.format("Invalid User %s. Falls back to anonymous.", getUserid()), e);
+            return Jenkins.ANONYMOUS;
+        }
     }
     
     /**
