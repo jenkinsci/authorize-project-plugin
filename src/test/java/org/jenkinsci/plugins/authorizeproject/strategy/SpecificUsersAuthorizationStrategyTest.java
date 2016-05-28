@@ -446,7 +446,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         p.removeProperty(AuthorizeProjectProperty.class);
         p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("validuser", false)));
         
-        j.assertBuildStatusSuccess(p.scheduleBuild2(0).get(1, TimeUnit.SECONDS));
+        j.assertBuildStatusSuccess(p.scheduleBuild2(0).get(10, TimeUnit.SECONDS));
         assertEquals("validuser", checker.authentication.getName());
         
         // In case of specifying an invalid user,
@@ -455,7 +455,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         p.removeProperty(AuthorizeProjectProperty.class);
         p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("invaliduser", false)));
         
-        j.assertBuildStatusSuccess(p.scheduleBuild2(0).get(1, TimeUnit.SECONDS));
+        j.assertBuildStatusSuccess(p.scheduleBuild2(0).get(10, TimeUnit.SECONDS));
         assertEquals(Jenkins.ANONYMOUS, checker.authentication);
     }
     
