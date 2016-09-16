@@ -24,20 +24,22 @@
 
 package org.jenkinsci.plugins.authorizeproject;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import org.acegisecurity.Authentication;
-
-import jenkins.model.Jenkins;
 import hudson.DescriptorExtensionList;
 import hudson.ExtensionPoint;
 import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
-import hudson.model.Queue;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.model.Job;
+import hudson.model.Queue;
+import hudson.model.User;
+import hudson.security.AccessControlled;
+import hudson.security.AccessDeniedException2;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import jenkins.model.Jenkins;
+import org.acegisecurity.AccessDeniedException;
+import org.acegisecurity.Authentication;
 
 /**
  * Extension point to define a new strategy to authorize builds configured in project configuration pages.
@@ -89,5 +91,29 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
     public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
         return authenticate((Job<?,?>)project, item);
     }
+
+    /**
+     * Checks that the job can be reconfigured by the current user when this strategy is the configured strategy.
+     *
+     * @param context the context of the job
+     * @throws AccessDeniedException if the current user is not allowed to reconfigure the specified job
+     * @since 1.3.0
+     */
+    public final void checkConfigurePermission(AccessControlled context) {
+        if (!hasConfigurePermission(context)) {
+            throw new AccessDeniedException2(Jenkins.getAuthentication(), Job.CONFIGURE);
+        }
+    }
     
+    /**
+     * Tests if the job can be reconfigured by the current user when this strategy is the configured strategy.
+     *
+     * @param context the context of the job
+     * @return {@code true} if and only if the current user is allowed to reconfigure the specified job.
+     * @since 1.3.0
+     */
+    public boolean hasConfigurePermission(AccessControlled context) {
+        return true;
+    }
+
 }

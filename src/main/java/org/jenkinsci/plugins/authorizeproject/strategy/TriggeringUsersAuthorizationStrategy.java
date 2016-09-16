@@ -24,6 +24,8 @@
 
 package org.jenkinsci.plugins.authorizeproject.strategy;
 
+import hudson.model.Item;
+import hudson.security.AccessControlled;
 import jenkins.model.Jenkins;
 import hudson.Extension;
 import hudson.model.Cause;
@@ -108,7 +110,15 @@ public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrate
         
         return null;
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean hasConfigurePermission(AccessControlled context) {
+        return context.hasPermission(Item.BUILD);
+    }
+
     /**
      *
      */

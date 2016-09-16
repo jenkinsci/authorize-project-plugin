@@ -24,31 +24,31 @@
 
 package org.jenkinsci.plugins.authorizeproject.strategy;
 
+import hudson.Extension;
+import hudson.model.AbstractProject;
+import hudson.model.Descriptor;
+import hudson.model.Job;
+import hudson.model.Queue;
+import hudson.model.User;
+import hudson.security.ACL;
+import hudson.security.AbstractPasswordBasedSecurityRealm;
+import hudson.security.AccessControlled;
+import hudson.security.AccessDeniedException2;
+import hudson.util.FormValidation;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import jenkins.model.Jenkins;
 import jenkins.security.ApiTokenProperty;
-import hudson.Extension;
-import hudson.model.Queue;
-import hudson.model.User;
-import hudson.model.AbstractProject;
-import hudson.model.Descriptor;
-import hudson.model.Job;
-import hudson.security.ACL;
-import hudson.security.AbstractPasswordBasedSecurityRealm;
-import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
-
 import org.acegisecurity.Authentication;
 import org.acegisecurity.providers.UsernamePasswordAuthenticationToken;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategyDescriptor;
-import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectUtil;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -117,7 +117,15 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             return Jenkins.ANONYMOUS;
         }
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean hasConfigurePermission(AccessControlled context) {
+        return AuthorizeProjectUtil.userIdEquals(Jenkins.getAuthentication().getName(), userid);
+    }
+
     /**
      * Returns whether authentication is required to update the configuration to newStrategy.
      * 
