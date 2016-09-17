@@ -158,7 +158,7 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
         if (strategy != null) {
             Authentication authentication = Jenkins.getAuthentication();
             if (authentication != ACL.SYSTEM) {
-                if (strategy != null && ProjectQueueItemAuthenticator.isConfigured()) {
+                if (ProjectQueueItemAuthenticator.isConfigured()) {
                     StaplerRequest request = Stapler.getCurrentRequest();
                     AccessControlled context;
                     if (request == null) {
