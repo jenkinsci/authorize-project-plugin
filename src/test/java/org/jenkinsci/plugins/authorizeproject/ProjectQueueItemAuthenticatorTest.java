@@ -26,7 +26,6 @@ package org.jenkinsci.plugins.authorizeproject;
 
 import static org.junit.Assert.*;
 
-import hudson.model.Item;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,7 +36,6 @@ import hudson.matrix.AxisList;
 import hudson.matrix.MatrixProject;
 import hudson.matrix.TextAxis;
 import hudson.model.AbstractProject;
-import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.FreeStyleProject;
 import hudson.model.Job;
@@ -258,24 +256,6 @@ public class ProjectQueueItemAuthenticatorTest {
     }
     
     /**
-     * Test no exception even if AuthorizeProjectStrategyDescriptor is not used.
-     */
-    public static class AuthorizeProjectStrategyExtendingBaseDescrptor extends AuthorizeProjectStrategy {
-        @Override
-        public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
-            return null;
-        }
-        
-        @TestExtension("testGlobalSecurityConfiguration")
-        public static class DescriptorImpl extends Descriptor<AuthorizeProjectStrategy> {
-            @Override
-            public String getDisplayName() {
-                return "AuthorizeProjectStrategyExtendingBaseDescrptor";
-            }
-        }
-    }
-    
-    /**
      * Test no exception even if no global-security.jelly is not provided.
      */
     public static class AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration extends AuthorizeProjectStrategy {
@@ -435,21 +415,18 @@ public class ProjectQueueItemAuthenticatorTest {
         // enabled / disabled preservation
         // all are enabled
         Map<String, Boolean> strategyEnabledMap = new HashMap<String, Boolean>();
-        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyExtendingBaseDescrptor.class).getId(), true);
         strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration.class).getId(), true);
         strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class).getId(), true);
         strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class).getId(), true);
         assertStrategyEnablingConfigurationPreserved(strategyEnabledMap);
         
         // all are disabled
-        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyExtendingBaseDescrptor.class).getId(), false);
         strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration.class).getId(), false);
         strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class).getId(), false);
         strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class).getId(), false);
         assertStrategyEnablingConfigurationPreserved(strategyEnabledMap);
         
         // mixed
-        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyExtendingBaseDescrptor.class).getId(), true);
         strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration.class).getId(), false);
         strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class).getId(), true);
         strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class).getId(), false);
@@ -565,7 +542,7 @@ public class ProjectQueueItemAuthenticatorTest {
         
         {
             WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "test"+j.jenkins.getItems().size());
-            p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1", true)));
+            p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1")));
             User.get("test1");  // create
             p.setDefinition(new CpsFlowDefinition("node{ step([$class: 'AuthorizationCheckSimpleBuilder']); }", true));
             WorkflowRun b = p.scheduleBuild2(0).get();
