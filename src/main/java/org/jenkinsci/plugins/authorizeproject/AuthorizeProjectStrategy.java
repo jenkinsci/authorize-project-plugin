@@ -101,7 +101,9 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
      */
     public final void checkConfigurePermission(AccessControlled context) {
         if (!hasConfigurePermission(context)) {
-            throw new AccessDeniedException2(Jenkins.getAuthentication(), Job.CONFIGURE);
+            throw new AccessDeniedException(Messages.AuthorizeProjectStrategy_UserNotAuthorized(
+                    Jenkins.getAuthentication().getName()
+            ));
         }
     }
     
