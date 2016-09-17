@@ -42,9 +42,6 @@ THE SOFTWARE.
     </div>
     <f:checkbox field="useApitoken" checked="${descriptor.useApitoken}" title="${%Use API Token for authentication}" />
   </f:entry>
-  <f:entry title="${%No need for re-authentication}" field="noNeedReauthentication">
-    <f:checkbox />
-  </f:entry>
   </j:if> <!-- authorizeProjectContext -->
   </table>
   <j:if test="${authorizeProjectContext != 'global'}">

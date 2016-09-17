@@ -103,62 +103,9 @@ public class SpecificUsersAuthorizationStrategyTest {
     public void testIsAuthenticateionRequiredAsUser() {
         ACL.impersonate(User.get("test1").impersonate());
         assertFalse(Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER));
-        // after: not configured
-        // before: test2, require re-auth
-        // result: false
-        assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                null,
-                new SpecificUsersAuthorizationStrategy("test2", false)
-        ));
-        
-        // after: test1, require re-auth
-        // before: test2, require re-auth
-        // result: false
-        assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                new SpecificUsersAuthorizationStrategy("test1", false),
-                new SpecificUsersAuthorizationStrategy("test2", false)
-        ));
-        
-        // after: test1, require re-auth
-        // before: not configured
-        // result: false
-        assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                new SpecificUsersAuthorizationStrategy("test1", false),
-                null
-        ));
-        
-        // after: test2, no require re-auth
-        // before: not configured
-        // result: true
-        assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                new SpecificUsersAuthorizationStrategy("test2", true),
-                null
-        ));
-        
-        // after: test2, require re-auth
-        // before: test2, no require re-auth
-        // result: false
-        assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                new SpecificUsersAuthorizationStrategy("test2", false),
-                new SpecificUsersAuthorizationStrategy("test2", true)
-        ));
-        
-        // after: admin, no require re-auth
-        // before: test2, no require re-auth
-        // result: true
-        assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                new SpecificUsersAuthorizationStrategy("admin", true),
-                new SpecificUsersAuthorizationStrategy("test2", true)
-        ));
-        
-        
-        // after: null, no require re-auth
-        // before: null, no require re-auth
-        // result: anything (not ABEND)
-        SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                new SpecificUsersAuthorizationStrategy(null, true),
-                new SpecificUsersAuthorizationStrategy(null, true)
-        );
+        assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test1"));
+        assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test2"));
+        assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("admin"));
     }
     
     @Test
@@ -166,62 +113,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     public void testIsAuthenticateionRequiredAsAdministrator() {
         ACL.impersonate(User.get("admin").impersonate());
         assertTrue(Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER));
-        // after: not configured
-        // before: test2, require re-auth
-        // result: false
-        assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                null,
-                new SpecificUsersAuthorizationStrategy("test2", false)
-        ));
-        
-        // after: test1, require re-auth
-        // before: test2, require re-auth
-        // result: false
-        assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                new SpecificUsersAuthorizationStrategy("test1", false),
-                new SpecificUsersAuthorizationStrategy("test2", false)
-        ));
-        
-        // after: test1, require re-auth
-        // before: not configured
-        // result: false
-        assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                new SpecificUsersAuthorizationStrategy("test1", false),
-                null
-        ));
-        
-        // after: test2, no require re-auth
-        // before: not configured
-        // result: false
-        assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                new SpecificUsersAuthorizationStrategy("test2", true),
-                null
-        ));
-        
-        // after: test2, require re-auth
-        // before: test2, no require re-auth
-        // result: false
-        assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                new SpecificUsersAuthorizationStrategy("test2", false),
-                new SpecificUsersAuthorizationStrategy("test2", true)
-        ));
-        
-        // after: admin, no require re-auth
-        // before: test2, no require re-auth
-        // result: false
-        assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                new SpecificUsersAuthorizationStrategy("admin", true),
-                new SpecificUsersAuthorizationStrategy("test2", true)
-        ));
-        
-        
-        // after: null, no require re-auth
-        // before: null, no require re-auth
-        // result: anything (not ABEND)
-        SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                new SpecificUsersAuthorizationStrategy(null, true),
-                new SpecificUsersAuthorizationStrategy(null, true)
-        );
+        assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test2"));
     }
     
     @Test
@@ -229,62 +121,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     public void testIsAuthenticateionRequiredAnonymous() {
         ACL.impersonate(Jenkins.ANONYMOUS);
         assertFalse(Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER));
-        // after: not configured
-        // before: test2, require re-auth
-        // result: false
-        assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                null,
-                new SpecificUsersAuthorizationStrategy("test2", false)
-        ));
-        
-        // after: test1, require re-auth
-        // before: test2, require re-auth
-        // result: true
-        assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                new SpecificUsersAuthorizationStrategy("test1", false),
-                new SpecificUsersAuthorizationStrategy("test2", false)
-        ));
-        
-        // after: test1, require re-auth
-        // before: not configured
-        // result: true
-        assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                new SpecificUsersAuthorizationStrategy("test1", false),
-                null
-        ));
-        
-        // after: test2, no require re-auth
-        // before: not configured
-        // result: true
-        assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                new SpecificUsersAuthorizationStrategy("test2", true),
-                null
-        ));
-        
-        // after: test2, require re-auth
-        // before: test2, no require re-auth
-        // result: false
-        assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                new SpecificUsersAuthorizationStrategy("test2", false),
-                new SpecificUsersAuthorizationStrategy("test2", true)
-        ));
-        
-        // after: admin, no require re-auth
-        // before: test2, no require re-auth
-        // result: true
-        assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                new SpecificUsersAuthorizationStrategy("admin", true),
-                new SpecificUsersAuthorizationStrategy("test2", true)
-        ));
-        
-        
-        // after: null, no require re-auth
-        // before: null, no require re-auth
-        // result: anything (not ABEND)
-        SpecificUsersAuthorizationStrategy.isAuthenticateionRequired(
-                new SpecificUsersAuthorizationStrategy(null, true),
-                new SpecificUsersAuthorizationStrategy(null, true)
-        );
+        assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test2"));
     }
     
     @Test
@@ -313,55 +150,37 @@ public class SpecificUsersAuthorizationStrategyTest {
         }
         {
             String userid = "foo";
-            boolean noNeedReauthentication = true;
             FreeStyleProject p = j.createFreeStyleProject();
             p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("foo", "bar")));
-            p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy(userid, noNeedReauthentication)));
+            p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy(userid)));
             SpecificUsersAuthorizationStrategy s = SpecificUsersAuthorizationStrategy.getCurrentStrategy(p);
             assertNotNull(p);
             assertEquals(userid, s.getUserid());
-            assertEquals(noNeedReauthentication, s.isNoNeedReauthentication());
-        }
-    }
-    
-    private static class AuthenticateDescriptorImpl extends SpecificUsersAuthorizationStrategy.DescriptorImpl {
-        public AuthenticateDescriptorImpl() {
-            super(SpecificUsersAuthorizationStrategy.class);
-        }
-        
-        @Override
-        public boolean authenticate(
-                SpecificUsersAuthorizationStrategy strategy,
-                String password
-        ) {
-            return super.authenticate(strategy, password);
         }
     }
     
     @Test
     @LocalData
-    public void testDescriptorAuthenticate() throws Exception {
-        AuthenticateDescriptorImpl d = new AuthenticateDescriptorImpl();
-        assertTrue(d.authenticate(new SpecificUsersAuthorizationStrategy("test1", false), "test1"));
-        assertFalse(d.authenticate(new SpecificUsersAuthorizationStrategy("test1", false), "test2"));
-        assertFalse(d.authenticate(new SpecificUsersAuthorizationStrategy("test1", false), ""));
-        assertFalse(d.authenticate(new SpecificUsersAuthorizationStrategy("", false), "test2"));
-        assertFalse(d.authenticate(new SpecificUsersAuthorizationStrategy("test1", false), null));
-        assertFalse(d.authenticate(new SpecificUsersAuthorizationStrategy(null, false), "test2"));
+    public void testAuthenticateWithPassword() throws Exception {
+        assertTrue(SpecificUsersAuthorizationStrategy.authenticate("test1", false, null, "test1"));
+        assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", false, null, "test2"));
+        assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", false, null, ""));
+        assertFalse(SpecificUsersAuthorizationStrategy.authenticate("", false, null, "test2"));
+        assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", false, null, null));
+        assertFalse(SpecificUsersAuthorizationStrategy.authenticate(null, false, null, "test2"));
     }
     
     @Test
-    public void testDescriptorAuthenticateWithApitoken() throws Exception {
+    public void testAuthenticateWithApitoken() throws Exception {
         prepareSecurity();
         String apitokenForTest1 = User.get("test1").getProperty(ApiTokenProperty.class).getApiToken();
         
-        AuthenticateDescriptorImpl d = new AuthenticateDescriptorImpl();
-        assertTrue(d.authenticateWithApitoken(new SpecificUsersAuthorizationStrategy("test1", false), apitokenForTest1));
-        assertFalse(d.authenticateWithApitoken(new SpecificUsersAuthorizationStrategy("test1", false), apitokenForTest1 + "xxx"));
-        assertFalse(d.authenticateWithApitoken(new SpecificUsersAuthorizationStrategy("test1", false), ""));
-        assertFalse(d.authenticateWithApitoken(new SpecificUsersAuthorizationStrategy("", false), apitokenForTest1));
-        assertFalse(d.authenticateWithApitoken(new SpecificUsersAuthorizationStrategy("test1", false), null));
-        assertFalse(d.authenticateWithApitoken(new SpecificUsersAuthorizationStrategy(null, false), apitokenForTest1));
+        assertTrue(SpecificUsersAuthorizationStrategy.authenticate("test1", true, apitokenForTest1, null));
+        assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", true, apitokenForTest1 + "xxx", null));
+        assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", true, "", null));
+        assertFalse(SpecificUsersAuthorizationStrategy.authenticate("", true, apitokenForTest1, null));
+        assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", true, null, null));
+        assertFalse(SpecificUsersAuthorizationStrategy.authenticate(null, true, apitokenForTest1, null));
     }
     @Test
     @LocalData
@@ -382,7 +201,7 @@ public class SpecificUsersAuthorizationStrategyTest {
             AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
             p.getBuildersList().add(checker);
             
-            p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1", false)));
+            p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1")));
             
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
             assertEquals("test1", checker.authentication.getName());
@@ -394,7 +213,7 @@ public class SpecificUsersAuthorizationStrategyTest {
             AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
             p.getBuildersList().add(checker);
             
-            p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin", false)));
+            p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin")));
             
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
             assertEquals("admin", checker.authentication.getName());
@@ -406,7 +225,7 @@ public class SpecificUsersAuthorizationStrategyTest {
             AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
             p.getBuildersList().add(checker);
             
-            p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("nosuchuser", false)));
+            p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("nosuchuser")));
             
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
             assertEquals(Jenkins.ANONYMOUS, checker.authentication);
@@ -421,7 +240,7 @@ public class SpecificUsersAuthorizationStrategyTest {
             AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
             p.getBuildersList().add(checker);
             
-            p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy(null, false)));
+            p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy(null)));
             
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
             assertEquals(Jenkins.ANONYMOUS, checker.authentication);
@@ -444,7 +263,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         p.getBuildersList().add(checker);
         
         p.removeProperty(AuthorizeProjectProperty.class);
-        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("validuser", false)));
+        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("validuser")));
         
         j.assertBuildStatusSuccess(p.scheduleBuild2(0).get(10, TimeUnit.SECONDS));
         assertEquals("validuser", checker.authentication.getName());
@@ -453,7 +272,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         // falls back to anonymous.
         // And the build should not be blocked.
         p.removeProperty(AuthorizeProjectProperty.class);
-        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("invaliduser", false)));
+        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("invaliduser")));
         
         j.assertBuildStatusSuccess(p.scheduleBuild2(0).get(10, TimeUnit.SECONDS));
         assertEquals(Jenkins.ANONYMOUS, checker.authentication);
@@ -504,7 +323,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         prepareSecurity();
         
         FreeStyleProject srcProject = j.createFreeStyleProject();
-        srcProject.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1", false)));
+        srcProject.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1")));
         srcProject.save();
         
         WebClient wc = j.createWebClient();
@@ -558,7 +377,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         prepareSecurity();
         
         FreeStyleProject srcProject = j.createFreeStyleProject();
-        srcProject.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin", false)));
+        srcProject.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin")));
         srcProject.save();
         
         WebClient wc = j.createWebClient();
@@ -617,7 +436,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         prepareSecurity();
         
         FreeStyleProject srcProject = j.createFreeStyleProject();
-        srcProject.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1", false)));
+        srcProject.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1")));
         srcProject.save();
         
         WebClient wc = j.createWebClient();
@@ -699,7 +518,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         prepareSecurity();
         
         FreeStyleProject srcProject = j.createFreeStyleProject();
-        srcProject.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin", false)));
+        srcProject.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin")));
         srcProject.save();
         
         WebClient wc = j.createWebClient();
@@ -784,23 +603,19 @@ public class SpecificUsersAuthorizationStrategyTest {
         WebClient wc = j.createWebClient();
         wc.login("test1");
         
-        // Reauthentication is not required if No need for re-authentication is checked
-        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin", true)));
-        j.submit(wc.getPage(p, "configure").getFormByName("config"));
-        
-        // Reauthentication is required if No need for re-authentication is checked
+        // Authentication is required if not current user
         p.removeProperty(AuthorizeProjectProperty.class);
-        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin", false)));
+        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin")));
         try {
-            j.submit(wc.getPage(p, "configure").getFormByName("config"));
+            j.submit(wc.getPage(p, "authorization").getFormByName("config"));
             fail();
         } catch (FailingHttpStatusCodeException e) {
-            assertEquals(400, e.getStatusCode());
+            assertEquals(403, e.getStatusCode());
         }
         
         // No authentication is required if oneself.
         {
-            HtmlPage page = wc.getPage(p, "configure");
+            HtmlPage page = wc.getPage(p, "authorization");
             HtmlTextInput userid = page.<HtmlTextInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'userid') and @type='text']");
             userid.setValueAttribute("test1");
             j.submit(page.getFormByName("config"));
@@ -808,17 +623,17 @@ public class SpecificUsersAuthorizationStrategyTest {
             assertEquals("test1", ((SpecificUsersAuthorizationStrategy)p.getProperty(AuthorizeProjectProperty.class).getStrategy()).getUserid());
         }
         
-        // Reauthentication is required to change userid even if No need for re-authentication is checked
-        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin", true)));
+        // Authentication is required to change userid to one that is not current user
+        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin")));
         {
-            HtmlPage page = wc.getPage(p, "configure");
+            HtmlPage page = wc.getPage(p, "authorization");
             HtmlTextInput userid = page.<HtmlTextInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'userid') and @type='text']");
             userid.setValueAttribute("test2");
             try {
                 j.submit(page.getFormByName("config"));
                 fail();
             } catch (FailingHttpStatusCodeException e) {
-                assertEquals(400, e.getStatusCode());
+                assertEquals(403, e.getStatusCode());
             }
         }
     }
@@ -828,27 +643,27 @@ public class SpecificUsersAuthorizationStrategyTest {
         prepareSecurity();
         
         FreeStyleProject p = j.createFreeStyleProject();
-        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test2", false)));
+        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test2")));
         
         WebClient wc = j.createWebClient();
         wc.login("test1");
         
         // authentication fails without password
         {
-            HtmlPage page = wc.getPage(p, "configure");
+            HtmlPage page = wc.getPage(p, "authorization");
             HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
             useApitoken.setChecked(false);
             try {
                 j.submit(page.getFormByName("config"));
                 fail();
             } catch (FailingHttpStatusCodeException e) {
-                assertEquals(400, e.getStatusCode());
+                assertEquals(403, e.getStatusCode());
             }
         }
         
         // authentication succeeds with the good password
         {
-            HtmlPage page = wc.getPage(p, "configure");
+            HtmlPage page = wc.getPage(p, "authorization");
             HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
             useApitoken.setChecked(false);
             HtmlPasswordInput password = page.<HtmlPasswordInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password') and @type='password']");
@@ -860,7 +675,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         
         // authentication fails with a bad password
         {
-            HtmlPage page = wc.getPage(p, "configure");
+            HtmlPage page = wc.getPage(p, "authorization");
             HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
             useApitoken.setChecked(false);
             HtmlPasswordInput password = page.<HtmlPasswordInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password') and @type='password']");
@@ -869,13 +684,13 @@ public class SpecificUsersAuthorizationStrategyTest {
                 j.submit(page.getFormByName("config"));
                 fail();
             } catch (FailingHttpStatusCodeException e) {
-                assertEquals(400, e.getStatusCode());
+                assertEquals(403, e.getStatusCode());
             }
         }
         
         // authentication fails if the password is used for apitoken
         {
-            HtmlPage page = wc.getPage(p, "configure");
+            HtmlPage page = wc.getPage(p, "authorization");
             HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
             useApitoken.setChecked(true);
             HtmlPasswordInput password = page.<HtmlPasswordInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password') and @type='password']");
@@ -886,7 +701,7 @@ public class SpecificUsersAuthorizationStrategyTest {
                 j.submit(page.getFormByName("config"));
                 fail();
             } catch (FailingHttpStatusCodeException e) {
-                assertEquals(400, e.getStatusCode());
+                assertEquals(403, e.getStatusCode());
             }
         }
     }
@@ -896,7 +711,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         prepareSecurity();
         
         FreeStyleProject p = j.createFreeStyleProject();
-        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test2", false)));
+        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test2")));
         
         WebClient wc = j.createWebClient();
         wc.login("test1");
@@ -907,20 +722,20 @@ public class SpecificUsersAuthorizationStrategyTest {
         
         // authentication fails without apitoken
         {
-            HtmlPage page = wc.getPage(p, "configure");
+            HtmlPage page = wc.getPage(p, "authorization");
             HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
             useApitoken.setChecked(true);
             try {
                 j.submit(page.getFormByName("config"));
                 fail();
             } catch (FailingHttpStatusCodeException e) {
-                assertEquals(400, e.getStatusCode());
+                assertEquals(403, e.getStatusCode());
             }
         }
         
         // authentication succeeds with the good apitoken
         {
-            HtmlPage page = wc.getPage(p, "configure");
+            HtmlPage page = wc.getPage(p, "authorization");
             HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
             useApitoken.setChecked(true);
             HtmlTextInput apitoken = page.<HtmlTextInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
@@ -932,7 +747,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         
         // authentication fails with a bad apitoken
         {
-            HtmlPage page = wc.getPage(p, "configure");
+            HtmlPage page = wc.getPage(p, "authorization");
             HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
             useApitoken.setChecked(true);
             HtmlTextInput apitoken = page.<HtmlTextInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
@@ -941,13 +756,13 @@ public class SpecificUsersAuthorizationStrategyTest {
                 j.submit(page.getFormByName("config"));
                 fail();
             } catch (FailingHttpStatusCodeException e) {
-                assertEquals(400, e.getStatusCode());
+                assertEquals(403, e.getStatusCode());
             }
         }
         
         // authentication fails if the apitoken is used for password
         {
-            HtmlPage page = wc.getPage(p, "configure");
+            HtmlPage page = wc.getPage(p, "authorization");
             HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
             useApitoken.setChecked(false);
             HtmlPasswordInput password = page.<HtmlPasswordInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password') and @type='password']");
@@ -958,7 +773,7 @@ public class SpecificUsersAuthorizationStrategyTest {
                 j.submit(page.getFormByName("config"));
                 fail();
             } catch (FailingHttpStatusCodeException e) {
-                assertEquals(400, e.getStatusCode());
+                assertEquals(403, e.getStatusCode());
             }
         }
     }

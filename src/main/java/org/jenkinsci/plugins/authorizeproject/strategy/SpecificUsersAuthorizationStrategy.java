@@ -33,7 +33,7 @@ import hudson.model.User;
 import hudson.security.ACL;
 import hudson.security.AbstractPasswordBasedSecurityRealm;
 import hudson.security.AccessControlled;
-import hudson.security.AccessDeniedException2;
+import hudson.security.SecurityRealm;
 import hudson.util.FormValidation;
 import java.io.IOException;
 import java.util.Collections;
@@ -42,7 +42,9 @@ import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import jenkins.security.ApiTokenProperty;
 import net.sf.json.JSONObject;
+import org.acegisecurity.AccessDeniedException;
 import org.acegisecurity.Authentication;
+import org.acegisecurity.AuthenticationException;
 import org.acegisecurity.providers.UsernamePasswordAuthenticationToken;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.apache.commons.lang.StringUtils;
@@ -50,6 +52,8 @@ import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategyDescriptor;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectUtil;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -73,26 +77,76 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         return userid;
     }
     
-    private final boolean noNeedReauthentication;
-    
-    /**
-     * @return if true, entering password is not required when the userid is not changed.
-     */
-    public boolean isNoNeedReauthentication() {
-        return noNeedReauthentication;
+    public SpecificUsersAuthorizationStrategy(String userid) {
+        this.userid = StringUtils.trim(userid);
+        for (Authentication a : BUILTIN_USERS) {
+            if (AuthorizeProjectUtil.userIdEquals(this.userid, a.getPrincipal().toString())) {
+                throw new IllegalArgumentException(Messages.SpecificUsersAuthorizationStrategy_userid_builtin());
+            }
+        }
     }
-    
+
     /**
      * No {@link DataBoundConstructor} for requiring to pass the authentication.
-     * 
+     *
      * authentication is performed in {@link DescriptorImpl#newInstance(StaplerRequest, JSONObject)}
      */
     @DataBoundConstructor
-    public SpecificUsersAuthorizationStrategy(String userid, boolean noNeedReauthentication) {
-        this.userid = StringUtils.trim(userid);
-        this.noNeedReauthentication = noNeedReauthentication;
+    public SpecificUsersAuthorizationStrategy(String userid, boolean useApitoken,
+                                              String apitoken, String password) throws AccessDeniedException {
+        this(userid);
+        if (isAuthenticationRequired(getUserid()) && !authenticate(getUserid(), useApitoken, apitoken, password)) {
+            throw new AccessDeniedException(Messages.SpecificUsersAuthorizationStrategy_userid_authenticate());
+        }
     }
-    
+
+    static boolean authenticate(String userId, boolean useApitoken, String apitoken, String password) {
+        if (useApitoken) {
+            if (apitoken != null) {
+                User u = User.get(userId, false, Collections.emptyMap());
+                if (u != null) {
+                    ApiTokenProperty p = u.getProperty(ApiTokenProperty.class);
+                    if (p != null && p.matchesPassword(apitoken)) {
+                        // supplied API token matches
+                        return true;
+                    }
+                }
+            }
+        } else {
+            if (password != null) {
+                try {
+                    Jenkins.getActiveInstance().getSecurityRealm().getSecurityComponents().manager.authenticate(
+                            new UsernamePasswordAuthenticationToken(userId, password)
+                    );
+                    // supplied password matches
+                    return true;
+                } catch (Exception e) { // handles any exception including NPE.
+                    LOGGER.log(Level.WARNING, String.format("Failed to authenticate %s", userId), e);
+                }
+            }
+        }
+        return false;
+    }
+
+    protected static boolean isAuthenticationRequired(String userId) {
+        if (Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
+            // Administrator can specify any user.
+            return false;
+        }
+
+        User u = User.current();
+        if (u != null && AuthorizeProjectUtil.userIdEquals(u.getId(), userId)) {
+            // Any user can specify oneself.
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public DescriptorImpl getDescriptor() {
+        return (DescriptorImpl) super.getDescriptor();
+    }
+
     /**
      * Run builds as a specified user.
      * 
@@ -128,50 +182,6 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
     }
 
     /**
-     * Returns whether authentication is required to update the configuration to newStrategy.
-     * 
-     * @param newStrategy strategy to be configured.
-     * @param currentStrategy strategy now configured.
-     * @return whether authentication is required.
-     */
-    protected static boolean isAuthenticateionRequired(
-            SpecificUsersAuthorizationStrategy newStrategy,
-            SpecificUsersAuthorizationStrategy currentStrategy
-    ) {
-        if (newStrategy == null) {
-            // if configure is removed, no need to authenticate.
-            return false;
-        }
-        
-        if (Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
-            // Administrator can specify any user.
-            return false;
-        }
-        
-        User u = User.current();
-        if (u != null && AuthorizeProjectUtil.userIdEquals(u.getId(), newStrategy.getUserid())) {
-            // Any user can specify oneself.
-            return false;
-        }
-        
-        if (currentStrategy == null) {
-            // if currentStrategy is null, authentication is always required.
-            return true;
-        }
-
-        if (
-                currentStrategy.isNoNeedReauthentication()
-                && AuthorizeProjectUtil.userIdEquals(currentStrategy.getUserid(), newStrategy.getUserid())
-        ) {
-            // the specified user is not changed, 
-            // and specified that authentication is not required in that case.
-            return false;
-        }
-        
-        return true;
-    }
-    
-    /**
      * Return {@link SpecificUsersAuthorizationStrategy} configured in a project.
      * 
      * @param project
@@ -194,11 +204,6 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         return (SpecificUsersAuthorizationStrategy)prop.getStrategy();
     }
     
-    @Deprecated
-    protected static SpecificUsersAuthorizationStrategy getCurrentStrategy(AbstractProject<?,?> project) {
-        return getCurrentStrategy((Job<?,?>)project);
-    }
-    
     /**
      * Called when XSTREAM2 instantiates this from XML configuration.
      * 
@@ -208,44 +213,23 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
      * @return return myself.
      * @throws IOException authentication failed.
      */
-    private Object readResolve() throws IOException {
-        if (!ACL.SYSTEM.equals(Jenkins.getAuthentication())) {
-            // This is called via REST/CLI.
-            
-            // There's no way to retrieve current strategy.
-            if (isAuthenticateionRequired(this, null)) {
-                // As REST/CLI interface saves configuration after successfully load object from the XML,
-                // this prevents the new configuration saved.
-                throw new IOException(Messages.SpecificUsersAuthorizationStrategy_userid_readResolve());
-            }
+    private Object readResolve() throws AccessDeniedException {
+        if (!ACL.SYSTEM.equals(Jenkins.getAuthentication()) && isAuthenticationRequired(getUserid())) {
+            // As REST/CLI interface saves configuration after successfully load object from the XML,
+            // this prevents the new configuration saved.
+            throw new AccessDeniedException(Messages.SpecificUsersAuthorizationStrategy_userid_readResolve());
         }
         return this;
     }
     
     /**
-     *
+     * Our descriptor.
      */
     @Extension
     public static class DescriptorImpl extends AuthorizeProjectStrategyDescriptor {
+
         /**
-         * 
-         */
-        public DescriptorImpl() {
-            super();
-        }
-        
-        /**
-         * For testing purpose.
-         * 
-         * @param clazz set SpecificUsersAuthorizationStrategy.class
-         */
-        protected DescriptorImpl(Class<? extends AuthorizeProjectStrategy> clazz) {
-            super(clazz);
-        }
-        
-        /**
-         * @return the name shown in project configuration pages.
-         * @see hudson.model.Descriptor#getDisplayName()
+         * {@inheritDoc}
          */
         @Override
         public String getDisplayName() {
@@ -253,131 +237,12 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         }
         
         /**
-         * Create a new instance. No authentication is performed.
-         * 
-         * @param req
-         * @param formData
-         * @return
-         * @throws FormException thrown when the input is incomplete.
-         */
-        protected SpecificUsersAuthorizationStrategy newInstanceWithoutAuthentication(
-                StaplerRequest req,
-                JSONObject formData
-        ) throws FormException {
-            String userid = formData.getString("userid");
-            boolean noNeedReauthentication = formData.optBoolean("noNeedReauthentication", false);
-            
-            if (StringUtils.isBlank(userid)) {
-                throw new FormException("userid must be specified", "userid");
-            }
-            for (Authentication a: BUILTIN_USERS) {
-                if (AuthorizeProjectUtil.userIdEquals(userid, (a.getPrincipal() != null)?a.getPrincipal().toString():null)) {
-                    throw new FormException(Messages.SpecificUsersAuthorizationStrategy_userid_builtin(), "userid");
-                }
-            }
-
-            return new SpecificUsersAuthorizationStrategy(
-                    userid, 
-                    noNeedReauthentication
-            );
-        }
-        
-        /**
-         * Authenticate the specified user.
-         * 
-         * Checks whether the user has privilege to specify that authorization.
-         * 
-         * @param strategy
-         * @param password
-         * @return true if the authentication is succeeded.
-         */
-        protected boolean authenticate(
-                SpecificUsersAuthorizationStrategy strategy, 
-                String password
-        ) {
-            try {
-                Jenkins.getActiveInstance().getSecurityRealm().getSecurityComponents().manager.authenticate(
-                        new UsernamePasswordAuthenticationToken(strategy.getUserid(), password)
-                );
-            } catch (Exception e) { // handles any exception including NPE.
-                LOGGER.log(Level.WARNING, String.format("Failed to authenticate %s", strategy.userid), e);
-                return false;
-            }
-            return true;
-        }
-        
-        /**
-         * Authenticate the specified user with Apitoken.
-         * 
-         * @param strategy
-         * @param apitoken
-         * @return true if the authentication is succeeded.
-         */
-        protected boolean authenticateWithApitoken(
-                SpecificUsersAuthorizationStrategy strategy, 
-                String apitoken
-        ) {
-            User u = User.get(strategy.getUserid(), false, Collections.emptyMap());
-            if (u == null) {
-                return false;
-            }
-            ApiTokenProperty p = u.getProperty(ApiTokenProperty.class);
-            if (p == null) {
-                return false;
-            }
-            return p.matchesPassword(apitoken);
-        }
-        
-        /**
-         * Authenticate the specified user.
-         * 
-         * Checks whether the user has privilege to specify that authorization.
-         * 
-         * @param strategy
-         * @param req
-         * @param formData
-         * @return true if the authentication is succeeded.
-         */
-        protected boolean authenticate(
-                SpecificUsersAuthorizationStrategy strategy, 
-                StaplerRequest req,
-                JSONObject formData
-        ) {
-            boolean useApitoken = formData.optBoolean("useApitoken");
-            
-            return useApitoken
-                    ?authenticateWithApitoken(strategy, formData.getString("apitoken"))
-                    :authenticate(strategy, formData.getString("password"));
-        }
-        
-        /**
-         * Create a new instance. Also performs authentication.
-         * 
-         * @param req
-         * @param formData
-         * @return
-         * @throws FormException thrown when the input is incomplete, or authentication failed.
-         */
-        @Override
-        public SpecificUsersAuthorizationStrategy newInstance(StaplerRequest req, JSONObject formData)
-                throws FormException {
-            SpecificUsersAuthorizationStrategy strategy = newInstanceWithoutAuthentication(req, formData);
-            
-            SpecificUsersAuthorizationStrategy currentStrategy
-                = getCurrentStrategy(req.findAncestorObject(Job.class));
-            
-            if (isAuthenticateionRequired(strategy, currentStrategy)) {
-                if (!authenticate(strategy, req, formData)) {
-                    throw new FormException(Messages.SpecificUsersAuthorizationStrategy_userid_authenticate(), "userid");
-                }
-            }
-            
-            return strategy;
-        }
-        
-        /**
+         * Helper method for computing the check password URL.
+         *
          * @return the URL to check password field is required.
          */
+        @Restricted(NoExternalUse.class) // used by stapler/jelly
+        @SuppressWarnings("unused")
         public String calcCheckPasswordRequestedUrl() {
             return String.format("'%s/%s/checkPasswordRequested' + qs(this).nearBy('userid').nearBy('noNeedReauthentication')",
                     getCurrentDescriptorByNameUrl(),
@@ -390,27 +255,23 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
          * 
          * This is called asynchronously.
          * 
-         * @param req
-         * @param userid
-         * @param noNeedReauthentication
+         * @param req the request.
+         * @param userid the userid.
          * @return "true" if password fiels is required. this should be evaluated as JavaScript.
          */
-        public String doCheckPasswordRequested(
-                StaplerRequest req,
-                @QueryParameter String userid,
-                @QueryParameter boolean noNeedReauthentication
-        ) {
-            SpecificUsersAuthorizationStrategy newStrategy = new SpecificUsersAuthorizationStrategy(userid, noNeedReauthentication);
-            return Boolean.toString(isAuthenticateionRequired(
-                    newStrategy,
-                    getCurrentStrategy(req.findAncestorObject(Job.class))
-            ));
+        @Restricted(NoExternalUse.class) // used by stapler/jelly
+        @SuppressWarnings("unused")
+        public String doCheckPasswordRequested(StaplerRequest req, @QueryParameter String userid) {
+            return Boolean.toString(!isAuthenticationRequired(userid.trim()));
         }
         
         /**
-         * @param userid
-         * @return
+         * Checks the userid against the blacklist of invalid users.
+         * @param userid the userid
+         * @return the validation results.
          */
+        @Restricted(NoExternalUse.class) // used by stapler/jelly
+        @SuppressWarnings("unused")
         public FormValidation doCheckUserid(@QueryParameter String userid) {
             if (StringUtils.isBlank(userid)) {
                 return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_userid_required());
@@ -424,63 +285,41 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         }
         
         /**
-         * @param req
-         * @param userid
-         * @param password
-         * @param noNeedReauthentication
-         * @return
+         * Checks the supplied password.
+         *
+         * @param req the request.
+         * @param userid the user id.
+         * @param password the password.
+         * @return the validationr results,
          */
+        @Restricted(NoExternalUse.class) // used by stapler/jelly
+        @SuppressWarnings("unused")
         public FormValidation doCheckPassword(
                 StaplerRequest req,
                 @QueryParameter String userid,
                 @QueryParameter String password,
                 @QueryParameter String apitoken,
-                @QueryParameter boolean useApitoken,
-                @QueryParameter boolean noNeedReauthentication
+                @QueryParameter boolean useApitoken
         ) {
-            SpecificUsersAuthorizationStrategy newStrategy = new SpecificUsersAuthorizationStrategy(userid, noNeedReauthentication);
-            if (!isAuthenticateionRequired(
-                    newStrategy,
-                    getCurrentStrategy(req.findAncestorObject(Job.class))
-            )) {
+            if (!isAuthenticationRequired(userid.trim())) {
                 // authentication is not required.
                 return FormValidation.ok();
             }
             
-            if (
-                    (!useApitoken && StringUtils.isBlank(password))
-                    || (useApitoken && StringUtils.isBlank(apitoken))
-            ) {
+            if (useApitoken ? StringUtils.isBlank(apitoken) : StringUtils.isBlank(password)) {
                 return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_password_required());
             }
             
-            /* Authentication should not be performed here,
-             * for this may cause account locking or
-             * is used for brute force attack.
-             * Authentication is done only in saving the configuration
-             * (that is, in DescriptorImpl#newInstance)
-            if (
-                    (!useApitoken && !authenticate(newStrategy, password))
-                    (useApitoken && authenticateWithApitoken(newStrategy, apitoken))
-            ) {
-                return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_password_invalid());
-            }
-            */
-            
             return FormValidation.ok();
         }
-        
+
         /**
-         * @param noNeedReauthentication
-         * @return
+         * Checks if the current {@link SecurityRealm} supports username/password authentication.
+         *
+         * @return {@code true} if and only if the current realm supports username/password authentication.
          */
-        public FormValidation doCheckNoNeedReauthentication(@QueryParameter boolean noNeedReauthentication) {
-            if (noNeedReauthentication) {
-                return FormValidation.warning(Messages.SpecificUsersAuthorizationStrategy_noNeedReauthentication_usage());
-            }
-            return FormValidation.ok();
-        }
-        
+        @Restricted(NoExternalUse.class) // used by stapler/jelly
+        @SuppressWarnings("unused")
         public boolean isUseApitoken() {
             return !(Jenkins.getActiveInstance().getSecurityRealm() instanceof AbstractPasswordBasedSecurityRealm);
         }
