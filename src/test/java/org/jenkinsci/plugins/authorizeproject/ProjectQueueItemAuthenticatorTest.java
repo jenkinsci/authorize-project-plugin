@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.authorizeproject;
 
 import static org.junit.Assert.*;
 
+import hudson.model.Item;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -205,31 +206,31 @@ public class ProjectQueueItemAuthenticatorTest {
     }
     
     @Test
-    public void testDisabledInProjectConfiguration() throws Exception {
+    public void testDisabledInProjectAuthorization() throws Exception {
         FreeStyleProject p = j.createFreeStyleProject();
         p.addProperty(new AuthorizeProjectProperty(new AnonymousAuthorizationStrategy()));
-        
+
         assertTrue(ProjectQueueItemAuthenticator.getConfigured().isStrategyEnabled(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class)));
-        
-        j.configRoundtrip(p);
-        
+
+        j.submit(j.createWebClient().getPage(p, "authorization").getFormByName("config"));
+
         // can be reconfigured if it is enabled.
         assertEquals(AnonymousAuthorizationStrategy.class, p.getProperty(AuthorizeProjectProperty.class).getStrategy().getClass());
-        
+
         Map<String, Boolean> strategyEnabledMap = new HashMap<String, Boolean>();
         strategyEnabledMap.put(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class).getId(), false);
-        
+
         QueueItemAuthenticatorConfiguration.get().getAuthenticators().clear();
         QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new ProjectQueueItemAuthenticator(strategyEnabledMap));
-        
+
         assertFalse(ProjectQueueItemAuthenticator.getConfigured().isStrategyEnabled(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class)));
-        
-        j.configRoundtrip(p);
-        
+
+        j.submit(j.createWebClient().getPage(p, "authorization").getFormByName("config"));
+
         // cannot be reconfigured if it is disabled.
         assertNotEquals(AnonymousAuthorizationStrategy.class, p.getProperty(AuthorizeProjectProperty.class).getStrategy().getClass());
     }
-    
+
     @Test
     public void testDisabledAtRuntime() throws Exception {
         FreeStyleProject p = j.createFreeStyleProject();
