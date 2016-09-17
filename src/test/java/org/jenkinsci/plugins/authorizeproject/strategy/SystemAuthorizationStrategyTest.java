@@ -448,9 +448,36 @@ public class SystemAuthorizationStrategyTest {
             j.submit(wc.getPage(p, "configure").getFormByName("config"));
             fail();
         } catch (FailingHttpStatusCodeException e) {
-            assertEquals(400, e.getStatusCode());
+            assertEquals(403, e.getStatusCode());
         }
     }
     
+    @Test
+    public void testAuthenticationAuthentication() throws Exception {
+        prepareSecurity();
+
+        FreeStyleProject p = j.createFreeStyleProject();
+
+        WebClient wc = j.createWebClient();
+        wc.login("test1");
+
+        SystemAuthorizationStrategy.DescriptorImpl descriptor =
+                j.getInstance().getDescriptorByType(SystemAuthorizationStrategy.DescriptorImpl.class);
+        p.addProperty(new AuthorizeProjectProperty(new SystemAuthorizationStrategy()));
+
+        // Reconfiguration is allowed if reconfiguration is permitted.
+        descriptor.setPermitReconfiguration(true);
+        j.submit(wc.getPage(p, "authorization").getFormByName("config"));
+
+        // Reconfiguration is not allowed if reconfiguration is permitted.
+        descriptor.setPermitReconfiguration(false);
+        try {
+            j.submit(wc.getPage(p, "authorization").getFormByName("config"));
+            fail();
+        } catch (FailingHttpStatusCodeException e) {
+            assertEquals(403, e.getStatusCode());
+        }
+    }
+
 
 }
