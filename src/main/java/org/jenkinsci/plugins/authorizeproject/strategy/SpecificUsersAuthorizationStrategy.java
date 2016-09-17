@@ -87,6 +87,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
      * 
      * authentication is performed in {@link DescriptorImpl#newInstance(StaplerRequest, JSONObject)}
      */
+    @DataBoundConstructor
     public SpecificUsersAuthorizationStrategy(String userid, boolean noNeedReauthentication) {
         this.userid = StringUtils.trim(userid);
         this.noNeedReauthentication = noNeedReauthentication;
