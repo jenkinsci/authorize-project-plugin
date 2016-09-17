@@ -56,6 +56,7 @@ public class SystemAuthorizationStrategy extends AuthorizeProjectStrategy {
 
     @DataBoundConstructor
     public SystemAuthorizationStrategy() {
+        Jenkins.getActiveInstance().checkPermission(Jenkins.ADMINISTER);
     }
 
     /**

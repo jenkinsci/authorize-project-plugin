@@ -32,9 +32,7 @@ import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.model.Job;
 import hudson.model.Queue;
-import hudson.model.User;
 import hudson.security.AccessControlled;
-import hudson.security.AccessDeniedException2;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
@@ -59,7 +57,7 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
      * 
      * @param project the project to run.
      * @param item the item in queue, which will be a build.
-     * @return
+     * @return {@code true} if authentication was successful
      */
     public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
         if(!Util.isOverridden(
@@ -85,11 +83,24 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
     }
     
     /**
+     * Old {@link AbstractProject} based version of {@link #authenticate(Job, Queue.Item)}.
+     *
+     * @param project the project to run.
+     * @param item the item in queue, which will be a build.
+     * @return {@code true} if authentication was successful
      * @deprecated use {@link #authenticate(hudson.model.Job, Queue.Item)} instead.
      */
     @Deprecated
     public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
         return authenticate((Job<?,?>)project, item);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public AuthorizeProjectStrategyDescriptor getDescriptor() {
+        return (AuthorizeProjectStrategyDescriptor)super.getDescriptor();
     }
 
     /**

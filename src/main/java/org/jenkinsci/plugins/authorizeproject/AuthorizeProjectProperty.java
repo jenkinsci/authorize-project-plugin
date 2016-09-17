@@ -331,14 +331,6 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
             JSONObject json = req.getSubmittedForm();
             JSONObject o = json.optJSONObject(getPropertyDescriptor().getJsonSafeClassName());
             AuthorizeProjectProperty submitted = o != null ? req.bindJSON(AuthorizeProjectProperty.class, o) : null;
-            // check if the user submitting the strategy is permitted to apply the submitted authorization strategy
-            if (submitted != null) {
-                AuthorizeProjectStrategy strategy = submitted.getEnabledStrategy();
-                if (strategy != null) {
-                    // ensure that you can only configure a strategy that you are allowed to configure
-                    strategy.checkConfigurePermission(job);
-                }
-            }
             // now it is safe to make the changes
             BulkChange bc = new BulkChange(job);
             try {
