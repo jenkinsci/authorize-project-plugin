@@ -24,11 +24,13 @@
 
 package org.jenkinsci.plugins.authorizeproject.strategy;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.Job;
 import hudson.model.Queue;
 import hudson.security.ACL;
+import hudson.security.AccessControlled;
 import hudson.util.FormValidation;
 import java.io.IOException;
 import jenkins.model.Jenkins;
@@ -43,8 +45,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 /**
  * Run builds as {@link ACL#SYSTEM}. Using this strategy becomes important when
  * {@link org.jenkinsci.plugins.authorizeproject.GlobalQueueItemAuthenticator}
@@ -56,6 +56,7 @@ public class SystemAuthorizationStrategy extends AuthorizeProjectStrategy {
 
     @DataBoundConstructor
     public SystemAuthorizationStrategy() {
+        Jenkins.getActiveInstance().checkPermission(Jenkins.ADMINISTER);
     }
 
     /**
@@ -132,6 +133,22 @@ public class SystemAuthorizationStrategy extends AuthorizeProjectStrategy {
     @Override
     public final boolean equals(Object obj) {
         return obj != null && SystemAuthorizationStrategy.class == obj.getClass();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean hasConfigurePermission(AccessControlled context) {
+        return context.hasPermission(Jenkins.ADMINISTER) || getDescriptor().isPermitReconfiguration();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public DescriptorImpl getDescriptor() {
+        return (DescriptorImpl) super.getDescriptor();
     }
 
     /**

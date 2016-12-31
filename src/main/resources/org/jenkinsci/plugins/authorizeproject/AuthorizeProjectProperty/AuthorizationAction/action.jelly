@@ -1,0 +1,10 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <j:set var="icon"
+         value="${action.iconClassName != null ? action.iconClassName + ' icon-md' : action.iconFileName}"/>
+  <j:if test="${icon!=null and action.job.hasPermission(action.job.CONFIGURE)}">
+    <l:task icon="${icon}" title="${action.displayName}"
+            href="${h.getActionUrl(it.url,action)}" contextMenu="${h.isContextMenuVisible(action)}"/>
+  </j:if>
+</j:jelly>

@@ -24,6 +24,8 @@
 
 package org.jenkinsci.plugins.authorizeproject.strategy;
 
+import hudson.model.Item;
+import hudson.security.AccessControlled;
 import jenkins.model.Jenkins;
 import hudson.Extension;
 import hudson.model.Cause;
@@ -47,19 +49,19 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * Run builds as a user who triggered the build.
  */
 public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrategy {
+    /**
+     * Our logger.
+     */
     private static final Logger LOGGER = Logger.getLogger(TriggeringUsersAuthorizationStrategy.class.getName());
     /**
-     * 
+     * Our constructor.
      */
     @DataBoundConstructor
     public TriggeringUsersAuthorizationStrategy() {
     }
     
     /**
-     * @param project
-     * @param item
-     * @return
-     * @see org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy#authenticate(hudson.model.Job, hudson.model.Queue.Item)
+     * {@inheritDoc}
      */
     @Override
     public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
@@ -84,8 +86,8 @@ public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrate
      * 
      * If this is a downstream build, search upstream builds.
      * 
-     * @param item
-     * @return
+     * @param item the item to query the triggering user of.
+     * @return the {@link UserIdCause} or {@code null} if none could be found.
      */
     private UserIdCause getRootUserIdCause(Queue.Item item) {
         Run<?,?> upstream = null;
@@ -108,15 +110,22 @@ public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrate
         
         return null;
     }
-    
+
     /**
-     *
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean hasConfigurePermission(AccessControlled context) {
+        return context.hasPermission(Item.BUILD);
+    }
+
+    /**
+     * Our descriptor.
      */
     @Extension
     public static class DescriptorImpl extends AuthorizeProjectStrategyDescriptor {
         /**
-         * @return the name shown in project configuration pages.
-         * @see hudson.model.Descriptor#getDisplayName()
+         * {@inheritDoc}
          */
         @Override
         public String getDisplayName() {

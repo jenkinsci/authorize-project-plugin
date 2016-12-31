@@ -142,10 +142,10 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
          * Creates new {@link ProjectQueueItemAuthenticator} from inputs.
          * Additional to that, configure global configurations of {@link AuthorizeProjectStrategy}.
          * 
-         * @param req
-         * @param formData
-         * @return
-         * @throws hudson.model.Descriptor.FormException
+         * @param req the request.
+         * @param formData the form data.
+         * @return the authenticator.
+         * @throws hudson.model.Descriptor.FormException if the submitted form is invalid.
          * @see hudson.model.Descriptor#newInstance(org.kohsuke.stapler.StaplerRequest, net.sf.json.JSONObject)
          */
         @Override

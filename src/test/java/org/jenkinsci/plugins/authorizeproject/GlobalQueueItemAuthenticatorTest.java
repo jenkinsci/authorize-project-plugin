@@ -43,7 +43,7 @@ public class GlobalQueueItemAuthenticatorTest {
         }
 
         authenticators.add(new GlobalQueueItemAuthenticator(
-                new SpecificUsersAuthorizationStrategy(User.get("bob", true).getId(), true))
+                new SpecificUsersAuthorizationStrategy(User.get("bob", true).getId()))
         );
         // if configured, GlobalQueueItemAuthenticator takes effect
         {
@@ -104,7 +104,7 @@ public class GlobalQueueItemAuthenticatorTest {
     @Test
     public void testConfigurationWithDescriptorNewInstance() throws Exception {
         GlobalQueueItemAuthenticator auth = new GlobalQueueItemAuthenticator(
-                new SpecificUsersAuthorizationStrategy("admin", true)
+                new SpecificUsersAuthorizationStrategy("admin")
         );
         QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(auth);
         

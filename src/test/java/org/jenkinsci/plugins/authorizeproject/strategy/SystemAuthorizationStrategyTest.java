@@ -438,19 +438,18 @@ public class SystemAuthorizationStrategyTest {
                 j.getInstance().getDescriptorByType(SystemAuthorizationStrategy.DescriptorImpl.class);
         p.addProperty(new AuthorizeProjectProperty(new SystemAuthorizationStrategy()));
 
-        // Reconfiguration is allowed if reconfiguration is permitted.
+        // Configuration is allowed if reconfiguration is permitted.
         descriptor.setPermitReconfiguration(true);
         j.submit(wc.getPage(p, "configure").getFormByName("config"));
 
-        // Reconfiguration is not allowed if reconfiguration is permitted.
+        // Configuration is not allowed if reconfiguration is permitted.
         descriptor.setPermitReconfiguration(false);
         try {
             j.submit(wc.getPage(p, "configure").getFormByName("config"));
             fail();
         } catch (FailingHttpStatusCodeException e) {
-            assertEquals(400, e.getStatusCode());
+            assertEquals(403, e.getStatusCode());
         }
     }
     
-
 }

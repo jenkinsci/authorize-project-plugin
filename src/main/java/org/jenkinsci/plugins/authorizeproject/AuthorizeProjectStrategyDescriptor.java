@@ -37,25 +37,28 @@ import java.io.File;
 import jenkins.model.Jenkins;
 
 /**
- *
+ * Base {@link Descriptor} class for {@link AuthorizeProjectStrategy} instances.
  */
 public abstract class AuthorizeProjectStrategyDescriptor extends Descriptor<AuthorizeProjectStrategy> {
     
     
     /**
-     * 
+     * {@inheritDoc}
      */
     protected AuthorizeProjectStrategyDescriptor() {
         super();
     }
     
     /**
-     * @param clazz
+     * {@inheritDoc}
      */
     protected AuthorizeProjectStrategyDescriptor(Class<? extends AuthorizeProjectStrategy> clazz) {
         super(clazz);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected final XmlFile getConfigFile() {
         return new XmlFile(new File(Jenkins.getActiveInstance().getRootDir(),
@@ -122,4 +125,16 @@ public abstract class AuthorizeProjectStrategyDescriptor extends Descriptor<Auth
     public boolean isApplicableToGlobal() {
         return true;
     }
+
+    protected void prepareNewInstance(StaplerRequest req) {
+
+    }
+
+    /**
+     *
+     */
+    protected void finalizeNewInstance(StaplerRequest req) {
+
+    }
+
 }
