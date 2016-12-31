@@ -26,13 +26,11 @@ package org.jenkinsci.plugins.authorizeproject.strategy;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
-import hudson.model.Descriptor;
 import hudson.model.Job;
 import hudson.model.Queue;
 import hudson.security.ACL;
 import hudson.security.AccessControlled;
 import hudson.util.FormValidation;
-import java.io.IOException;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.acegisecurity.Authentication;
@@ -56,7 +54,7 @@ public class SystemAuthorizationStrategy extends AuthorizeProjectStrategy {
 
     @DataBoundConstructor
     public SystemAuthorizationStrategy() {
-        Jenkins.getActiveInstance().checkPermission(Jenkins.ADMINISTER);
+        checkAuthorizationConfigurePermission(Jenkins.getActiveInstance());
     }
 
     /**
@@ -92,26 +90,6 @@ public class SystemAuthorizationStrategy extends AuthorizeProjectStrategy {
     }
 
     /**
-     * Called when XSTREAM2 instantiates this from XML configuration.
-     *
-     * When configured via REST/CLI, {@link Descriptor#newInstance(StaplerRequest, JSONObject)} is not called.
-     * Instead checks authentication here.
-     *
-     * @return return myself.
-     * @throws IOException authentication failed.
-     */
-    private Object readResolve() throws IOException {
-        Jenkins instance = Jenkins.getInstance();
-        if (instance == null || !instance.hasPermission(Jenkins.RUN_SCRIPTS)) {
-            // This is called via REST/CLI.
-            // As REST/CLI interface saves configuration after successfully load object from the XML,
-            // this prevents the new configuration saved.
-            throw new IOException(Messages.SystemAuthorizationStrategy_readResolve());
-        }
-        return this;
-    }
-
-    /**
      * For now we are an object with no configurable fields, so return a fixed value.
      * If we add configurable fields we probably should consider removing the final.
      *
@@ -139,8 +117,16 @@ public class SystemAuthorizationStrategy extends AuthorizeProjectStrategy {
      * {@inheritDoc}
      */
     @Override
-    public boolean hasConfigurePermission(AccessControlled context) {
+    public boolean hasJobConfigurePermission(AccessControlled context) {
         return context.hasPermission(Jenkins.ADMINISTER) || getDescriptor().isPermitReconfiguration();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean hasAuthorizationConfigurePermission(AccessControlled context) {
+        return context.hasPermission(Jenkins.RUN_SCRIPTS);
     }
 
     /**

@@ -41,10 +41,8 @@ import javax.annotation.CheckForNull;
 import net.sf.json.JSONObject;
 
 import org.acegisecurity.Authentication;
-import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
-import jenkins.model.Jenkins;
 import jenkins.security.QueueItemAuthenticatorConfiguration;
 import jenkins.security.QueueItemAuthenticatorDescriptor;
 import jenkins.security.QueueItemAuthenticator;

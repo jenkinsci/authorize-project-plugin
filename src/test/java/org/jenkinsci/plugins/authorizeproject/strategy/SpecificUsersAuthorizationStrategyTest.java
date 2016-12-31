@@ -30,6 +30,9 @@ import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import javax.xml.transform.Transformer;
@@ -47,7 +50,10 @@ import hudson.model.ParametersDefinitionProperty;
 import hudson.model.StringParameterDefinition;
 import hudson.model.User;
 import hudson.security.ACL;
+import hudson.security.AuthorizationMatrixProperty;
 import hudson.security.GlobalMatrixAuthorizationStrategy;
+import hudson.security.Permission;
+import hudson.security.ProjectMatrixAuthorizationStrategy;
 
 import org.apache.commons.io.input.NullInputStream;
 import org.apache.commons.io.output.ByteArrayOutputStream;
@@ -70,6 +76,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlPasswordInput;
 import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 import com.gargoylesoftware.htmlunit.xml.XmlPage;
+import com.google.common.collect.Sets;
 
 /**
  *
@@ -83,6 +90,26 @@ public class SpecificUsersAuthorizationStrategyTest {
         j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
         
         GlobalMatrixAuthorizationStrategy authorization = new GlobalMatrixAuthorizationStrategy();
+        authorization.add(Jenkins.ADMINISTER, "admin");
+        authorization.add(Jenkins.READ, "test1");
+        authorization.add(Item.READ, "test1");
+        authorization.add(Item.CONFIGURE, "test1");
+        authorization.add(Jenkins.READ, "test2");
+        authorization.add(Item.READ, "test2");
+        authorization.add(Item.CONFIGURE, "test2");
+        
+        // This is required for CLI, JENKINS-12543.
+        authorization.add(Jenkins.READ, "anonymous");
+        authorization.add(Item.READ, "anonymous");
+        
+        j.jenkins.setAuthorizationStrategy(authorization);
+    }
+    
+    private void prepareJobBasedSecurity() {
+        // This allows any users authenticate name == password
+        j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
+        
+        ProjectMatrixAuthorizationStrategy authorization = new ProjectMatrixAuthorizationStrategy();
         authorization.add(Jenkins.ADMINISTER, "admin");
         authorization.add(Jenkins.READ, "test1");
         authorization.add(Item.READ, "test1");
@@ -776,5 +803,57 @@ public class SpecificUsersAuthorizationStrategyTest {
                 assertEquals(403, e.getStatusCode());
             }
         }
+    }
+
+    @Test
+    public void testConfigureJobByTheUserIsAllowed() throws Exception {
+        prepareSecurity();
+        
+        FreeStyleProject p = j.createFreeStyleProject();
+        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1")));
+        p.save();
+        
+        WebClient wc = j.createWebClient();
+        wc.login("test1", "test1");
+        
+        j.submit(wc.getPage(p, "configure").getFormByName("config"));
+    }
+
+    @Test
+    public void testConfigureJobByAnotherUserIsForbidden() throws Exception {
+        prepareSecurity();
+        
+        FreeStyleProject p = j.createFreeStyleProject();
+        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1")));
+        p.save();
+        
+        WebClient wc = j.createWebClient();
+        wc.login("test2", "test2");
+        
+        try {
+            j.submit(wc.getPage(p, "configure").getFormByName("config"));
+        } catch (FailingHttpStatusCodeException e) {
+            assertEquals(403, e.getStatusCode());
+        }
+    }
+
+    @Test
+    public void testConfigureJobByAdminIsAllowed() throws Exception {
+        prepareJobBasedSecurity();
+        
+        FreeStyleProject p = j.createFreeStyleProject();
+        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1")));
+        {
+            Map<Permission, Set<String>> authMap = new HashMap<>();
+            authMap.put(Item.READ, Sets.newHashSet("test1"));
+            authMap.put(Item.CONFIGURE, Sets.newHashSet("test1"));
+            p.addProperty(new AuthorizationMatrixProperty(authMap));
+        }
+        p.save();
+        
+        WebClient wc = j.createWebClient();
+        wc.login("admin", "admin");
+        
+        j.submit(wc.getPage(p, "configure").getFormByName("config"));
     }
 }

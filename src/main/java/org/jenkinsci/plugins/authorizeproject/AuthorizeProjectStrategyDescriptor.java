@@ -125,16 +125,4 @@ public abstract class AuthorizeProjectStrategyDescriptor extends Descriptor<Auth
     public boolean isApplicableToGlobal() {
         return true;
     }
-
-    protected void prepareNewInstance(StaplerRequest req) {
-
-    }
-
-    /**
-     *
-     */
-    protected void finalizeNewInstance(StaplerRequest req) {
-
-    }
-
 }

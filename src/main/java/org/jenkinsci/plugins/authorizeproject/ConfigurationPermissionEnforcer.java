@@ -4,6 +4,7 @@ import hudson.Extension;
 import hudson.model.Job;
 import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -47,16 +48,28 @@ public class ConfigurationPermissionEnforcer extends JobProperty<Job<?,?>> {
         public JobProperty<?> newInstance(StaplerRequest req, JSONObject formData) throws FormException {
             Job<?,?> job = req.findAncestorObject(Job.class);
             if (job != null) {
-                AuthorizeProjectProperty property = job.getProperty(AuthorizeProjectProperty.class);
-                if (property != null && ProjectQueueItemAuthenticator.isConfigured()) {
-                    AuthorizeProjectStrategy strategy = property.getStrategy();
-                    if (strategy != null) {
-                        strategy.checkConfigurePermission(job);
-                    }
-                }
+                checkConfigurePermission(job);
             }
             // we don't actually return a job property... just want to be called on every form submission.
             return null;
+        }
+
+        private void checkConfigurePermission(Job<?, ?> job) {
+            if (job.hasPermission(Jenkins.ADMINISTER)) {
+                return;
+            }
+            AuthorizeProjectProperty property = job.getProperty(AuthorizeProjectProperty.class);
+            if (property == null) {
+                return;
+            }
+            if (!ProjectQueueItemAuthenticator.isConfigured()) {
+                return;
+            }
+            AuthorizeProjectStrategy strategy = property.getStrategy();
+            if (strategy == null) {
+                return;
+            }
+            strategy.checkJobConfigurePermission(job);
         }
     }
 }

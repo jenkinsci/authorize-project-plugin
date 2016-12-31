@@ -32,12 +32,18 @@ import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.model.Job;
 import hudson.model.Queue;
+import hudson.security.ACL;
 import hudson.security.AccessControlled;
+
+import java.io.InvalidObjectException;
+import java.io.ObjectStreamException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import org.acegisecurity.AccessDeniedException;
 import org.acegisecurity.Authentication;
+import org.kohsuke.stapler.Stapler;
+import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * Extension point to define a new strategy to authorize builds configured in project configuration pages.
@@ -110,9 +116,9 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
      * @throws AccessDeniedException if the current user is not allowed to reconfigure the specified job
      * @since 1.3.0
      */
-    public final void checkConfigurePermission(AccessControlled context) {
-        if (!hasConfigurePermission(context)) {
-            throw new AccessDeniedException(Messages.AuthorizeProjectStrategy_UserNotAuthorized(
+    public final void checkJobConfigurePermission(AccessControlled context) {
+        if (!hasJobConfigurePermission(context)) {
+            throw new AccessDeniedException(Messages.AuthorizeProjectStrategy_UserNotAuthorizedForJob(
                     Jenkins.getAuthentication().getName()
             ));
         }
@@ -120,13 +126,87 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
     
     /**
      * Tests if the job can be reconfigured by the current user when this strategy is the configured strategy.
+     * Users with {@link Jenkins#ADMINISTER} permission skips this check.
      *
      * @param context the context of the job
      * @return {@code true} if and only if the current user is allowed to reconfigure the specified job.
      * @since 1.3.0
      */
-    public boolean hasConfigurePermission(AccessControlled context) {
+    public boolean hasJobConfigurePermission(AccessControlled context) {
         return true;
     }
 
+    /**
+     * Checks that the authorization can be configured by the current user.
+     *
+     * @param context the context of the job
+     * @throws AccessDeniedException if the current user is not allowed to configure this authorization
+     * @since 1.3.0
+     */
+    public final void checkAuthorizationConfigurePermission(AccessControlled context) {
+        if (!hasAuthorizationConfigurePermission(context)) {
+            throw new AccessDeniedException(Messages.AuthorizeProjectStrategy_UserNotAuthorized(
+                    Jenkins.getAuthentication().getName()
+            ));
+        }
+    }
+
+    /**
+     * Tests if the authorization can be configured by the current user.
+     * Users with {@link Jenkins#ADMINISTER} permission skips this check.
+     *
+     * @param context the context of the job
+     * @return {@code true} if and only if the current user is allowed to configure this authorization.
+     * @since 1.3.0
+     */
+    public boolean hasAuthorizationConfigurePermission(AccessControlled context) {
+        return true;
+    }
+
+    /**
+     * If we are being deserialized outside of loading the initial jobs (or reloading) then we need to cross check
+     * the strategy permissions to defend against somebody trying to push a configuration relating to a user other
+     * than themselves.
+     *
+     * @return {@code this}
+     * @throws ObjectStreamException if the object cannot be deserialized.
+     * @see AuthorizeProjectProperty#setStrategyCritical()
+     */
+    private Object readResolve() throws ObjectStreamException {
+        checkUnsecuredConfiguration();
+        return this;
+    }
+
+    private void checkUnsecuredConfiguration() throws ObjectStreamException {
+        Authentication authentication = Jenkins.getAuthentication();
+        if (authentication == ACL.SYSTEM) {
+            // It is considered to initial loading or reloading.
+            return;
+        }
+        if (!ProjectQueueItemAuthenticator.isConfigured()) {
+            return;
+        }
+        StaplerRequest request = Stapler.getCurrentRequest();
+        AccessControlled context;
+        if (request == null) {
+            context = Jenkins.getActiveInstance();
+        } else {
+            Job<?, ?> job = request.findAncestorObject(Job.class);
+            context = job == null ? Jenkins.getActiveInstance() : job;
+        }
+        if (context.hasPermission(Jenkins.ADMINISTER)) {
+            // allows configuration by administrators
+            return;
+        }
+        try {
+            checkJobConfigurePermission(context);
+        } catch (AccessDeniedException e) {
+            throw new InvalidObjectException(e.getMessage());
+        }
+        try {
+            checkAuthorizationConfigurePermission(context);
+        } catch (AccessDeniedException e) {
+            throw new InvalidObjectException(e.getMessage());
+        }
+    }
 }
