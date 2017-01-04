@@ -65,7 +65,7 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
         this.strategyEnabledMap = strategyEnabledMap;
     }
     
-    public Object readResolve() {
+    protected Object readResolve() {
         if(strategyEnabledMap == null) {
             return new ProjectQueueItemAuthenticator(Collections.<String, Boolean>emptyMap());
         }

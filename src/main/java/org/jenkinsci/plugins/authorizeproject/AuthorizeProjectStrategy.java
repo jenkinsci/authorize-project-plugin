@@ -172,7 +172,7 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
      * @throws ObjectStreamException if the object cannot be deserialized.
      * @see AuthorizeProjectProperty#setStrategyCritical()
      */
-    private Object readResolve() throws ObjectStreamException {
+    protected Object readResolve() throws ObjectStreamException {
         checkUnsecuredConfiguration();
         return this;
     }
