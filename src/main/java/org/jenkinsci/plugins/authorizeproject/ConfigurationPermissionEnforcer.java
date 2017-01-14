@@ -4,8 +4,12 @@ import hudson.Extension;
 import hudson.model.Job;
 import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
+import hudson.security.AccessControlled;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
+
+import javax.annotation.CheckForNull;
+
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -47,15 +51,24 @@ public class ConfigurationPermissionEnforcer extends JobProperty<Job<?,?>> {
         @Override
         public JobProperty<?> newInstance(StaplerRequest req, JSONObject formData) throws FormException {
             Job<?,?> job = req.findAncestorObject(Job.class);
-            if (job != null) {
-                checkConfigurePermission(job);
-            }
+            AccessControlled context = req.findAncestorObject(AccessControlled.class);
+            checkConfigurePermission(job, context);
             // we don't actually return a job property... just want to be called on every form submission.
             return null;
         }
 
-        private void checkConfigurePermission(Job<?, ?> job) {
-            if (job.hasPermission(Jenkins.ADMINISTER)) {
+        private void checkConfigurePermission(@CheckForNull Job<?, ?> job, @CheckForNull AccessControlled context) {
+            if (job == null) {
+                return;
+            }
+            if (context == null) {
+                // this should not happen.
+                context = job;
+            }
+            if (Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
+                // allows any configurations by system administrators.
+                // It may not be allowed even if the user is an administrator of the job,
+                // 
                 return;
             }
             AuthorizeProjectProperty property = job.getProperty(AuthorizeProjectProperty.class);
@@ -69,7 +82,7 @@ public class ConfigurationPermissionEnforcer extends JobProperty<Job<?,?>> {
             if (strategy == null) {
                 return;
             }
-            strategy.checkJobConfigurePermission(job);
+            strategy.checkJobConfigurePermission(context);
         }
     }
 }

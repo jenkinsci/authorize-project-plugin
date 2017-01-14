@@ -186,17 +186,15 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
         if (!ProjectQueueItemAuthenticator.isConfigured()) {
             return;
         }
-        StaplerRequest request = Stapler.getCurrentRequest();
-        AccessControlled context;
-        if (request == null) {
-            context = Jenkins.getActiveInstance();
-        } else {
-            Job<?, ?> job = request.findAncestorObject(Job.class);
-            context = job == null ? Jenkins.getActiveInstance() : job;
-        }
-        if (context.hasPermission(Jenkins.ADMINISTER)) {
-            // allows configuration by administrators
+        if (Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
+            // allows any configurations by system administrators.
+            // It may not be allowed even if the user is an administrator of the job.
             return;
+        }
+        StaplerRequest request = Stapler.getCurrentRequest();
+        AccessControlled context = (request != null) ? request.findAncestorObject(AccessControlled.class) : null;
+        if (context == null) {
+            context = Jenkins.getActiveInstance();
         }
         try {
             checkJobConfigurePermission(context);

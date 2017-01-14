@@ -111,12 +111,6 @@ public class SpecificUsersAuthorizationStrategyTest {
         
         ProjectMatrixAuthorizationStrategy authorization = new ProjectMatrixAuthorizationStrategy();
         authorization.add(Jenkins.ADMINISTER, "admin");
-        authorization.add(Jenkins.READ, "test1");
-        authorization.add(Item.READ, "test1");
-        authorization.add(Item.CONFIGURE, "test1");
-        authorization.add(Jenkins.READ, "test2");
-        authorization.add(Item.READ, "test2");
-        authorization.add(Item.CONFIGURE, "test2");
         
         // This is required for CLI, JENKINS-12543.
         authorization.add(Jenkins.READ, "anonymous");
@@ -622,6 +616,172 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
     
     @Test
+    public void testCliSuccessBySystemAdmin() throws Exception {
+        prepareSecurity();
+        
+        FreeStyleProject srcProject = j.createFreeStyleProject();
+        srcProject.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1")));
+        srcProject.save();
+        
+        // GET config.xml of srcProject (userid is set to test1)
+        String configXml = null;
+        {
+            CLI cli = new CLI(j.getURL());
+            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+            int ret = cli.execute(Arrays.asList(
+                    "get-job",
+                    srcProject.getFullName(),
+                    "--username",
+                    "admin",
+                    "--password",
+                    "admin"
+                ),
+                new NullInputStream(0),
+                stdout,
+                stderr
+            );
+            assertEquals(stderr.toString(), 0, ret);
+            configXml = stdout.toString();
+        }
+        
+        // POST config.xml of srcProject (userid is set to test1) to a new project.
+        // This should success when the user is administrator of the system.
+        FreeStyleProject destProject = j.createFreeStyleProject();
+        destProject.save();
+        String projectName = destProject.getFullName();
+        
+        {
+            CLI cli = new CLI(j.getURL());
+            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+            int ret = cli.execute(Arrays.asList(
+                    "update-job",
+                    destProject.getFullName(),
+                    "--username",
+                    "admin",
+                    "--password",
+                    "admin"
+                ),
+                new ByteArrayInputStream(configXml.getBytes()),
+                stdout,
+                stderr
+            );
+            assertEquals(stderr.toString(), 0, ret);
+        }
+        
+        {
+            FreeStyleProject p = j.jenkins.getItemByFullName(projectName, FreeStyleProject.class);
+            assertNotNull(p);
+            AuthorizeProjectProperty prop = p.getProperty(AuthorizeProjectProperty.class);
+            assertNotNull(prop);
+            assertEquals(SpecificUsersAuthorizationStrategy.class, prop.getStrategy().getClass());
+            SpecificUsersAuthorizationStrategy strategy = (SpecificUsersAuthorizationStrategy)prop.getStrategy();
+            assertEquals("test1", strategy.getUserid());
+        }
+        
+        j.jenkins.reload();
+        
+        {
+            FreeStyleProject p = j.jenkins.getItemByFullName(projectName, FreeStyleProject.class);
+            assertNotNull(p);
+            AuthorizeProjectProperty prop = p.getProperty(AuthorizeProjectProperty.class);
+            assertNotNull(prop);
+            assertEquals(SpecificUsersAuthorizationStrategy.class, prop.getStrategy().getClass());
+            SpecificUsersAuthorizationStrategy strategy = (SpecificUsersAuthorizationStrategy)prop.getStrategy();
+            assertEquals("test1", strategy.getUserid());
+        }
+    }
+    
+    @Test
+    public void testCliFailureEvenByJobAdmin() throws Exception {
+        prepareJobBasedSecurity();
+        
+        FreeStyleProject srcProject = j.createFreeStyleProject();
+        srcProject.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin")));
+        {
+            Map<Permission, Set<String>> authMap = new HashMap<>();
+            authMap.put(Item.EXTENDED_READ, Sets.newHashSet("test1"));
+            srcProject.addProperty(new AuthorizationMatrixProperty(authMap));
+        }
+        srcProject.save();
+        
+        // GET config.xml of srcProject (userid is set to admin)
+        String configXml = null;
+        {
+            CLI cli = new CLI(j.getURL());
+            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+            int ret = cli.execute(Arrays.asList(
+                    "get-job",
+                    srcProject.getFullName(),
+                    "--username",
+                    "test1",
+                    "--password",
+                    "test1"
+                ),
+                new NullInputStream(0),
+                stdout,
+                stderr
+            );
+            assertEquals(stderr.toString(), 0, ret);
+            configXml = stdout.toString();
+        }
+        
+        // POST config.xml of srcProject (userid is set to test1) to a new project.
+        // This should fail even if test1 is a administrator of the new job.
+        FreeStyleProject destProject = j.createFreeStyleProject();
+        {
+            Map<Permission, Set<String>> authMap = new HashMap<>();
+            authMap.put(Jenkins.ADMINISTER, Sets.newHashSet("test1"));
+            destProject.addProperty(new AuthorizationMatrixProperty(authMap));
+        }
+        destProject.save();
+        String projectName = destProject.getFullName();
+        
+        {
+            CLI cli = new CLI(j.getURL());
+            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+            int ret = cli.execute(Arrays.asList(
+                    "update-job",
+                    destProject.getFullName(),
+                    "--username",
+                    "test1",
+                    "--password",
+                    "test1"
+                ),
+                new ByteArrayInputStream(configXml.getBytes()),
+                stdout,
+                stderr
+            );
+            assertNotEquals(0, ret);
+        }
+        
+        {
+            FreeStyleProject p = j.jenkins.getItemByFullName(projectName, FreeStyleProject.class);
+            assertNotNull(p);
+            AuthorizeProjectProperty prop = p.getProperty(AuthorizeProjectProperty.class);
+            assertTrue(
+                    prop == null
+                    || prop.getStrategy() == null
+            );
+        }
+        
+        j.jenkins.reload();
+        
+        {
+            FreeStyleProject p = j.jenkins.getItemByFullName(projectName, FreeStyleProject.class);
+            assertNotNull(p);
+            AuthorizeProjectProperty prop = p.getProperty(AuthorizeProjectProperty.class);
+            assertTrue(
+                    prop == null
+                    || prop.getStrategy() == null
+            );
+        }
+    }
+    
+    @Test
     public void testConfigurationAuthentication() throws Exception {
         prepareSecurity();
         
@@ -838,7 +998,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
 
     @Test
-    public void testConfigureJobByAdminIsAllowed() throws Exception {
+    public void testConfigureJobBySystemAdminIsAllowed() throws Exception {
         prepareJobBasedSecurity();
         
         FreeStyleProject p = j.createFreeStyleProject();
@@ -855,5 +1015,30 @@ public class SpecificUsersAuthorizationStrategyTest {
         wc.login("admin", "admin");
         
         j.submit(wc.getPage(p, "configure").getFormByName("config"));
+    }
+
+    @Test
+    public void testConfigureJobByJobAdminIsNotAllowed() throws Exception {
+        prepareJobBasedSecurity();
+
+        FreeStyleProject p = j.createFreeStyleProject();
+        p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1")));
+        {
+            Map<Permission, Set<String>> authMap = new HashMap<>();
+            authMap.put(Item.READ, Sets.newHashSet("test1"));
+            authMap.put(Item.CONFIGURE, Sets.newHashSet("test1"));
+            authMap.put(Jenkins.ADMINISTER, Sets.newHashSet("test2"));
+            p.addProperty(new AuthorizationMatrixProperty(authMap));
+        }
+        p.save();
+
+        WebClient wc = j.createWebClient();
+        wc.login("test2", "test2");
+
+        try {
+            j.submit(wc.getPage(p, "configure").getFormByName("config"));
+        } catch (FailingHttpStatusCodeException e) {
+            assertEquals(403, e.getStatusCode());
+        }
     }
 }
