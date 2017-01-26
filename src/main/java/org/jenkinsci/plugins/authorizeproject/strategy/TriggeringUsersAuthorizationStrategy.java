@@ -115,7 +115,7 @@ public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrate
      * {@inheritDoc}
      */
     @Override
-    public boolean hasConfigurePermission(AccessControlled context) {
+    public boolean hasJobConfigurePermission(AccessControlled context) {
         return context.hasPermission(Item.BUILD);
     }
 

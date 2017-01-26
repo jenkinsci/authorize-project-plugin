@@ -24,7 +24,6 @@
 
 package org.jenkinsci.plugins.authorizeproject;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.BulkChange;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
@@ -38,12 +37,8 @@ import hudson.model.Job;
 import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
 import hudson.model.Queue;
-import hudson.security.ACL;
-import hudson.security.AccessControlled;
 import hudson.util.FormApply;
 import java.io.IOException;
-import java.io.InvalidObjectException;
-import java.io.ObjectStreamException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -55,14 +50,12 @@ import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 import jenkins.model.TransientActionFactory;
 import net.sf.json.JSONObject;
-import org.acegisecurity.AccessDeniedException;
 import org.acegisecurity.Authentication;
 import org.jenkins.ui.icon.IconSpec;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.HttpResponse;
-import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
@@ -146,43 +139,13 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
     }
 
     /**
-     * If we are being deserialized outside of loading the initial jobs (or reloading) then we need to cross check
-     * the strategy permissions to defend against somebody trying to push a configuration relating to a user other
-     * than themselves.
-     *
-     * @return {@code this}
-     * @throws ObjectStreamException if the object cannot be deserialized.
-     * @see #setStrategyCritical()
-     */
-    private Object readResolve() throws ObjectStreamException {
-        if (strategy != null) {
-            Authentication authentication = Jenkins.getAuthentication();
-            if (authentication != ACL.SYSTEM) {
-                if (ProjectQueueItemAuthenticator.isConfigured()) {
-                    StaplerRequest request = Stapler.getCurrentRequest();
-                    AccessControlled context;
-                    if (request == null) {
-                        context = Jenkins.getActiveInstance();
-                    } else {
-                        Job job = request.findAncestorObject(Job.class);
-                        context = job == null ? Jenkins.getActiveInstance() : job;
-                    }
-                    try {
-                        strategy.checkConfigurePermission(context);
-                    } catch (AccessDeniedException e) {
-                        throw new InvalidObjectException(e.getMessage());
-                    }
-                }
-            }
-        }
-        return this;
-    }
-
-    /**
      * {@inheritDoc}
      */
     @Override
     public JobProperty<?> reconfigure(StaplerRequest req, JSONObject form) throws Descriptor.FormException {
+        // This is called when the job configuration is submitted.
+        // authorize-project is preserved in job configuration pages.
+        // It is updated via AuthorizationAction instead.
         return strategy != null && ProjectQueueItemAuthenticator.isConfigured() ? this : null;
     }
 
@@ -296,7 +259,7 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
          */
         @Override
         public String getDisplayName() {
-            return "Authorization";
+            return Messages.AuthorizationAction_DisplayName();
         }
 
         /**
@@ -323,10 +286,9 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
          * @throws ServletException when things go wrong.
          */
         @RequirePOST
-        @NonNull
+        @Nonnull
         @Restricted(NoExternalUse.class)
-        @SuppressWarnings("unused") // stapler web method binding
-        public synchronized HttpResponse doAuthorize(@NonNull StaplerRequest req) throws IOException, ServletException {
+        public synchronized HttpResponse doAuthorize(@Nonnull StaplerRequest req) throws IOException, ServletException {
             job.checkPermission(Job.CONFIGURE);
             JSONObject json = req.getSubmittedForm();
             JSONObject o = json.optJSONObject(getPropertyDescriptor().getJsonSafeClassName());
@@ -357,7 +319,8 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
      *
      * @since 1.3.0
      */
-    @Extension(ordinal = Double.MAX_VALUE / 2)
+    @SuppressWarnings("rawtypes")
+    @Extension(ordinal = Double.MAX_VALUE / 2)  // close to the top
     public static class TransientActionFactoryImpl extends TransientActionFactory<Job> {
 
         /**

@@ -25,8 +25,6 @@
 package org.jenkinsci.plugins.authorizeproject.strategy;
 
 import hudson.Extension;
-import hudson.model.AbstractProject;
-import hudson.model.Descriptor;
 import hudson.model.Job;
 import hudson.model.Queue;
 import hudson.model.User;
@@ -35,7 +33,6 @@ import hudson.security.AbstractPasswordBasedSecurityRealm;
 import hudson.security.AccessControlled;
 import hudson.security.SecurityRealm;
 import hudson.util.FormValidation;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,7 +41,6 @@ import jenkins.security.ApiTokenProperty;
 import net.sf.json.JSONObject;
 import org.acegisecurity.AccessDeniedException;
 import org.acegisecurity.Authentication;
-import org.acegisecurity.AuthenticationException;
 import org.acegisecurity.providers.UsernamePasswordAuthenticationToken;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.apache.commons.lang.StringUtils;
@@ -177,8 +173,16 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
      * {@inheritDoc}
      */
     @Override
-    public boolean hasConfigurePermission(AccessControlled context) {
+    public boolean hasJobConfigurePermission(AccessControlled context) {
         return AuthorizeProjectUtil.userIdEquals(Jenkins.getAuthentication().getName(), userid);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean hasAuthorizationConfigurePermission(AccessControlled context) {
+        return !isAuthenticationRequired(getUserid());
     }
 
     /**
@@ -205,24 +209,6 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
     }
     
     /**
-     * Called when XSTREAM2 instantiates this from XML configuration.
-     * 
-     * When configured via REST/CLI, {@link Descriptor#newInstance(StaplerRequest, JSONObject)} is not called.
-     * Instead checks authentication here.
-     * 
-     * @return return myself.
-     * @throws IOException authentication failed.
-     */
-    private Object readResolve() throws AccessDeniedException {
-        if (!ACL.SYSTEM.equals(Jenkins.getAuthentication()) && isAuthenticationRequired(getUserid())) {
-            // As REST/CLI interface saves configuration after successfully load object from the XML,
-            // this prevents the new configuration saved.
-            throw new AccessDeniedException(Messages.SpecificUsersAuthorizationStrategy_userid_readResolve());
-        }
-        return this;
-    }
-    
-    /**
      * Our descriptor.
      */
     @Extension
@@ -244,7 +230,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         @Restricted(NoExternalUse.class) // used by stapler/jelly
         @SuppressWarnings("unused")
         public String calcCheckPasswordRequestedUrl() {
-            return String.format("'%s/%s/checkPasswordRequested' + qs(this).nearBy('userid').nearBy('noNeedReauthentication')",
+            return String.format("'%s/%s/checkPasswordRequested' + qs(this).nearBy('userid')",
                     getCurrentDescriptorByNameUrl(),
                     getDescriptorUrl()
             );
