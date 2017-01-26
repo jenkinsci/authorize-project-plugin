@@ -1,0 +1,17 @@
+<div>
+<p>
+"Run as Specific User" restricts the job configuration only to the specified user.
+Other users cannot configure the job even if the Jenkins access control configuration
+allows it.
+</p>
+<p>
+This option disabled that feature, and the job configuration is controlled
+by the Jenkins access control.
+</p>
+<p>
+Use this feature carefully, for a malicious user can run unintended commands
+without authentication by changing configuration of the job.
+Check the access control configuration, and ensure that the CONFIGURE permission
+for this job is granted only to proper users.
+</p>
+</div>

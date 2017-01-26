@@ -42,6 +42,9 @@ THE SOFTWARE.
     </div>
     <f:checkbox field="useApitoken" checked="${descriptor.useApitoken}" title="${%Use API Token for authentication}" />
   </f:entry>
+  <f:entry title="${%Don't restrict job configuration}" field="dontRestrictJobConfiguration">
+    <f:checkbox />
+  </f:entry>
   </j:if> <!-- authorizeProjectContext -->
   </table>
   <j:if test="${authorizeProjectContext != 'global'}">

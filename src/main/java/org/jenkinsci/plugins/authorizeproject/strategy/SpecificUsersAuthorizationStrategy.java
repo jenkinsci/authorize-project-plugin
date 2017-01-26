@@ -33,6 +33,8 @@ import hudson.security.AbstractPasswordBasedSecurityRealm;
 import hudson.security.AccessControlled;
 import hudson.security.SecurityRealm;
 import hudson.util.FormValidation;
+
+import java.io.ObjectStreamException;
 import java.util.Collections;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -51,6 +53,7 @@ import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectUtil;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -72,9 +75,32 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
     public String getUserid() {
         return userid;
     }
-    
+
+    // to migrate from < 1.3.0.
+    private transient Boolean noNeedReauthentication;
+
+    private boolean dontRestrictJobConfiguration;
+
+    /**
+     * @return whether not to restrict job configuration
+     * @see #hasJobConfigurePermission(AccessControlled)
+     */
+    public boolean isDontRestrictJobConfiguration() {
+        return dontRestrictJobConfiguration;
+    }
+
+    /**
+     * @param dontRestrictPermission whether not to restrict job configuration
+     * @see #hasJobConfigurePermission(AccessControlled)
+     */
+    @DataBoundSetter
+    public void setDontRestrictJobConfiguration(boolean dontRestrictPermission) {
+        this.dontRestrictJobConfiguration = dontRestrictPermission;
+    }
+
     public SpecificUsersAuthorizationStrategy(String userid) {
         this.userid = StringUtils.trim(userid);
+        this.dontRestrictJobConfiguration = false;
         for (Authentication a : BUILTIN_USERS) {
             if (AuthorizeProjectUtil.userIdEquals(this.userid, a.getPrincipal().toString())) {
                 throw new IllegalArgumentException(Messages.SpecificUsersAuthorizationStrategy_userid_builtin());
@@ -174,6 +200,9 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
      */
     @Override
     public boolean hasJobConfigurePermission(AccessControlled context) {
+        if (isDontRestrictJobConfiguration()) {
+            return true;
+        }
         return AuthorizeProjectUtil.userIdEquals(Jenkins.getAuthentication().getName(), userid);
     }
 
@@ -208,6 +237,18 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         return (SpecificUsersAuthorizationStrategy)prop.getStrategy();
     }
     
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected Object readResolve() throws ObjectStreamException {
+        SpecificUsersAuthorizationStrategy self = (SpecificUsersAuthorizationStrategy)super.readResolve();
+        if (self.noNeedReauthentication != null) {
+            self.setDontRestrictJobConfiguration(self.noNeedReauthentication.booleanValue());
+        }
+        return self;
+    }
+
     /**
      * Our descriptor.
      */
@@ -296,6 +337,24 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
                 return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_password_required());
             }
             
+            return FormValidation.ok();
+        }
+
+        /**
+         * Display warnings for {@code dontRestrictJobConfiguration}
+         *
+         * "Don't restrict job configuration" can cause security issues
+         * when used with inappropriate access controls,
+         * and display for a waning message for that.
+         *
+         * @param dontRestrictJobConfiguration whether not to restrict job configuration
+         * @return a warning message for {@code dontRestrictJobConfiguration} if it is {@code true}
+         * @see SpecificUsersAuthorizationStrategy#setDontRestrictJobConfiguration(boolean)
+         */
+        public FormValidation doCheckDontRestrictJobConfiguration(@QueryParameter boolean dontRestrictJobConfiguration) {
+            if (dontRestrictJobConfiguration) {
+                return FormValidation.warning(Messages.SpecificUsersAuthorizationStrategy_dontRestrictJobConfiguration_usage());
+            }
             return FormValidation.ok();
         }
 
