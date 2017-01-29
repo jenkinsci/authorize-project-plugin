@@ -84,6 +84,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
     /**
      * @return whether not to restrict job configuration
      * @see #hasJobConfigurePermission(AccessControlled)
+     * @since 1.3.0
      */
     public boolean isDontRestrictJobConfiguration() {
         return dontRestrictJobConfiguration;
@@ -92,6 +93,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
     /**
      * @param dontRestrictPermission whether not to restrict job configuration
      * @see #hasJobConfigurePermission(AccessControlled)
+     * @since 1.3.0
      */
     @DataBoundSetter
     public void setDontRestrictJobConfiguration(boolean dontRestrictPermission) {
