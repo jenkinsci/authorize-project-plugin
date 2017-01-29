@@ -97,7 +97,7 @@
         <artifactId>maven-hpi-plugin</artifactId>
         <extensions>true</extensions>
         <configuration>
-          <compatibleSinceVersion>1.1.0</compatibleSinceVersion>
+          <compatibleSinceVersion>1.3.0</compatibleSinceVersion>
         </configuration>
       </plugin>
     </plugins>
