@@ -291,7 +291,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         @Restricted(NoExternalUse.class) // used by stapler/jelly
         @SuppressWarnings("unused")
         public String doCheckPasswordRequested(StaplerRequest req, @QueryParameter String userid) {
-            return Boolean.toString(!isAuthenticationRequired(userid.trim()));
+            return Boolean.toString(isAuthenticationRequired(userid.trim()));
         }
         
         /**
