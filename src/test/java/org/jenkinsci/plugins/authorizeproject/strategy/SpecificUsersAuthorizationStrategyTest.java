@@ -28,6 +28,7 @@ import static org.junit.Assert.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -894,6 +895,28 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
     
     @Test
+    public void testConfigureDontRestrictJobConfiguration() throws Exception {
+        prepareSecurity();
+
+        boolean[] testValues = {true, false};
+        for (boolean testValue: testValues) {
+            FreeStyleProject p = j.createFreeStyleProject();
+            SpecificUsersAuthorizationStrategy target = new SpecificUsersAuthorizationStrategy("test1");
+            target.setDontRestrictJobConfiguration(testValue);
+            p.addProperty(new AuthorizeProjectProperty(target));
+
+            WebClient wc = j.createWebClient();
+            wc.login("test1");
+
+            // configRoundtrip
+            j.submit(wc.getPage(p, "authorization").getFormByName("config"));
+
+            target = (SpecificUsersAuthorizationStrategy) p.getProperty(AuthorizeProjectProperty.class).getStrategy();
+            assertEquals(testValue, target.isDontRestrictJobConfiguration());
+        }
+    }
+
+    @Test
     public void testConfigureApitoken() throws Exception {
         prepareSecurity();
         
@@ -998,6 +1021,22 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
 
     @Test
+    public void testDontRestrictJobConfiguration() throws Exception {
+        prepareSecurity();
+        
+        FreeStyleProject p = j.createFreeStyleProject();
+        SpecificUsersAuthorizationStrategy strategy = new SpecificUsersAuthorizationStrategy("test1");
+        strategy.setDontRestrictJobConfiguration(true);
+        p.addProperty(new AuthorizeProjectProperty(strategy));
+        p.save();
+        
+        WebClient wc = j.createWebClient();
+        wc.login("test2", "test2");
+        
+        j.submit(wc.getPage(p, "configure").getFormByName("config"));
+    }
+
+    @Test
     public void testConfigureJobBySystemAdminIsAllowed() throws Exception {
         prepareJobBasedSecurity();
         
@@ -1039,6 +1078,52 @@ public class SpecificUsersAuthorizationStrategyTest {
             j.submit(wc.getPage(p, "configure").getFormByName("config"));
         } catch (FailingHttpStatusCodeException e) {
             assertEquals(403, e.getStatusCode());
+        }
+    }
+
+    @Test
+    public void testReadResolveNoNeedReauthenticationIsSet() throws Exception {
+        SpecificUsersAuthorizationStrategy target = new SpecificUsersAuthorizationStrategy("test1");
+        target.setDontRestrictJobConfiguration(false);
+
+        Field noNeedReauthentication = target.getClass().getDeclaredField("noNeedReauthentication");
+        try {
+            noNeedReauthentication.setAccessible(true);
+            noNeedReauthentication.set(target, true);
+        } finally {
+            noNeedReauthentication.setAccessible(false);
+        }
+
+        target = (SpecificUsersAuthorizationStrategy) target.readResolve();
+        assertTrue(target.isDontRestrictJobConfiguration());
+    }
+
+    @Test
+    public void testReadResolveNoNeedReauthenticationIsUnset() throws Exception {
+        SpecificUsersAuthorizationStrategy target = new SpecificUsersAuthorizationStrategy("test1");
+        target.setDontRestrictJobConfiguration(true);
+
+        Field noNeedReauthentication = target.getClass().getDeclaredField("noNeedReauthentication");
+        try {
+            noNeedReauthentication.setAccessible(true);
+            noNeedReauthentication.set(target, false);
+        } finally {
+            noNeedReauthentication.setAccessible(false);
+        }
+
+        target = (SpecificUsersAuthorizationStrategy) target.readResolve();
+        assertFalse(target.isDontRestrictJobConfiguration());
+    }
+
+    @Test
+    public void testReadResolveNoNeedReauthenticationIsNotDefined() throws Exception {
+        boolean[] testValues = {true, false};
+        for (boolean testValue: testValues) {
+            SpecificUsersAuthorizationStrategy target = new SpecificUsersAuthorizationStrategy("test1");
+            target.setDontRestrictJobConfiguration(testValue);
+
+            target = (SpecificUsersAuthorizationStrategy) target.readResolve();
+            assertEquals(testValue, target.isDontRestrictJobConfiguration());
         }
     }
 }
