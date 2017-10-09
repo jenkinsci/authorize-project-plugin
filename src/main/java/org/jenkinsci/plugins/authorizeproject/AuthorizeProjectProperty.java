@@ -39,6 +39,7 @@ import hudson.model.JobPropertyDescriptor;
 import hudson.model.Queue;
 import hudson.util.FormApply;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -47,6 +48,8 @@ import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
+
+import hudson.util.ReflectionUtils;
 import jenkins.model.Jenkins;
 import jenkins.model.TransientActionFactory;
 import net.sf.json.JSONObject;
@@ -135,7 +138,13 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
      */
     @Initializer(after = InitMilestone.PLUGINS_STARTED)
     public static void setStrategyCritical() {
-        Items.XSTREAM2.addCriticalField(AuthorizeProjectProperty.class, "strategy");
+        //TODO the reflection could be removed when the addCriticalField will be un-restricted (PR: https://github.com/jenkinsci/jenkins/pull/3066)
+        Method m = ReflectionUtils.findMethod(Items.XSTREAM2.getClass(), "addCriticalField", new Class[]{Class.class, String.class});
+        if(m == null) {
+            throw new RuntimeException("Class XSTREAM2 should have a method called 'addCriticalField' accepting a Class and a String as arguments");
+        }
+
+        ReflectionUtils.invokeMethod(m, Items.XSTREAM2, new Object[]{ AuthorizeProjectProperty.class, "strategy" });
     }
 
     /**
