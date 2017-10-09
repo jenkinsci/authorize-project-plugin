@@ -36,6 +36,7 @@ import hudson.matrix.AxisList;
 import hudson.matrix.MatrixProject;
 import hudson.matrix.TextAxis;
 import hudson.model.AbstractProject;
+import hudson.model.Descriptor;
 import hudson.model.FreeStyleProject;
 import hudson.model.Job;
 import hudson.model.Queue;
