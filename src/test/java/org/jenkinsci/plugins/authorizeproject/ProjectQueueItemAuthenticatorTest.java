@@ -79,7 +79,7 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 public class ProjectQueueItemAuthenticatorTest {
     @Rule
     public JenkinsRule j = new AuthorizeProjectJenkinsRule(SpecificUsersAuthorizationStrategy.class);
-
+    
     public static class NullAuthorizeProjectStrategy extends AuthorizeProjectStrategy {
         @DataBoundConstructor
         public NullAuthorizeProjectStrategy() {
@@ -516,7 +516,7 @@ public class ProjectQueueItemAuthenticatorTest {
             }
         }
     }
-
+    
     @Test
     public void testWorkflow() throws Exception {
         j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
@@ -527,18 +527,18 @@ public class ProjectQueueItemAuthenticatorTest {
             j.assertBuildStatusSuccess(b);
             assertEquals(ACL.SYSTEM, b.getAction(AuthorizationRecordAction.class).authentication);
         }
-
+        
         {
             WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "test"+j.jenkins.getItems().size());
             p.addProperty(new AuthorizeProjectProperty(new AuthorizeProjectStrategyWithOldSignature("test1")));
             p.setDefinition(new CpsFlowDefinition("node{ step([$class: 'AuthorizationCheckSimpleBuilder']); }", true));
             WorkflowRun b = p.scheduleBuild2(0).get();
             j.assertBuildStatusSuccess(b);
-
+            
             // Strategies with old signatures don't work for Jobs.
             assertEquals(ACL.SYSTEM, b.getAction(AuthorizationRecordAction.class).authentication);
         }
-
+        
         {
             WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "test"+j.jenkins.getItems().size());
             p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1")));
