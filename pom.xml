@@ -13,7 +13,7 @@
   <description>Configure projects to run with specified authorization.</description>
 
   <url>https://wiki.jenkins-ci.org/display/JENKINS/Authorize+Project+plugin</url>
-
+  
   <scm>
     <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
     <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
@@ -61,7 +61,6 @@
       <version>${workflow.version}</version>
       <scope>test</scope>
     </dependency>
-    
     <!-- Required to avoid cyclic dependency -->
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
