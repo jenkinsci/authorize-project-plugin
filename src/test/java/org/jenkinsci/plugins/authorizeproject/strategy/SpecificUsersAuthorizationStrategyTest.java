@@ -698,6 +698,9 @@ public class SpecificUsersAuthorizationStrategyTest {
     public void testCliFailureEvenByJobAdmin() throws Exception {
         prepareJobBasedSecurity();
         
+        // required since matrix-auth:1.7
+        Item.EXTENDED_READ.setEnabled(true);
+        
         FreeStyleProject srcProject = j.createFreeStyleProject();
         srcProject.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin")));
         {
