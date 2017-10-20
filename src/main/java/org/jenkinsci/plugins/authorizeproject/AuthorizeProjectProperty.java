@@ -39,6 +39,8 @@ import hudson.model.JobPropertyDescriptor;
 import hudson.model.Queue;
 import hudson.util.FormApply;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -47,6 +49,8 @@ import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
+
+import hudson.util.XStream2;
 import jenkins.model.Jenkins;
 import jenkins.model.TransientActionFactory;
 import net.sf.json.JSONObject;
@@ -134,8 +138,10 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
      * This method is responsible for ensuring that POSTing config.xml respects the defined strategy.
      */
     @Initializer(after = InitMilestone.PLUGINS_STARTED)
-    public static void setStrategyCritical() {
-        Items.XSTREAM2.addCriticalField(AuthorizeProjectProperty.class, "strategy");
+    public static void setStrategyCritical() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        //TODO the reflection could be removed when the addCriticalField will be un-restricted (PR: https://github.com/jenkinsci/jenkins/pull/3066)
+        Method method = XStream2.class.getMethod("addCriticalField", Class.class, String.class);
+        method.invoke(Items.XSTREAM2, AuthorizeProjectProperty.class, "strategy");
     }
 
     /**
