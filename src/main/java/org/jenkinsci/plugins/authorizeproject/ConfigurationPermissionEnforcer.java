@@ -50,10 +50,12 @@ public class ConfigurationPermissionEnforcer extends JobProperty<Job<?,?>> {
          */
         @Override
         public JobProperty<?> newInstance(StaplerRequest req, JSONObject formData) throws FormException {
-            Job<?,?> job = req.findAncestorObject(Job.class);
-            AccessControlled context = req.findAncestorObject(AccessControlled.class);
-            checkConfigurePermission(job, context);
-            // we don't actually return a job property... just want to be called on every form submission.
+            if(req != null) {
+                Job<?, ?> job = req.findAncestorObject(Job.class);
+                AccessControlled context = req.findAncestorObject(AccessControlled.class);
+                checkConfigurePermission(job, context);
+                // we don't actually return a job property... just want to be called on every form submission.
+            }
             return null;
         }
 
