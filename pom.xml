@@ -37,29 +37,22 @@
   </licenses>
   
   <properties>
-    <jenkins.version>1.625</jenkins.version><!-- for JENKINS-28298 -->
+    <jenkins.version>1.642.3</jenkins.version>
     <java.level>7</java.level>
-    <workflow.version>1.0</workflow.version> <!-- only for testing purpose -->
+    <declarative.version>1.0</declarative.version> <!-- only for testing purpose -->
   </properties>
   
   <dependencies>
     <dependency>
-      <groupId>org.jenkins-ci.plugins.workflow</groupId>
-      <artifactId>workflow-job</artifactId>
-      <version>${workflow.version}</version>
+      <groupId>org.jenkinsci.plugins</groupId>
+      <artifactId>pipeline-model-definition</artifactId>
+      <version>${declarative.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.jenkins-ci.plugins.workflow</groupId>
-      <artifactId>workflow-basic-steps</artifactId>
-      <version>${workflow.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jenkins-ci.plugins.workflow</groupId>
-      <artifactId>workflow-cps</artifactId>
-      <version>${workflow.version}</version>
-      <scope>test</scope>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>structs</artifactId>
+      <version>1.5</version>
     </dependency>
     <!-- Required to avoid cyclic dependency -->
     <dependency>

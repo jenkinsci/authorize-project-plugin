@@ -46,6 +46,7 @@ import org.acegisecurity.Authentication;
 import org.acegisecurity.providers.UsernamePasswordAuthenticationToken;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategyDescriptor;
@@ -255,6 +256,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
      * Our descriptor.
      */
     @Extension
+    @Symbol("specificUsersAuthorizationStrategy")
     public static class DescriptorImpl extends AuthorizeProjectStrategyDescriptor {
 
         /**
