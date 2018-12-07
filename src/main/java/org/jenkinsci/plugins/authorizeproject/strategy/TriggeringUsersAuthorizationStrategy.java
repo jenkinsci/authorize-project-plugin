@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.authorizeproject.strategy;
 
 import hudson.model.Item;
 import hudson.security.AccessControlled;
+import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import hudson.Extension;
 import hudson.model.Cause;
@@ -44,6 +45,8 @@ import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategyDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 
 /**
  * Run builds as a user who triggered the build.
@@ -90,6 +93,12 @@ public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrate
      * @return the {@link UserIdCause} or {@code null} if none could be found.
      */
     private UserIdCause getRootUserIdCause(Queue.Item item) {
+        // Defect with Queue.WaitingItem where triggering causes are not propagated. Temporary (hopefully?) patch to bypass issue.
+        if (waitingQueueItemAuthorizationWorkaround && item instanceof Queue.WaitingItem && item.getCauses().isEmpty()) {
+            LOGGER.log(Level.FINE, "Using work around for queue item with no causes - create UserIdCause and inherit thread security context.");
+            return new UserIdCause();
+        }
+
         Run<?,?> upstream = null;
         for (Cause c: item.getCauses()) {
             if (c instanceof UserIdCause) {
@@ -120,6 +129,32 @@ public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrate
     }
 
     /**
+     * Workaround for issue with {@link Queue.WaitingItem#getCauses()}.
+     *
+     * @see #getRootUserIdCause(Queue.Item)
+     */
+    private boolean waitingQueueItemAuthorizationWorkaround;
+
+    /**
+     * @return whether not to restrict job configuration
+     * @see #getRootUserIdCause(Queue.Item)
+     * @since 1.3.1
+     */
+    public boolean isWaitingQueueItemAuthorizationWorkaround() {
+        return waitingQueueItemAuthorizationWorkaround;
+    }
+
+    /**
+     * @param waitingQueueItemAuthorizationWorkaround whether not allow the
+     * @see #getRootUserIdCause(Queue.Item)
+     * @since 1.3.1
+     */
+    @DataBoundSetter
+    public void setWaitingQueueItemAuthorizationWorkaround(boolean waitingQueueItemAuthorizationWorkaround) {
+        this.waitingQueueItemAuthorizationWorkaround = waitingQueueItemAuthorizationWorkaround;
+    }
+
+    /**
      * Our descriptor.
      */
     @Extension
@@ -130,6 +165,24 @@ public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrate
         @Override
         public String getDisplayName() {
             return Messages.TriggeringUsersAuthorizationStrategy_DisplayName();
+        }
+
+        /**
+         * Display warnings for {@code waitingQueueItemAuthorizationWorkaround}
+         *
+         * "This feature is a security risk; use with caution. This works around a defect in the handling
+         * propagation of user IDs for Queue.WaitingItem. This opens a security hole, where by the incorrect
+         * USER private credentials may be exposed in certain cases. Use this only with great care."
+         *
+         * @param waitingQueueItemAuthorizationWorkaround whether not to restrict job configuration
+         * @return a warning message for {@code allowQueueItemAuthorizationWorkaround} if it is {@code true}
+         * @see SpecificUsersAuthorizationStrategy#setDontRestrictJobConfiguration(boolean)
+         */
+        public FormValidation doCheckWaitingQueueItemAuthorizationWorkaround(@QueryParameter boolean waitingQueueItemAuthorizationWorkaround) {
+            if (waitingQueueItemAuthorizationWorkaround) {
+                return FormValidation.warning(Messages.TriggeringUsersAuthorizationStrategy_waitingQueueItemAuthorizationWorkaround_usage());
+            }
+            return FormValidation.ok();
         }
     }
 }

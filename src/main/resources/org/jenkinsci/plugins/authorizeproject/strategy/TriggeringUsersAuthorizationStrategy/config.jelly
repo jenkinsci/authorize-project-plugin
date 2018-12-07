@@ -24,4 +24,7 @@ THE SOFTWARE.
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
   <!-- dropdownDescriptorSelector causes exception without config.jelly -->
+  <f:entry title="${%Allow waiting queue item authorization workaround}" field="waitingQueueItemAuthorizationWorkaround">
+    <f:checkbox />
+  </f:entry>
 </j:jelly>
