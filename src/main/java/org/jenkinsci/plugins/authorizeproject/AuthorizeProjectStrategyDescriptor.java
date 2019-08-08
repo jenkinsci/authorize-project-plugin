@@ -88,7 +88,7 @@ public abstract class AuthorizeProjectStrategyDescriptor extends Descriptor<Auth
      */
     public static List<AuthorizeProjectStrategyDescriptor> getDescriptorsForGlobalSecurityConfigPage() {
         List<Descriptor<AuthorizeProjectStrategy>> all = AuthorizeProjectStrategy.all();
-        List<AuthorizeProjectStrategyDescriptor> r = new ArrayList<AuthorizeProjectStrategyDescriptor>(all.size());
+        List<AuthorizeProjectStrategyDescriptor> r = new ArrayList<>(all.size());
         for (Descriptor<AuthorizeProjectStrategy> d: all) {
             if (
                     d instanceof AuthorizeProjectStrategyDescriptor
