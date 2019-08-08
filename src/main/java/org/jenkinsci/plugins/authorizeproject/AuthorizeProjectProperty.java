@@ -285,7 +285,7 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
         }
 
         /**
-         * Handles the submisson of the authorization configuration.
+         * Handles the submission of the authorization configuration.
          * @param req the request.
          * @return the response.
          * @throws IOException when things go wrong.

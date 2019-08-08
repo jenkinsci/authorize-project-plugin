@@ -122,7 +122,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     
     @Test
     @LocalData
-    public void testIsAuthenticateionRequiredAsUser() {
+    public void testIsAuthenticationRequiredAsUser() {
         ACL.impersonate(User.get("test1").impersonate());
         assertFalse(Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER));
         assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test1"));
@@ -132,7 +132,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     
     @Test
     @LocalData
-    public void testIsAuthenticateionRequiredAsAdministrator() {
+    public void testIsAuthenticationRequiredAsAdministrator() {
         ACL.impersonate(User.get("admin").impersonate());
         assertTrue(Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER));
         assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test2"));
@@ -140,7 +140,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     
     @Test
     @LocalData
-    public void testIsAuthenticateionRequiredAnonymous() {
+    public void testIsAuthenticationRequiredAnonymous() {
         ACL.impersonate(Jenkins.ANONYMOUS);
         assertFalse(Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER));
         assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test2"));
@@ -270,7 +270,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
     
     @Test
-    public void testUsernotFoundException() throws Exception {
+    public void testUserNotFoundException() throws Exception {
         j.jenkins.setSecurityRealm(new SecurityRealmWithUserFilter(
                 j.createDummySecurityRealm(),
                 Arrays.asList("validuser")
@@ -329,7 +329,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
     
     private String getConfigXml(XmlPage page) throws TransformerException {
-        // {@link XmlPage#asXml} does unneccessary indentations.
+        // {@link XmlPage#asXml} does unnecessary indentations.
         Document doc = page.getXmlDocument();
         TransformerFactory tfactory = TransformerFactory.newInstance(); 
         Transformer transformer = tfactory.newTransformer(); 

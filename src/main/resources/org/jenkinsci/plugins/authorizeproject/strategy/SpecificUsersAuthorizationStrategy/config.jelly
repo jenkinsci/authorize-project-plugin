@@ -26,7 +26,7 @@ THE SOFTWARE.
 <f:block>
   <table style="width:100%" class="specific-user-authorization">
   <!-- 
-    hetero-radio makes entries visiable even they are hidden.
+    hetero-radio makes entries visible even they are hidden.
     So nest it not to handled by hetero-radio.
   -->
   <f:entry title="${%User ID}" field="userid">
