@@ -273,7 +273,7 @@ public class ProjectQueueItemAuthenticatorTest {
             
             @Override
             public void configureFromGlobalSecurity(StaplerRequest req, JSONObject js)
-                    throws hudson.model.Descriptor.FormException
+                    throws Descriptor.FormException
             {
                 throw new FormException("Should not be called for global-security.jelly is not defined.", "");
             }
@@ -308,7 +308,7 @@ public class ProjectQueueItemAuthenticatorTest {
             
             @Override
             public void configureFromGlobalSecurity(StaplerRequest req, JSONObject js)
-                    throws hudson.model.Descriptor.FormException
+                    throws Descriptor.FormException
             {
                 value = js.getString("value");
                 save();
@@ -344,7 +344,7 @@ public class ProjectQueueItemAuthenticatorTest {
             
             @Override
             public void configureFromGlobalSecurity(StaplerRequest req, JSONObject js)
-                    throws hudson.model.Descriptor.FormException
+                    throws Descriptor.FormException
             {
                 value = js.getString("value");
                 save();
