@@ -50,9 +50,6 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.JenkinsRule.WebClient;
 import org.jvnet.hudson.test.recipes.LocalData;
 
-/**
- *
- */
 public class TriggeringUsersAuthorizationStrategyTest {
     @Rule
     public JenkinsRule j = new AuthorizeProjectJenkinsRule();
