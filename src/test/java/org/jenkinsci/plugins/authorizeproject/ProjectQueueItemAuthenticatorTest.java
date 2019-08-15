@@ -259,6 +259,10 @@ public class ProjectQueueItemAuthenticatorTest {
      * Test no exception even if no global-security.jelly is not provided.
      */
     public static class AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration extends AuthorizeProjectStrategy {
+        @DataBoundConstructor
+        public AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration() {
+        }
+
         @Override
         public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
             return null;
@@ -284,6 +288,10 @@ public class ProjectQueueItemAuthenticatorTest {
      * Test configuration in "Configure Global Security" is available.
      */
     public static class AuthorizeProjectStrategyWithGlobalSecurityConfiguration extends AuthorizeProjectStrategy {
+        @DataBoundConstructor
+        public AuthorizeProjectStrategyWithGlobalSecurityConfiguration() {
+        }
+
         @Override
         public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
             return null;
@@ -320,6 +328,10 @@ public class ProjectQueueItemAuthenticatorTest {
      * Test alternate file except global-security.jelly can be used.
      */
     public static class AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration extends AuthorizeProjectStrategy {
+        @DataBoundConstructor
+        public AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration() {
+        }
+
         @Override
         public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
             return null;
@@ -453,7 +465,8 @@ public class ProjectQueueItemAuthenticatorTest {
      */
     public static class AuthorizeProjectStrategyWithOldSignature extends AuthorizeProjectStrategy {
         private String name;
-        
+
+        @DataBoundConstructor
         public AuthorizeProjectStrategyWithOldSignature(String name) {
             this.name = name;
         }
