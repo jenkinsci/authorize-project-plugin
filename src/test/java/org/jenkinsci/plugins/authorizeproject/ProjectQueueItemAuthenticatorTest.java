@@ -95,9 +95,8 @@ public class ProjectQueueItemAuthenticatorTest {
         public static class DescriptorImpl extends AuthorizeProjectStrategyDescriptor {
             @Override
             public String getDisplayName() {
-                return "AuthorizeProjectStrategyWithOldSignature";
+                return "NullAuthorizeProjectStrategy";
             }
-            
         }
     }
     
