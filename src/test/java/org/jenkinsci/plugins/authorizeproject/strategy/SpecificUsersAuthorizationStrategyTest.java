@@ -187,7 +187,6 @@ public class SpecificUsersAuthorizationStrategyTest {
         assertTrue(SpecificUsersAuthorizationStrategy.authenticate("test1", false, null, "test1"));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", false, null, "test2"));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", false, null, ""));
-        assertFalse(SpecificUsersAuthorizationStrategy.authenticate("", false, null, "test2"));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", false, null, null));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate(null, false, null, "test2"));
     }
@@ -200,7 +199,6 @@ public class SpecificUsersAuthorizationStrategyTest {
         assertTrue(SpecificUsersAuthorizationStrategy.authenticate("test1", true, apitokenForTest1, null));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", true, apitokenForTest1 + "xxx", null));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", true, "", null));
-        assertFalse(SpecificUsersAuthorizationStrategy.authenticate("", true, apitokenForTest1, null));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", true, null, null));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate(null, true, apitokenForTest1, null));
     }
