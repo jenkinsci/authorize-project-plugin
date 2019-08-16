@@ -41,7 +41,7 @@ import hudson.tasks.Builder;
  *
  */
 public class AuthorizationCheckBuilder extends Builder {
-    public Authentication authentication = null;
+    public transient Authentication authentication = null;
     
     @Override
     public boolean prebuild(AbstractBuild<?, ?> build, BuildListener listener) {
