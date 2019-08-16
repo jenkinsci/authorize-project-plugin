@@ -27,6 +27,7 @@ package org.jenkinsci.plugins.authorizeproject.strategy;
 import static org.junit.Assert.*;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.net.URL;
@@ -195,8 +196,8 @@ public class SpecificUsersAuthorizationStrategyTest {
     @Test
     public void testAuthenticateWithApitoken() throws Exception {
         prepareSecurity();
-        String apitokenForTest1 = User.get("test1").getProperty(ApiTokenProperty.class).getApiToken();
-        
+        String apitokenForTest1 = getApiToken(User.get("test1"));
+
         assertTrue(SpecificUsersAuthorizationStrategy.authenticate("test1", true, apitokenForTest1, null));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", true, apitokenForTest1 + "xxx", null));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", true, "", null));
@@ -928,11 +929,9 @@ public class SpecificUsersAuthorizationStrategyTest {
         
         WebClient wc = j.createWebClient();
         wc.login("test1");
-        
-        String apitokenForTest2 = User.get("test2").getProperty(ApiTokenProperty.class).getApiToken();
-        assertNotNull(apitokenForTest2);
-        assertNotEquals("", apitokenForTest2);
-        
+
+        String apitokenForTest2 = getApiToken(User.get("test2"));
+
         // authentication fails without apitoken
         {
             HtmlPage page = wc.getPage(p, "authorization");
@@ -1128,5 +1127,14 @@ public class SpecificUsersAuthorizationStrategyTest {
             target = (SpecificUsersAuthorizationStrategy) target.readResolve();
             assertEquals(testValue, target.isDontRestrictJobConfiguration());
         }
+    }
+
+    private String getApiToken(User user) throws IOException {
+        ApiTokenProperty apiTokenProperty = user.getProperty(ApiTokenProperty.class);
+        apiTokenProperty.changeApiToken();
+        String apiToken = apiTokenProperty.getApiToken();
+        assertNotNull(apiToken);
+        assertNotEquals("", apiToken);
+        return apiToken;
     }
 }
