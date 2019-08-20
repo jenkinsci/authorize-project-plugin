@@ -286,7 +286,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
          * 
          * @param req the request.
          * @param userid the userid.
-         * @return "true" if password fiels is required. this should be evaluated as JavaScript.
+         * @return "true" if password field is required. this should be evaluated as JavaScript.
          */
         @Restricted(NoExternalUse.class) // used by stapler/jelly
         @SuppressWarnings("unused")
@@ -319,7 +319,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
          * @param req the request.
          * @param userid the user id.
          * @param password the password.
-         * @return the validationr results,
+         * @return the validation results
          */
         @Restricted(NoExternalUse.class) // used by stapler/jelly
         @SuppressWarnings("unused")

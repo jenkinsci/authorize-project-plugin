@@ -155,7 +155,7 @@ public class SystemAuthorizationStrategyTest {
     }
     
     private String getConfigXml(XmlPage page) throws TransformerException {
-        // {@link XmlPage#asXml} does unneccessary indentations.
+        // {@link XmlPage#asXml} does unnecessary indentations.
         Document doc = page.getXmlDocument();
         TransformerFactory tfactory = TransformerFactory.newInstance(); 
         Transformer transformer = tfactory.newTransformer(); 

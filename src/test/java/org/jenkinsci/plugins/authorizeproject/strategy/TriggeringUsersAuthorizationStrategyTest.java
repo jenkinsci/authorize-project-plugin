@@ -161,7 +161,7 @@ public class TriggeringUsersAuthorizationStrategyTest {
     }
     
     @Test
-    public void testUsernotFoundException() throws Exception {
+    public void testUserNotFoundException() throws Exception {
         j.jenkins.setSecurityRealm(new SecurityRealmWithUserFilter(
                 j.createDummySecurityRealm(),
                 Arrays.asList("validuser")

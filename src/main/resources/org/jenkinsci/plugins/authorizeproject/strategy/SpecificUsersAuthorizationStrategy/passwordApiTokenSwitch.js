@@ -23,7 +23,7 @@
  */
 
 /**
- * Swtich password and ApiToken
+ * Switch password and ApiToken
  */
 Behaviour.specify(".specific-user-authorization", "passwordApiTokenSwitch", 0, function (e) {
   var findChild = function(startNode) {

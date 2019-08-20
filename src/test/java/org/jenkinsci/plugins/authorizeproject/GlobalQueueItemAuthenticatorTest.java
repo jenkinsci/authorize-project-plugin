@@ -112,7 +112,7 @@ public class GlobalQueueItemAuthenticatorTest {
         j.submit(wc.goTo("configureSecurity").getFormByName("config"));
         
         /*
-        // as SpecificUsersAuthorizationStrategy is not annotated with @DataBoundConstoctor,
+        // as SpecificUsersAuthorizationStrategy is not annotated with @DataBoundConstructor,
         // assertEqualDataBoundBeans is not applicable.
         j.assertEqualDataBoundBeans(
                 auth,
