@@ -863,6 +863,9 @@ public class SpecificUsersAuthorizationStrategyTest {
             assertEquals("test2", ((SpecificUsersAuthorizationStrategy)p.getProperty(AuthorizeProjectProperty.class).getStrategy()).getUserid());
         }
         
+        // TODO: If JENKINS-59107 is fixed, remove this relogin.
+        wc.login("test1");
+        
         // authentication fails with a bad password
         {
             HtmlPage page = wc.getPage(p, "authorization");
