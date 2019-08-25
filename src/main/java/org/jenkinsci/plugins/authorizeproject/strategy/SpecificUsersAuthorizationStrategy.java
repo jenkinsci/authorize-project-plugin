@@ -110,11 +110,6 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         }
     }
 
-    /**
-     * No {@link DataBoundConstructor} for requiring to pass the authentication.
-     *
-     * authentication is performed in {@link DescriptorImpl#newInstance(StaplerRequest, JSONObject)}
-     */
     @DataBoundConstructor
     public SpecificUsersAuthorizationStrategy(String userid, boolean useApitoken,
                                               String apitoken, String password) throws AccessDeniedException {
