@@ -34,6 +34,7 @@ import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.acegisecurity.Authentication;
+import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategyDescriptor;
@@ -141,6 +142,7 @@ public class SystemAuthorizationStrategy extends AuthorizeProjectStrategy {
      * Our descriptor
      */
     @Extension(ordinal = -100)
+    @Symbol("systemAuthorizationStrategy")
     public static class DescriptorImpl extends AuthorizeProjectStrategyDescriptor {
 
         /**

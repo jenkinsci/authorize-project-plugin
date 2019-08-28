@@ -56,6 +56,7 @@ import jenkins.model.TransientActionFactory;
 import net.sf.json.JSONObject;
 import org.acegisecurity.Authentication;
 import org.jenkins.ui.icon.IconSpec;
+import org.jenkinsci.Symbol;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -161,6 +162,7 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
      * Provides functions for displaying.
      */
     @Extension
+    @Symbol("authorizeProject")
     public static class DescriptorImpl extends JobPropertyDescriptor {
         /**
          * @return the name shown in the project configuration page.

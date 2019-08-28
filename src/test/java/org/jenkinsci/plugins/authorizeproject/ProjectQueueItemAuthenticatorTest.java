@@ -36,7 +36,6 @@ import hudson.matrix.AxisList;
 import hudson.matrix.MatrixProject;
 import hudson.matrix.TextAxis;
 import hudson.model.AbstractProject;
-import hudson.model.Descriptor;
 import hudson.model.FreeStyleProject;
 import hudson.model.Job;
 import hudson.model.Queue;
@@ -45,6 +44,7 @@ import hudson.security.ACL;
 import net.sf.json.JSONObject;
 
 import org.acegisecurity.Authentication;
+import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.authorizeproject.strategy.AnonymousAuthorizationStrategy;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizationCheckBuilder;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRule;
@@ -505,6 +505,7 @@ public class ProjectQueueItemAuthenticatorTest {
         }
         
         @TestExtension("testWorkflow")
+        @Symbol("authorizationCheckSimpleBuilder")
         public static class DescriptorImpl extends BuildStepDescriptor<Builder> {
             @Override
             public boolean isApplicable(Class<? extends AbstractProject> jobType) {
@@ -548,6 +549,101 @@ public class ProjectQueueItemAuthenticatorTest {
             WorkflowRun b = p.scheduleBuild2(0).get();
             j.assertBuildStatusSuccess(b);
             assertEquals(User.get("test1").impersonate(), b.getAction(AuthorizationRecordAction.class).authentication);
+        }
+    }
+
+    @Test
+    public void testDeclarativeWorkflow() throws Exception {
+        // A job need to build at least once so that the authorization is loaded
+        j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
+        {
+            WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "test"+j.jenkins.getItems().size());
+            p.setDefinition(new CpsFlowDefinition("" +
+                    "pipeline {\n" +
+                    "    agent any\n" +
+                    "    options { authorizeProject(systemAuthorizationStrategy()) }\n" +
+                    "    stages {\n" +
+                    "        stage('Example') {\n" +
+                    "            steps {\n" +
+                    "                authorizationCheckSimpleBuilder()\n" +
+                    "            }\n" +
+                    "        }\n" +
+                    "    }\n" +
+                    "}",true));
+            WorkflowRun b = p.scheduleBuild2(0).get();
+            j.assertBuildStatusSuccess(b);
+            assertEquals(ACL.SYSTEM, b.getAction(AuthorizationRecordAction.class).authentication);
+            b = p.scheduleBuild2(0).get();
+            j.assertBuildStatusSuccess(b);
+            assertEquals(ACL.SYSTEM, b.getAction(AuthorizationRecordAction.class).authentication);
+        }
+
+        {
+            WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "test"+j.jenkins.getItems().size());
+            p.setDefinition(new CpsFlowDefinition("" +
+                    "pipeline {\n" +
+                    "    agent any\n" +
+                    "    options { authorizeProject(specificUsersAuthorizationStrategy(userid: 'test1', dontRestrictJobConfiguration: false)) }\n" +
+                    "    stages {\n" +
+                    "        stage('Example') {\n" +
+                    "            steps {\n" +
+                    "                authorizationCheckSimpleBuilder()\n" +
+                    "            }\n" +
+                    "        }\n" +
+                    "    }\n" +
+                    "}",true));
+            User.get("test1");  // create
+            WorkflowRun b = p.scheduleBuild2(0).get();
+            j.assertBuildStatusSuccess(b);
+            assertEquals(ACL.SYSTEM, b.getAction(AuthorizationRecordAction.class).authentication);
+            b = p.scheduleBuild2(0).get();
+            j.assertBuildStatusSuccess(b);
+            assertEquals("test1", b.getAction(AuthorizationRecordAction.class).authentication.getName());
+        }
+
+        {
+            WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "test"+j.jenkins.getItems().size());
+            p.setDefinition(new CpsFlowDefinition("" +
+                    "pipeline {\n" +
+                    "    agent any\n" +
+                    "    options { authorizeProject(triggeringUsersAuthorizationStrategy()) }\n" +
+                    "    stages {\n" +
+                    "        stage('Example') {\n" +
+                    "            steps {\n" +
+                    "                authorizationCheckSimpleBuilder()\n" +
+                    "            }\n" +
+                    "        }\n" +
+                    "    }\n" +
+                    "}",true));
+            User.get("test1");  // create
+            WorkflowRun b = p.scheduleBuild2(0).get();
+            j.assertBuildStatusSuccess(b);
+            assertEquals(ACL.SYSTEM, b.getAction(AuthorizationRecordAction.class).authentication);
+            b = p.scheduleBuild2(0).get();
+            j.assertBuildStatusSuccess(b);
+            assertEquals(ACL.SYSTEM, b.getAction(AuthorizationRecordAction.class).authentication);
+        }
+
+        {
+            WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "test"+j.jenkins.getItems().size());
+            p.setDefinition(new CpsFlowDefinition("" +
+                    "pipeline {\n" +
+                    "    agent any\n" +
+                    "    options { authorizeProject(anonymousAuthorizationStrategy()) }\n" +
+                    "    stages {\n" +
+                    "        stage('Example') {\n" +
+                    "            steps {\n" +
+                    "                authorizationCheckSimpleBuilder()\n" +
+                    "            }\n" +
+                    "        }\n" +
+                    "    }\n" +
+                    "}",true));
+            WorkflowRun b = p.scheduleBuild2(0).get();
+            j.assertBuildStatusSuccess(b);
+            assertEquals(ACL.SYSTEM, b.getAction(AuthorizationRecordAction.class).authentication);
+            b = p.scheduleBuild2(0).get();
+            j.assertBuildStatusSuccess(b);
+            assertEquals(Jenkins.ANONYMOUS.getName(), b.getAction(AuthorizationRecordAction.class).authentication.getName());
         }
     }
 }
