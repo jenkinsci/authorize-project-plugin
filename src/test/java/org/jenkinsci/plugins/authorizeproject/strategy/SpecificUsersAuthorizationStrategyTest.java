@@ -27,6 +27,7 @@ package org.jenkinsci.plugins.authorizeproject.strategy;
 import static org.junit.Assert.*;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.net.URL;
@@ -187,7 +188,6 @@ public class SpecificUsersAuthorizationStrategyTest {
         assertTrue(SpecificUsersAuthorizationStrategy.authenticate("test1", false, null, "test1"));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", false, null, "test2"));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", false, null, ""));
-        assertFalse(SpecificUsersAuthorizationStrategy.authenticate("", false, null, "test2"));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", false, null, null));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate(null, false, null, "test2"));
     }
@@ -195,12 +195,11 @@ public class SpecificUsersAuthorizationStrategyTest {
     @Test
     public void testAuthenticateWithApitoken() throws Exception {
         prepareSecurity();
-        String apitokenForTest1 = User.get("test1").getProperty(ApiTokenProperty.class).getApiToken();
-        
+        String apitokenForTest1 = getApiToken(User.get("test1"));
+
         assertTrue(SpecificUsersAuthorizationStrategy.authenticate("test1", true, apitokenForTest1, null));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", true, apitokenForTest1 + "xxx", null));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", true, "", null));
-        assertFalse(SpecificUsersAuthorizationStrategy.authenticate("", true, apitokenForTest1, null));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", true, null, null));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate(null, true, apitokenForTest1, null));
     }
@@ -864,6 +863,9 @@ public class SpecificUsersAuthorizationStrategyTest {
             assertEquals("test2", ((SpecificUsersAuthorizationStrategy)p.getProperty(AuthorizeProjectProperty.class).getStrategy()).getUserid());
         }
         
+        // TODO: If JENKINS-59107 is fixed, remove this relogin.
+        wc.login("test1");
+        
         // authentication fails with a bad password
         {
             HtmlPage page = wc.getPage(p, "authorization");
@@ -928,11 +930,9 @@ public class SpecificUsersAuthorizationStrategyTest {
         
         WebClient wc = j.createWebClient();
         wc.login("test1");
-        
-        String apitokenForTest2 = User.get("test2").getProperty(ApiTokenProperty.class).getApiToken();
-        assertNotNull(apitokenForTest2);
-        assertNotEquals("", apitokenForTest2);
-        
+
+        String apitokenForTest2 = getApiToken(User.get("test2"));
+
         // authentication fails without apitoken
         {
             HtmlPage page = wc.getPage(p, "authorization");
@@ -1128,5 +1128,14 @@ public class SpecificUsersAuthorizationStrategyTest {
             target = (SpecificUsersAuthorizationStrategy) target.readResolve();
             assertEquals(testValue, target.isDontRestrictJobConfiguration());
         }
+    }
+
+    private String getApiToken(User user) throws IOException {
+        ApiTokenProperty apiTokenProperty = user.getProperty(ApiTokenProperty.class);
+        apiTokenProperty.changeApiToken();
+        String apiToken = apiTokenProperty.getApiToken();
+        assertNotNull(apiToken);
+        assertNotEquals("", apiToken);
+        return apiToken;
     }
 }
