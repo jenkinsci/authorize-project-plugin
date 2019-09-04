@@ -52,6 +52,7 @@ import hudson.model.ParametersDefinitionProperty;
 import hudson.model.StringParameterDefinition;
 import hudson.model.User;
 import hudson.security.ACL;
+import hudson.security.ACLContext;
 import hudson.security.AuthorizationMatrixProperty;
 import hudson.security.GlobalMatrixAuthorizationStrategy;
 import hudson.security.Permission;
@@ -122,27 +123,30 @@ public class SpecificUsersAuthorizationStrategyTest {
     @Test
     @LocalData
     public void testIsAuthenticationRequiredAsUser() {
-        ACL.impersonate(User.getById("test1", true).impersonate());
-        assertFalse(Jenkins.get().hasPermission(Jenkins.ADMINISTER));
-        assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test1"));
-        assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test2"));
-        assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("admin"));
+        try (ACLContext ignored = ACL.as(User.getById("test1", true))) {
+            assertFalse(Jenkins.get().hasPermission(Jenkins.ADMINISTER));
+            assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test1"));
+            assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test2"));
+            assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("admin"));
+        }
     }
     
     @Test
     @LocalData
     public void testIsAuthenticationRequiredAsAdministrator() {
-        ACL.impersonate(User.getById("admin", true).impersonate());
-        assertTrue(Jenkins.get().hasPermission(Jenkins.ADMINISTER));
-        assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test2"));
+        try (ACLContext ignored = ACL.as(User.getById("admin", true))) {
+            assertTrue(Jenkins.get().hasPermission(Jenkins.ADMINISTER));
+            assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test2"));
+        }
     }
     
     @Test
     @LocalData
     public void testIsAuthenticationRequiredAnonymous() {
-        ACL.impersonate(Jenkins.ANONYMOUS);
-        assertFalse(Jenkins.get().hasPermission(Jenkins.ADMINISTER));
-        assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test2"));
+        try (ACLContext ignored = ACL.as(Jenkins.ANONYMOUS)) {
+            assertFalse(Jenkins.get().hasPermission(Jenkins.ADMINISTER));
+            assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test2"));
+        }
     }
     
     @Test
