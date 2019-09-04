@@ -41,7 +41,9 @@ import hudson.tasks.Builder;
  *
  */
 public class AuthorizationCheckBuilder extends Builder {
-    public Authentication authentication = null;
+
+    // "transient" is required for exclusion from serialization - see https://jenkins.io/redirect/class-filter/
+    public transient Authentication authentication = null;
     
     @Override
     public boolean prebuild(AbstractBuild<?, ?> build, BuildListener listener) {
