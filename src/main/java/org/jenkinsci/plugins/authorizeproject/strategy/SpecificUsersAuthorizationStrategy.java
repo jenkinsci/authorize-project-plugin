@@ -51,6 +51,7 @@ import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategyDescriptor;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectUtil;
 import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -63,7 +64,17 @@ import org.kohsuke.stapler.StaplerRequest;
 public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy {
     private static Logger LOGGER = Logger.getLogger(SpecificUsersAuthorizationStrategy.class.getName());
     private final String userid;
-    
+
+    // The fields "useApitoken", "apitoken" and "password" are part of the @DataBoundConstructor annotated constructor
+    // but they are only required for validation during form submission. They are put here and marked restricted and
+    // transient to make Configuration as Code ignore them when exporting the configuration.
+    @Restricted(DoNotUse.class)
+    private transient Boolean useApitoken;
+    @Restricted(DoNotUse.class)
+    private transient String apitoken;
+    @Restricted(DoNotUse.class)
+    private transient String password;
+
     private final static Authentication[] BUILTIN_USERS = {
             ACL.SYSTEM,
             Jenkins.ANONYMOUS,

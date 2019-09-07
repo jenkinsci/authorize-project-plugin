@@ -26,8 +26,11 @@ package org.jenkinsci.plugins.authorizeproject;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import hudson.Extension;
 import hudson.model.DescriptorVisibilityFilter;
@@ -41,6 +44,7 @@ import javax.annotation.CheckForNull;
 import net.sf.json.JSONObject;
 
 import org.acegisecurity.Authentication;
+import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
 import jenkins.security.QueueItemAuthenticatorConfiguration;
@@ -51,27 +55,41 @@ import jenkins.security.QueueItemAuthenticator;
  * Authorize builds of projects configured with {@link AuthorizeProjectProperty}.
  */
 public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
-    private final Map<String,Boolean> strategyEnabledMap;
-    
-    /**
-     * 
-     */
+
+    private final Set<String> enabledStrategies;
+    private final Set<String> disabledStrategies;
+
+    @Deprecated
+    private transient Map<String,Boolean> strategyEnabledMap;
+
     @Deprecated
     public ProjectQueueItemAuthenticator() {
-        this(Collections.<String, Boolean>emptyMap());
+        this(Collections.emptySet(), Collections.emptySet());
     }
-    
+
+    @Deprecated
     public ProjectQueueItemAuthenticator(Map<String,Boolean> strategyEnabledMap) {
-        this.strategyEnabledMap = strategyEnabledMap;
+        this(
+            strategyEnabledMap.entrySet().stream()
+                .filter(e -> e.getValue().equals(true)).map(Map.Entry::getKey).collect(Collectors.toSet()),
+            strategyEnabledMap.entrySet().stream()
+                .filter(e -> e.getValue().equals(false)).map(Map.Entry::getKey).collect(Collectors.toSet())
+        );
     }
-    
+
+    @DataBoundConstructor
+    public ProjectQueueItemAuthenticator(Set<String> enabledStrategies, Set<String> disabledStrategies) {
+        this.enabledStrategies = enabledStrategies;
+        this.disabledStrategies = disabledStrategies;
+    }
+
     protected Object readResolve() {
-        if(strategyEnabledMap == null) {
-            return new ProjectQueueItemAuthenticator(Collections.<String, Boolean>emptyMap());
+        if (strategyEnabledMap != null) {
+            return new ProjectQueueItemAuthenticator(strategyEnabledMap);
         }
         return this;
     }
-    
+
     /**
      * @param item
      * @return
@@ -93,23 +111,43 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
         }
         return prop.authenticate(item);
     }
-    
+
+    @Deprecated
     public Map<String, Boolean> getStrategyEnabledMap() {
+        Map<String,Boolean> strategyEnabledMap = new HashMap<>();
+        for (String strategy : enabledStrategies) {
+            strategyEnabledMap.put(strategy, true);
+        }
+        for (String strategy : disabledStrategies) {
+            strategyEnabledMap.put(strategy, false);
+        }
         return strategyEnabledMap;
     }
-    
-    public boolean isStrategyEnabled(Descriptor<?> d)
-    {
-        Boolean b = getStrategyEnabledMap().get(d.getId());
-        if(b != null) {
-            return b.booleanValue();
-        }
-        if(!(d instanceof AuthorizeProjectStrategyDescriptor)) {
+
+    public Set<String> getEnabledStrategies() {
+        return enabledStrategies;
+    }
+
+    public Set<String> getDisabledStrategies() {
+        return disabledStrategies;
+    }
+
+    public boolean isStrategyEnabled(Descriptor<?> d) {
+        if (enabledStrategies.contains(d.getId())) {
             return true;
         }
-        return ((AuthorizeProjectStrategyDescriptor)d).isEnabledByDefault();
+
+        if (disabledStrategies.contains(d.getId())) {
+            return false;
+        }
+
+        if (d instanceof AuthorizeProjectStrategyDescriptor) {
+            return ((AuthorizeProjectStrategyDescriptor) d).isEnabledByDefault();
+        }
+
+        return true;
     }
-    
+
     /**
      *
      */
