@@ -90,30 +90,6 @@ public class SystemAuthorizationStrategy extends AuthorizeProjectStrategy {
     }
 
     /**
-     * For now we are an object with no configurable fields, so return a fixed value.
-     * If we add configurable fields we probably should consider removing the final.
-     *
-     * @return our hashCode.
-     */
-    @Override
-    public final int hashCode() {
-        return SystemAuthorizationStrategy.class.hashCode();
-    }
-
-    /**
-     * For now we are an object with no configurable fields, so strict instanceof establishes equality.
-     * If we add configurable fields we probably should consider removing the final.
-     *
-     * @param obj the object to test equality with.
-     * @return {@code true} if and only if this is a equivalent {@link SystemAuthorizationStrategy} instance.
-     */
-    @SuppressFBWarnings(value="EQ_GETCLASS_AND_CLASS_CONSTANT", justification="Should be the same class")
-    @Override
-    public final boolean equals(Object obj) {
-        return obj != null && SystemAuthorizationStrategy.class == obj.getClass();
-    }
-
-    /**
      * {@inheritDoc}
      */
     @Override
