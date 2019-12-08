@@ -1,0 +1,3 @@
+authenticators:
+- global:
+    strategy: "triggeringUsersAuthorizationStrategy"

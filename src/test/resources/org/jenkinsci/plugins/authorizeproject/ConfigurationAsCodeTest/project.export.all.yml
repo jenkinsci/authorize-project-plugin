@@ -1,0 +1,8 @@
+authenticators:
+- project:
+    disabledStrategies:
+    - "systemAuthorizationStrategy"
+    - "specificUsersAuthorizationStrategy"
+    - "triggeringUsersAuthorizationStrategy"
+    enabledStrategies:
+    - "anonymousAuthorizationStrategy"
