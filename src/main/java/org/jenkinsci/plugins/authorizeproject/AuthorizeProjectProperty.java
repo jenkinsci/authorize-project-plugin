@@ -238,7 +238,7 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
          * @return the {@link AuthorizeProjectProperty.DescriptorImpl}
          */
         public DescriptorImpl getPropertyDescriptor() {
-            return Jenkins.getActiveInstance().getDescriptorByType(DescriptorImpl.class);
+            return Jenkins.get().getDescriptorByType(DescriptorImpl.class);
         }
 
         @Nonnull

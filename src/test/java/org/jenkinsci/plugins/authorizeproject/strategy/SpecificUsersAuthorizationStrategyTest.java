@@ -43,9 +43,9 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import hudson.cli.CLICommandInvoker;
 import jenkins.model.Jenkins;
 import jenkins.security.ApiTokenProperty;
-import hudson.cli.CLI;
 import hudson.model.Item;
 import hudson.model.FreeStyleProject;
 import hudson.model.ParametersDefinitionProperty;
@@ -58,7 +58,6 @@ import hudson.security.Permission;
 import hudson.security.ProjectMatrixAuthorizationStrategy;
 
 import org.apache.commons.io.input.NullInputStream;
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizationCheckBuilder;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRule;
@@ -75,7 +74,6 @@ import com.gargoylesoftware.htmlunit.HttpMethod;
 import com.gargoylesoftware.htmlunit.WebRequest;
 import com.gargoylesoftware.htmlunit.html.HtmlCheckBoxInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlPasswordInput;
 import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 import com.gargoylesoftware.htmlunit.xml.XmlPage;
 import com.google.common.collect.Sets;
@@ -124,8 +122,8 @@ public class SpecificUsersAuthorizationStrategyTest {
     @Test
     @LocalData
     public void testIsAuthenticationRequiredAsUser() {
-        ACL.impersonate(User.get("test1").impersonate());
-        assertFalse(Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER));
+        ACL.impersonate(User.getById("test1", true).impersonate());
+        assertFalse(Jenkins.get().hasPermission(Jenkins.ADMINISTER));
         assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test1"));
         assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test2"));
         assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("admin"));
@@ -134,8 +132,8 @@ public class SpecificUsersAuthorizationStrategyTest {
     @Test
     @LocalData
     public void testIsAuthenticationRequiredAsAdministrator() {
-        ACL.impersonate(User.get("admin").impersonate());
-        assertTrue(Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER));
+        ACL.impersonate(User.getById("admin", true).impersonate());
+        assertTrue(Jenkins.get().hasPermission(Jenkins.ADMINISTER));
         assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test2"));
     }
     
@@ -143,7 +141,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     @LocalData
     public void testIsAuthenticationRequiredAnonymous() {
         ACL.impersonate(Jenkins.ANONYMOUS);
-        assertFalse(Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER));
+        assertFalse(Jenkins.get().hasPermission(Jenkins.ADMINISTER));
         assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test2"));
     }
     
@@ -195,7 +193,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     @Test
     public void testAuthenticateWithApitoken() throws Exception {
         prepareSecurity();
-        String apitokenForTest1 = getApiToken(User.get("test1"));
+        String apitokenForTest1 = getApiToken(User.getById("test1", true));
 
         assertTrue(SpecificUsersAuthorizationStrategy.authenticate("test1", true, apitokenForTest1, null));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", true, apitokenForTest1 + "xxx", null));
@@ -276,8 +274,8 @@ public class SpecificUsersAuthorizationStrategyTest {
         ));
         
         // Users should be created before the test.
-        User.get("validuser");
-        User.get("invaliduser");
+        User.getById("validuser", true);
+        User.getById("invaliduser", true);
         
         FreeStyleProject p = j.createFreeStyleProject();
         AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
@@ -451,65 +449,53 @@ public class SpecificUsersAuthorizationStrategyTest {
             );
         }
     }
-    
+
     @Test
     public void testCliSuccess() throws Exception {
         prepareSecurity();
-        
+
         FreeStyleProject srcProject = j.createFreeStyleProject();
         srcProject.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1")));
         srcProject.save();
-        
+
         WebClient wc = j.createWebClient();
         wc.login("test1", "test1");
-        
+
         // GET config.xml of srcProject (userid is set to test1)
         String configXml = null;
         {
-            CLI cli = new CLI(j.getURL());
-            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-            int ret = cli.execute(Arrays.asList(
-                    "get-job",
-                    srcProject.getFullName(),
-                    "--username",
-                    "test1",
-                    "--password",
-                    "test1"
-                ),
-                new NullInputStream(0),
-                stdout,
-                stderr
-            );
-            assertEquals(stderr.toString(), 0, ret);
-            configXml = stdout.toString();
+            CLICommandInvoker.Result result = new CLICommandInvoker(j, "get-job")
+                    .withStdin(new NullInputStream(0))
+                    .asUser("test1")
+                    .invokeWithArgs(
+                            srcProject.getFullName()
+                    );
+            configXml = result.stdout();
+            String stderr = result.stderr();
+            int ret = result.returnCode();
+            
+            assertEquals(stderr, 0, ret);
         }
-        
+
         // POST config.xml of srcProject (userid is set to test1) to a new project.
         // This should success.
         FreeStyleProject destProject = j.createFreeStyleProject();
         destProject.save();
         String projectName = destProject.getFullName();
-        
+
         {
-            CLI cli = new CLI(j.getURL());
-            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-            int ret = cli.execute(Arrays.asList(
-                    "update-job",
-                    destProject.getFullName(),
-                    "--username",
-                    "test1",
-                    "--password",
-                    "test1"
-                ),
-                new ByteArrayInputStream(configXml.getBytes()),
-                stdout,
-                stderr
-            );
-            assertEquals(stderr.toString(), 0, ret);
+            CLICommandInvoker.Result result = new CLICommandInvoker(j, "update-job")
+                    .withStdin(new ByteArrayInputStream(configXml.getBytes()))
+                    .asUser("test1")
+                    .invokeWithArgs(
+                            destProject.getFullName()
+                    );
+            String stderr = result.stderr();
+            int ret = result.returnCode();
+
+            assertEquals(stderr, 0, ret);
         }
-        
+
         {
             FreeStyleProject p = j.jenkins.getItemByFullName(projectName, FreeStyleProject.class);
             assertNotNull(p);
@@ -519,9 +505,9 @@ public class SpecificUsersAuthorizationStrategyTest {
             SpecificUsersAuthorizationStrategy strategy = (SpecificUsersAuthorizationStrategy)prop.getStrategy();
             assertEquals("test1", strategy.getUserid());
         }
-        
+
         j.jenkins.reload();
-        
+
         {
             FreeStyleProject p = j.jenkins.getItemByFullName(projectName, FreeStyleProject.class);
             assertNotNull(p);
@@ -532,7 +518,6 @@ public class SpecificUsersAuthorizationStrategyTest {
             assertEquals("test1", strategy.getUserid());
         }
     }
-    
     
     @Test
     public void testCliFailure() throws Exception {
@@ -548,23 +533,17 @@ public class SpecificUsersAuthorizationStrategyTest {
         // GET config.xml of srcProject (userid is set to admin)
         String configXml = null;
         {
-            CLI cli = new CLI(j.getURL());
-            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-            int ret = cli.execute(Arrays.asList(
-                    "get-job",
-                    srcProject.getFullName(),
-                    "--username",
-                    "test1",
-                    "--password",
-                    "test1"
-                ),
-                new NullInputStream(0),
-                stdout,
-                stderr
-            );
-            assertEquals(stderr.toString(), 0, ret);
-            configXml = stdout.toString();
+            CLICommandInvoker.Result result = new CLICommandInvoker(j, "get-job")
+                    .withStdin(new NullInputStream(0))
+                    .asUser("test1")
+                    .invokeWithArgs(
+                            srcProject.getFullName()
+                    );
+            configXml = result.stdout();
+            String stderr = result.stderr();
+            int ret = result.returnCode();
+
+            assertEquals(stderr, 0, ret);
         }
         
         // POST config.xml of srcProject (userid is set to admin) to a new project.
@@ -574,21 +553,14 @@ public class SpecificUsersAuthorizationStrategyTest {
         String projectName = destProject.getFullName();
         
         {
-            CLI cli = new CLI(j.getURL());
-            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-            int ret = cli.execute(Arrays.asList(
-                    "update-job",
-                    destProject.getFullName(),
-                    "--username",
-                    "test1",
-                    "--password",
-                    "test1"
-                ),
-                new ByteArrayInputStream(configXml.getBytes()),
-                stdout,
-                stderr
-            );
+            CLICommandInvoker.Result result = new CLICommandInvoker(j, "update-job")
+                    .withStdin(new ByteArrayInputStream(configXml.getBytes()))
+                    .asUser("test1")
+                    .invokeWithArgs(
+                            destProject.getFullName()
+                    );
+            int ret = result.returnCode();
+
             assertNotEquals(0, ret);
         }
         
@@ -626,23 +598,17 @@ public class SpecificUsersAuthorizationStrategyTest {
         // GET config.xml of srcProject (userid is set to test1)
         String configXml = null;
         {
-            CLI cli = new CLI(j.getURL());
-            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-            int ret = cli.execute(Arrays.asList(
-                    "get-job",
-                    srcProject.getFullName(),
-                    "--username",
-                    "admin",
-                    "--password",
-                    "admin"
-                ),
-                new NullInputStream(0),
-                stdout,
-                stderr
-            );
-            assertEquals(stderr.toString(), 0, ret);
-            configXml = stdout.toString();
+            CLICommandInvoker.Result result = new CLICommandInvoker(j, "get-job")
+                    .withStdin(new NullInputStream(0))
+                    .asUser("admin")
+                    .invokeWithArgs(
+                            srcProject.getFullName()
+                    );
+            configXml = result.stdout();
+            String stderr = result.stderr();
+            int ret = result.returnCode();
+
+            assertEquals(stderr, 0, ret);
         }
         
         // POST config.xml of srcProject (userid is set to test1) to a new project.
@@ -652,22 +618,16 @@ public class SpecificUsersAuthorizationStrategyTest {
         String projectName = destProject.getFullName();
         
         {
-            CLI cli = new CLI(j.getURL());
-            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-            int ret = cli.execute(Arrays.asList(
-                    "update-job",
-                    destProject.getFullName(),
-                    "--username",
-                    "admin",
-                    "--password",
-                    "admin"
-                ),
-                new ByteArrayInputStream(configXml.getBytes()),
-                stdout,
-                stderr
-            );
-            assertEquals(stderr.toString(), 0, ret);
+            CLICommandInvoker.Result result = new CLICommandInvoker(j, "update-job")
+                    .withStdin(new ByteArrayInputStream(configXml.getBytes()))
+                    .asUser("admin")
+                    .invokeWithArgs(
+                            destProject.getFullName()
+                    );
+            String stderr = result.stderr();
+            int ret = result.returnCode();
+
+            assertEquals(stderr, 0, ret);
         }
         
         {
@@ -712,23 +672,17 @@ public class SpecificUsersAuthorizationStrategyTest {
         // GET config.xml of srcProject (userid is set to admin)
         String configXml = null;
         {
-            CLI cli = new CLI(j.getURL());
-            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-            int ret = cli.execute(Arrays.asList(
-                    "get-job",
-                    srcProject.getFullName(),
-                    "--username",
-                    "test1",
-                    "--password",
-                    "test1"
-                ),
-                new NullInputStream(0),
-                stdout,
-                stderr
-            );
-            assertEquals(stderr.toString(), 0, ret);
-            configXml = stdout.toString();
+            CLICommandInvoker.Result result = new CLICommandInvoker(j, "get-job")
+                    .withStdin(new NullInputStream(0))
+                    .asUser("test1")
+                    .invokeWithArgs(
+                            srcProject.getFullName()
+                    );
+            configXml = result.stdout();
+            String stderr = result.stderr();
+            int ret = result.returnCode();
+
+            assertEquals(stderr, 0, ret);
         }
         
         // POST config.xml of srcProject (userid is set to test1) to a new project.
@@ -743,22 +697,15 @@ public class SpecificUsersAuthorizationStrategyTest {
         String projectName = destProject.getFullName();
         
         {
-            CLI cli = new CLI(j.getURL());
-            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-            int ret = cli.execute(Arrays.asList(
-                    "update-job",
-                    destProject.getFullName(),
-                    "--username",
-                    "test1",
-                    "--password",
-                    "test1"
-                ),
-                new ByteArrayInputStream(configXml.getBytes()),
-                stdout,
-                stderr
-            );
-            assertNotEquals(0, ret);
+            CLICommandInvoker.Result result = new CLICommandInvoker(j, "update-job")
+                .withStdin(new ByteArrayInputStream(configXml.getBytes()))
+                .asUser("test1")
+                .invokeWithArgs(
+                        destProject.getFullName()
+                );
+            int ret = result.returnCode();
+
+            assertNotEquals( 0, ret);
         }
         
         {
@@ -806,7 +753,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         // No authentication is required if oneself.
         {
             HtmlPage page = wc.getPage(p, "authorization");
-            HtmlTextInput userid = page.<HtmlTextInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'userid') and @type='text']");
+            HtmlTextInput userid = page.getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'userid') and @type='text']");
             userid.setValueAttribute("test1");
             j.submit(page.getFormByName("config"));
             
@@ -817,7 +764,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin")));
         {
             HtmlPage page = wc.getPage(p, "authorization");
-            HtmlTextInput userid = page.<HtmlTextInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'userid') and @type='text']");
+            HtmlTextInput userid = page.getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'userid') and @type='text']");
             userid.setValueAttribute("test2");
             try {
                 j.submit(page.getFormByName("config"));
@@ -841,7 +788,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         // authentication fails without password
         {
             HtmlPage page = wc.getPage(p, "authorization");
-            HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
+            HtmlCheckBoxInput useApitoken = page.getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
             useApitoken.setChecked(false);
             try {
                 j.submit(page.getFormByName("config"));
@@ -854,9 +801,9 @@ public class SpecificUsersAuthorizationStrategyTest {
         // authentication succeeds with the good password
         {
             HtmlPage page = wc.getPage(p, "authorization");
-            HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
+            HtmlCheckBoxInput useApitoken = page.getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
             useApitoken.setChecked(false);
-            HtmlPasswordInput password = page.<HtmlPasswordInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password') and @type='password']");
+            HtmlTextInput password = page.getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password')]");
             password.setValueAttribute("test2");
             j.submit(page.getFormByName("config"));
             
@@ -869,9 +816,9 @@ public class SpecificUsersAuthorizationStrategyTest {
         // authentication fails with a bad password
         {
             HtmlPage page = wc.getPage(p, "authorization");
-            HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
+            HtmlCheckBoxInput useApitoken = page.getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
             useApitoken.setChecked(false);
-            HtmlPasswordInput password = page.<HtmlPasswordInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password') and @type='password']");
+            HtmlTextInput password = page.getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password')]");
             password.setValueAttribute("badpassword");
             try {
                 j.submit(page.getFormByName("config"));
@@ -884,11 +831,11 @@ public class SpecificUsersAuthorizationStrategyTest {
         // authentication fails if the password is used for apitoken
         {
             HtmlPage page = wc.getPage(p, "authorization");
-            HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
+            HtmlCheckBoxInput useApitoken = page.getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
             useApitoken.setChecked(true);
-            HtmlPasswordInput password = page.<HtmlPasswordInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password') and @type='password']");
+            HtmlTextInput password = page.getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password')]");
             password.setValueAttribute("test2");
-            HtmlTextInput apitoken = page.<HtmlTextInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
+            HtmlTextInput apitoken = page.getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
             apitoken.setValueAttribute("test2");
             try {
                 j.submit(page.getFormByName("config"));
@@ -931,12 +878,12 @@ public class SpecificUsersAuthorizationStrategyTest {
         WebClient wc = j.createWebClient();
         wc.login("test1");
 
-        String apitokenForTest2 = getApiToken(User.get("test2"));
+        String apitokenForTest2 = getApiToken(User.getById("test2", true));
 
         // authentication fails without apitoken
         {
             HtmlPage page = wc.getPage(p, "authorization");
-            HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
+            HtmlCheckBoxInput useApitoken = page.getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
             useApitoken.setChecked(true);
             try {
                 j.submit(page.getFormByName("config"));
@@ -949,9 +896,9 @@ public class SpecificUsersAuthorizationStrategyTest {
         // authentication succeeds with the good apitoken
         {
             HtmlPage page = wc.getPage(p, "authorization");
-            HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
+            HtmlCheckBoxInput useApitoken = page.getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
             useApitoken.setChecked(true);
-            HtmlTextInput apitoken = page.<HtmlTextInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
+            HtmlTextInput apitoken = page.getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
             apitoken.setValueAttribute(apitokenForTest2);
             j.submit(page.getFormByName("config"));
             
@@ -961,9 +908,9 @@ public class SpecificUsersAuthorizationStrategyTest {
         // authentication fails with a bad apitoken
         {
             HtmlPage page = wc.getPage(p, "authorization");
-            HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
+            HtmlCheckBoxInput useApitoken = page.getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
             useApitoken.setChecked(true);
-            HtmlTextInput apitoken = page.<HtmlTextInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
+            HtmlTextInput apitoken = page.getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
             apitoken.setValueAttribute(apitokenForTest2 + "xxx");
             try {
                 j.submit(page.getFormByName("config"));
@@ -976,11 +923,11 @@ public class SpecificUsersAuthorizationStrategyTest {
         // authentication fails if the apitoken is used for password
         {
             HtmlPage page = wc.getPage(p, "authorization");
-            HtmlCheckBoxInput useApitoken = page.<HtmlCheckBoxInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
+            HtmlCheckBoxInput useApitoken = page.getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
             useApitoken.setChecked(false);
-            HtmlPasswordInput password = page.<HtmlPasswordInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password') and @type='password']");
+            HtmlTextInput password = page.getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password')]");
             password.setValueAttribute(apitokenForTest2);
-            HtmlTextInput apitoken = page.<HtmlTextInput>getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
+            HtmlTextInput apitoken = page.getFirstByXPath("//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
             apitoken.setValueAttribute(apitokenForTest2);
             try {
                 j.submit(page.getFormByName("config"));

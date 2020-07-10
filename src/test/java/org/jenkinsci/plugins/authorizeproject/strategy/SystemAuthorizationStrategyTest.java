@@ -28,7 +28,7 @@ import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.HttpMethod;
 import com.gargoylesoftware.htmlunit.WebRequest;
 import com.gargoylesoftware.htmlunit.xml.XmlPage;
-import hudson.cli.CLI;
+import hudson.cli.CLICommandInvoker;
 import hudson.model.FreeStyleProject;
 import hudson.model.Item;
 import hudson.model.ParametersDefinitionProperty;
@@ -37,7 +37,6 @@ import hudson.security.GlobalMatrixAuthorizationStrategy;
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
 import java.net.URL;
-import java.util.Arrays;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -45,7 +44,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import jenkins.model.Jenkins;
 import org.apache.commons.io.input.NullInputStream;
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRule;
 import org.junit.Rule;
@@ -283,23 +281,17 @@ public class SystemAuthorizationStrategyTest {
         // GET config.xml of srcProject
         String configXml = null;
         {
-            CLI cli = new CLI(j.getURL());
-            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-            int ret = cli.execute(Arrays.asList(
-                    "get-job",
-                    srcProject.getFullName(),
-                    "--username",
-                    "admin",
-                    "--password",
-                    "admin"
-                ),
-                new NullInputStream(0),
-                stdout,
-                stderr
-            );
-            assertEquals(stderr.toString(), 0, ret);
-            configXml = stdout.toString();
+            CLICommandInvoker.Result result = new CLICommandInvoker(j, "get-job")
+                    .withStdin(new NullInputStream(0))
+                    .asUser("admin")
+                    .invokeWithArgs(
+                            srcProject.getFullName()
+                    );
+            configXml = result.stdout();
+            String stderr = result.stderr();
+            int ret = result.returnCode();
+
+            assertEquals(stderr, 0, ret);
         }
         
         // POST config.xml of srcProject to a new project.
@@ -309,22 +301,16 @@ public class SystemAuthorizationStrategyTest {
         String projectName = destProject.getFullName();
         
         {
-            CLI cli = new CLI(j.getURL());
-            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-            int ret = cli.execute(Arrays.asList(
-                    "update-job",
-                    destProject.getFullName(),
-                    "--username",
-                    "admin",
-                    "--password",
-                    "admin"
-                ),
-                new ByteArrayInputStream(configXml.getBytes()),
-                stdout,
-                stderr
-            );
-            assertEquals(stderr.toString(), 0, ret);
+            CLICommandInvoker.Result result = new CLICommandInvoker(j, "update-job")
+                    .withStdin(new ByteArrayInputStream(configXml.getBytes()))
+                    .asUser("admin")
+                    .invokeWithArgs(
+                            destProject.getFullName()
+                    );
+            String stderr = result.stderr();
+            int ret = result.returnCode();
+
+            assertEquals(stderr, 0, ret);
         }
         
         {
@@ -362,23 +348,17 @@ public class SystemAuthorizationStrategyTest {
         // GET config.xml of srcProject (userid is set to admin)
         String configXml = null;
         {
-            CLI cli = new CLI(j.getURL());
-            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-            int ret = cli.execute(Arrays.asList(
-                    "get-job",
-                    srcProject.getFullName(),
-                    "--username",
-                    "test1",
-                    "--password",
-                    "test1"
-                ),
-                new NullInputStream(0),
-                stdout,
-                stderr
-            );
-            assertEquals(stderr.toString(), 0, ret);
-            configXml = stdout.toString();
+            CLICommandInvoker.Result result = new CLICommandInvoker(j, "get-job")
+                    .withStdin(new NullInputStream(0))
+                    .asUser("test1")
+                    .invokeWithArgs(
+                            srcProject.getFullName()
+                    );
+            configXml = result.stdout();
+            String stderr = result.stderr();
+            int ret = result.returnCode();
+
+            assertEquals(stderr, 0, ret);
         }
         
         // POST config.xml of srcProject (userid is set to admin) to a new project.
@@ -388,21 +368,14 @@ public class SystemAuthorizationStrategyTest {
         String projectName = destProject.getFullName();
         
         {
-            CLI cli = new CLI(j.getURL());
-            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-            int ret = cli.execute(Arrays.asList(
-                    "update-job",
-                    destProject.getFullName(),
-                    "--username",
-                    "test1",
-                    "--password",
-                    "test1"
-                ),
-                new ByteArrayInputStream(configXml.getBytes()),
-                stdout,
-                stderr
-            );
+            CLICommandInvoker.Result result = new CLICommandInvoker(j, "update-job")
+                    .withStdin(new ByteArrayInputStream(configXml.getBytes()))
+                    .asUser("test1")
+                    .invokeWithArgs(
+                            destProject.getFullName()
+                    );
+            int ret = result.returnCode();
+
             assertNotEquals(0, ret);
         }
         

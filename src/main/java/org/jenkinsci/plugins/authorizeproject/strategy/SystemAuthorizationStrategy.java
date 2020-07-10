@@ -24,7 +24,6 @@
 
 package org.jenkinsci.plugins.authorizeproject.strategy;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Job;
 import hudson.model.Queue;
@@ -54,7 +53,7 @@ public class SystemAuthorizationStrategy extends AuthorizeProjectStrategy {
 
     @DataBoundConstructor
     public SystemAuthorizationStrategy() {
-        checkAuthorizationConfigurePermission(Jenkins.getActiveInstance());
+        checkAuthorizationConfigurePermission(Jenkins.get());
     }
 
     /**
@@ -188,7 +187,7 @@ public class SystemAuthorizationStrategy extends AuthorizeProjectStrategy {
         public SystemAuthorizationStrategy newInstance(StaplerRequest req, JSONObject formData)
                 throws FormException {
             SystemAuthorizationStrategy result = (SystemAuthorizationStrategy) super.newInstance(req, formData);
-            Jenkins instance = Jenkins.getInstance();
+            Jenkins instance = Jenkins.get();
             if (instance == null || !instance.hasPermission(Jenkins.RUN_SCRIPTS)) {
                 Job job = req.findAncestorObject(Job.class);
                 if (job != null) {

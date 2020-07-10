@@ -65,7 +65,7 @@ public class ConfigurationPermissionEnforcer extends JobProperty<Job<?,?>> {
                 // this should not happen.
                 context = job;
             }
-            if (Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
+            if (Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
                 // allows any configurations by system administrators.
                 // It may not be allowed even if the user is an administrator of the job,
                 // 

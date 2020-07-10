@@ -27,7 +27,7 @@ public class GlobalQueueItemAuthenticatorTest {
 
     @Test
     public void testWorkForFreeStyleProject() throws Exception {
-        Jenkins.getInstance().setSecurityRealm(j.createDummySecurityRealm());
+        Jenkins.get().setSecurityRealm(j.createDummySecurityRealm());
 
         DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators =
                 QueueItemAuthenticatorConfiguration.get().getAuthenticators();
@@ -43,7 +43,7 @@ public class GlobalQueueItemAuthenticatorTest {
         }
 
         authenticators.add(new GlobalQueueItemAuthenticator(
-                new SpecificUsersAuthorizationStrategy(User.get("bob", true).getId()))
+                new SpecificUsersAuthorizationStrategy(User.getById("bob", true).getId()))
         );
         // if configured, GlobalQueueItemAuthenticator takes effect
         {
