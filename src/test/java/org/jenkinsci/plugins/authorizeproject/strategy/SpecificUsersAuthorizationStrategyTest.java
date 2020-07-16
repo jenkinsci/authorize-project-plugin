@@ -465,7 +465,6 @@ public class SpecificUsersAuthorizationStrategyTest {
         String configXml = null;
         {
             CLICommandInvoker.Result result = new CLICommandInvoker(j, "get-job")
-                    .withStdin(new NullInputStream(0))
                     .asUser("test1")
                     .invokeWithArgs(
                             srcProject.getFullName()
