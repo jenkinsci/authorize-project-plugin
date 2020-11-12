@@ -1,7 +1,7 @@
 /target
 /work
 
-# eclipse project file
+# eclipse project files
 /.classpath
 /.project
 /.settings
@@ -11,3 +11,6 @@
 *.ipr
 *.iws
 .idea/
+
+# VSCode project files
+.factorypath
