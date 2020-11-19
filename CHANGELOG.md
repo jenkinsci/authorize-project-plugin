@@ -1,5 +1,10 @@
 # authorize-project-plugin Changelog
 
+## Version 1.3.2 (November 19, 2020)
+
+* Add documentation from wiki to README and CHANGELOG
+* Add pictures to documentation
+
 ## Version 1.3.0 (Feb 12, 2017)
 
 * Split the configuration of authentication into a separate screen
