@@ -29,30 +29,26 @@ public abstract Authentication authenticate(hudson.model.AbstractProject<?, ?> p
 ## Screenshots
 
 * After installed Authorize Project plugin, you will find "Access
-Control for Builds" in "Manage Jenkins" > "Configure Global
-Security". Adding "Configure Build Authorizations in Project
-Configuration" enables Authorize Project plugin. +
-image:docs/images/authorize-project_01_globalsecurity.png[]
- ** You can also disable specific strategies in this page. Disabled
-strategies are never used for authorization.
-* A new side bar menu "Authorization" will appear in project pages. +
-image:docs/images/sidebar.png[]
+  Control for Builds" in "Manage Jenkins" > "Configure Global
+  Security". Adding "Configure Build Authorizations in Project
+  Configuration" enables Authorize Project plugin.
+  ![global security](docs/images/authorize-project_01_globalsecurity.png)
+  * You can also disable specific strategies in this page. Disabled
+    strategies are never used for authorization.
+* A new side bar menu "Authorization" will appear in project pages.
+  ![sidebar](docs/images/sidebar.png)
 * You can select how to authorize builds of the project in the
-"Authorization" page. +
-image:docs/images/authorization-page.png[]
+  "Authorization" page. ![authorization page](docs/images/authorization-page.png)
 * When selecting "Run as Specific User", you can enter User ID with
-whose authorization builds will run. If you enter a user ID except
-yourself and have no administrative privilege, you are required to
-enter the password of that user. +
-image:docs/images/authorization-page-specific-user.png[]
- ** You can also use API token, especially for non password-based
-security realms.
+  whose authorization builds will run. If you enter a user ID except
+  yourself and have no administrative privilege, you are required to
+  enter the password of that user. ![authorization page specific user](docs/images/authorization-page-specific-user.png)
+  * You can also use API token, especially for non password-based
+    security realms.
 * Configuring project settings by unauthorized users are forbidden
-when you configure the authorization for the project. See [What's
-this?](https://wiki.jenkins.io/display/JENKINS/Authorize+Project+plugin#AuthorizeProjectplugin-What%27sthis?).
-for details. +
-
-![access denied](docs/images/access-denied.png)
+  when you configure the authorization for the project. See [What's
+  this?](https://wiki.jenkins.io/display/JENKINS/Authorize+Project+plugin#AuthorizeProjectplugin-What%27sthis?)
+  for details. ![access denied](docs/images/access-denied.png)
 
 ## Issues
 
