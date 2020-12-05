@@ -1,6 +1,6 @@
 # authorize-project-plugin Changelog
 
-## [1.3.2] - 2020-11-19
+## [Unreleased] - 2020-11-19
 
 ### Added
 * Add documentation from wiki to README and CHANGELOG.
@@ -80,3 +80,14 @@ if you authenticate with non-existent user.
 
 ### Added
 * Initial release.
+
+[Unreleased]: https://github.com/jenkinsci/authorize-project-plugin/compare/authorize-project-1.3.0...HEAD
+[1.3.0]: https://github.com/jenkinsci/authorize-project-plugin/compare/authorize-project-1.2.2...authorize-project-1.3.0
+[1.2.2]: https://github.com/jenkinsci/authorize-project-plugin/compare/authorize-project-1.2.1...authorize-project-1.2.2
+[1.2.1]: https://github.com/jenkinsci/authorize-project-plugin/compare/authorize-project-1.2.0...authorize-project-1.2.1
+[1.2.0]: https://github.com/jenkinsci/authorize-project-plugin/compare/authorize-project-1.1.0...authorize-project-1.2.0
+[1.1.0]: https://github.com/jenkinsci/authorize-project-plugin/compare/authorize-project-1.0.3...authorize-project-1.1.0
+[1.0.3]: https://github.com/jenkinsci/authorize-project-plugin/compare/authorize-project-1.0.2...authorize-project-1.0.3
+[1.0.2]: https://github.com/jenkinsci/authorize-project-plugin/compare/authorize-project-1.0.1...authorize-project-1.0.2
+[1.0.1]: https://github.com/jenkinsci/authorize-project-plugin/compare/authorize-project-1.0.0...authorize-project-1.0.1
+[1.0.0]: https://github.com/jenkinsci/authorize-project-plugin/releases/tag/authorize-project-1.0.0
