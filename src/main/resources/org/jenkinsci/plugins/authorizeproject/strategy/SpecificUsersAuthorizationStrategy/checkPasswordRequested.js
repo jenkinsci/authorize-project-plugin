@@ -46,8 +46,13 @@ Behaviour.specify(".specific-user-authorization", "checkPasswordRequired", 0, fu
   var useridField = findFormItem(e, "userid", findChild(e));
   var passwordField = findFormItem(e, "password", findChild(e));
   var passwordFieldBlock = findAncestor(passwordField, "TR");
+  if (passwordFieldBlock == null) {
+      passwordFieldBlock = findAncestorClass(passwordField, "tr");
+    }
+
   var passwordCheckBlock = findFollowingTR(passwordField, "validation-error-area");
   var passwordHelpBlock = findFollowingTR(passwordField, "help-area");
+
   var passwordBlockList = [
     passwordFieldBlock,
     passwordCheckBlock,
