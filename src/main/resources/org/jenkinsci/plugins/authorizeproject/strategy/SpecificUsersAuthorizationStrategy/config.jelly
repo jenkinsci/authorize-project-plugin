@@ -27,7 +27,8 @@ THE SOFTWARE.
     <d:tag name="blockWrapperTable" >
       <j:choose>
         <j:when test="${divBasedFormLayout}">
-          <div style="width:100%" class="specific-user-authorization">
+          <div class="specific-user-authorization">
+
             <d:invokeBody/>
           </div>
         </j:when>
