@@ -27,7 +27,8 @@ THE SOFTWARE.
     <d:tag name="blockWrapperTable" >
       <j:choose>
         <j:when test="${divBasedFormLayout}">
-          <div style="width:100%">
+          <div>
+
             <d:invokeBody/>
           </div>
         </j:when>
