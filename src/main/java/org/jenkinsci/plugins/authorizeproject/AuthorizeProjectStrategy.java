@@ -55,7 +55,7 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
      * @return all the registered {@link AuthorizeProjectStrategy}.
      */
     public static DescriptorExtensionList<AuthorizeProjectStrategy, Descriptor<AuthorizeProjectStrategy>> all() {
-        return Jenkins.getActiveInstance().getDescriptorList(AuthorizeProjectStrategy.class);
+        return Jenkins.get().getDescriptorList(AuthorizeProjectStrategy.class);
     }
     
     /**
@@ -77,7 +77,7 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
         }
         
         if (!(project instanceof AbstractProject)) {
-            Descriptor<?> d = Jenkins.getActiveInstance().getDescriptor(getClass());
+            Descriptor<?> d = Jenkins.get().getDescriptor(getClass());
             LOGGER.log(
                     Level.WARNING,
                     "This authorization strategy ({0}) is designed for authorize-project < 1.1.0 and not applicable for non-AbstractProjects (like WorkflowJob). ignored.",
@@ -186,7 +186,7 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
         if (!ProjectQueueItemAuthenticator.isConfigured()) {
             return;
         }
-        if (Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
+        if (Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
             // allows any configurations by system administrators.
             // It may not be allowed even if the user is an administrator of the job.
             return;
@@ -194,7 +194,7 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
         StaplerRequest request = Stapler.getCurrentRequest();
         AccessControlled context = (request != null) ? request.findAncestorObject(AccessControlled.class) : null;
         if (context == null) {
-            context = Jenkins.getActiveInstance();
+            context = Jenkins.get();
         }
         try {
             checkJobConfigurePermission(context);

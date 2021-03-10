@@ -61,7 +61,7 @@ public abstract class AuthorizeProjectStrategyDescriptor extends Descriptor<Auth
      */
     @Override
     protected final XmlFile getConfigFile() {
-        return new XmlFile(new File(Jenkins.getActiveInstance().getRootDir(),
+        return new XmlFile(new File(Jenkins.get().getRootDir(),
                 Constants.CONFIG_FOLDER+"/"+getId()+".xml"));
     }
     

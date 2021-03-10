@@ -68,8 +68,8 @@ public class AuthorizeProjectUtil {
         }
         try {
             @SuppressWarnings("unchecked")
-            Class<? extends T> staplerClass = (Class<? extends T>)Jenkins.getActiveInstance().getPluginManager().uberClassLoader.loadClass(staplerClazzName);
-            Descriptor<?> d = Jenkins.getActiveInstance().getDescriptorOrDie(staplerClass);
+            Class<? extends T> staplerClass = (Class<? extends T>)Jenkins.get().getPluginManager().uberClassLoader.loadClass(staplerClazzName);
+            Descriptor<?> d = Jenkins.get().getDescriptorOrDie(staplerClass);
             
             @SuppressWarnings("unchecked")
             T instance = (T)d.newInstance(req, formData);
@@ -91,6 +91,6 @@ public class AuthorizeProjectUtil {
         if (b == null) {
             return false;
         }
-        return Jenkins.getActiveInstance().getSecurityRealm().getUserIdStrategy().equals(a, b);
+        return Jenkins.get().getSecurityRealm().getUserIdStrategy().equals(a, b);
     }
 }

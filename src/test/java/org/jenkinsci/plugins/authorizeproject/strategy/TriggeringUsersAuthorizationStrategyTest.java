@@ -168,8 +168,8 @@ public class TriggeringUsersAuthorizationStrategyTest {
         ));
         
         // Users should be created before the test.
-        User.get("validuser");
-        User.get("invaliduser");
+        User.getById("validuser", true);
+        User.getById("invaliduser", true);
         
         FreeStyleProject p = j.createFreeStyleProject();
         p.addProperty(new AuthorizeProjectProperty(new TriggeringUsersAuthorizationStrategy()));
