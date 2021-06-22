@@ -101,5 +101,5 @@ Also have a look on [How to report an issue](https://www.jenkins.io/participate/
 
 ## Change Log
 
-* See [GitHub Releases]() for the recent releases
+* See [GitHub Releases](https://github.com/jenkinsci/authorize-project-plugin/releases) for the recent releases
 * See the [Changelog Archive](./docs/CHANGELOG.old.md) for version 1.3.0 and older
