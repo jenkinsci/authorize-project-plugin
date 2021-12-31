@@ -36,7 +36,7 @@ import hudson.model.Descriptor;
 import hudson.model.Job;
 import hudson.model.Queue;
 
-import javax.annotation.CheckForNull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 
 import net.sf.json.JSONObject;
 
