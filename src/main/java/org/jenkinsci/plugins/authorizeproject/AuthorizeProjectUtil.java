@@ -24,7 +24,7 @@
 
 package org.jenkinsci.plugins.authorizeproject;
 
-import javax.annotation.CheckForNull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 
 import jenkins.model.Jenkins;
 import hudson.model.Describable;
