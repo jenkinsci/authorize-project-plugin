@@ -44,8 +44,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 import jenkins.model.TransientActionFactory;
@@ -210,7 +210,7 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
         /**
          * The job that this action belongs to.
          */
-        @Nonnull
+        @NonNull
         private final Job<?, ?> job;
 
         /**
@@ -218,7 +218,7 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
          *
          * @param job the job.
          */
-        public AuthorizationAction(@Nonnull Job<?, ?> job) {
+        public AuthorizationAction(@NonNull Job<?, ?> job) {
             this.job = job;
         }
 
@@ -238,10 +238,10 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
          * @return the {@link AuthorizeProjectProperty.DescriptorImpl}
          */
         public DescriptorImpl getPropertyDescriptor() {
-            return Jenkins.getActiveInstance().getDescriptorByType(DescriptorImpl.class);
+            return Jenkins.get().getDescriptorByType(DescriptorImpl.class);
         }
 
-        @Nonnull
+        @NonNull
         public Job<?, ?> getJob() {
             return job;
         }
@@ -286,9 +286,9 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
          * @throws ServletException when things go wrong.
          */
         @RequirePOST
-        @Nonnull
+        @NonNull
         @Restricted(NoExternalUse.class)
-        public synchronized HttpResponse doAuthorize(@Nonnull StaplerRequest req) throws IOException, ServletException {
+        public synchronized HttpResponse doAuthorize(@NonNull StaplerRequest req) throws IOException, ServletException {
             job.checkPermission(Job.CONFIGURE);
             JSONObject json = req.getSubmittedForm();
             JSONObject o = json.optJSONObject(getPropertyDescriptor().getJsonSafeClassName());
@@ -334,9 +334,9 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
         /**
          * {@inheritDoc}
          */
-        @Nonnull
+        @NonNull
         @Override
-        public Collection<? extends Action> createFor(@Nonnull Job target) {
+        public Collection<? extends Action> createFor(@NonNull Job target) {
             return Collections.<Action>singletonList(new AuthorizationAction((Job<?, ?>) target));
         }
     }

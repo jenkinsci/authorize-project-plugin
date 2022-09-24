@@ -40,7 +40,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import jenkins.security.ApiTokenProperty;
-import net.sf.json.JSONObject;
 import org.acegisecurity.AccessDeniedException;
 import org.acegisecurity.Authentication;
 import org.acegisecurity.providers.UsernamePasswordAuthenticationToken;
@@ -134,7 +133,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         } else {
             if (password != null) {
                 try {
-                    Jenkins.getActiveInstance().getSecurityRealm().getSecurityComponents().manager.authenticate(
+                    Jenkins.get().getSecurityRealm().getSecurityComponents().manager.authenticate(
                             new UsernamePasswordAuthenticationToken(userId, password)
                     );
                     // supplied password matches
@@ -148,7 +147,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
     }
 
     protected static boolean isAuthenticationRequired(String userId) {
-        if (Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
+        if (Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
             // Administrator can specify any user.
             return false;
         }
@@ -363,7 +362,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         @Restricted(NoExternalUse.class) // used by stapler/jelly
         @SuppressWarnings("unused")
         public boolean isUseApitoken() {
-            return !(Jenkins.getActiveInstance().getSecurityRealm() instanceof AbstractPasswordBasedSecurityRealm);
+            return !(Jenkins.get().getSecurityRealm() instanceof AbstractPasswordBasedSecurityRealm);
         }
         
         /**

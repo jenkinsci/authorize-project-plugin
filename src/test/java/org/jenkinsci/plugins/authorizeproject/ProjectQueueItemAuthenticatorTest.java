@@ -38,16 +38,26 @@ import hudson.matrix.TextAxis;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.model.FreeStyleProject;
+import hudson.model.InvisibleAction;
 import hudson.model.Job;
 import hudson.model.Queue;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.model.User;
 import hudson.security.ACL;
+import hudson.tasks.BuildStepDescriptor;
+import hudson.tasks.Builder;
+import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.authorizeproject.strategy.AnonymousAuthorizationStrategy;
+import org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizationCheckBuilder;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRule;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -61,18 +71,8 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 
 import java.io.IOException;
-import jenkins.tasks.SimpleBuildStep;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.InvisibleAction;
-import hudson.model.TaskListener;
-import hudson.model.Run;
-import hudson.tasks.BuildStepDescriptor;
-import hudson.tasks.Builder;
-import org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy;
-import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 
 /**
  *
@@ -371,9 +371,9 @@ public class ProjectQueueItemAuthenticatorTest {
     @Test
     public void testGlobalSecurityConfiguration() throws Exception {
         AuthorizeProjectStrategyWithGlobalSecurityConfiguration.DescriptorImpl descriptor
-            = (AuthorizeProjectStrategyWithGlobalSecurityConfiguration.DescriptorImpl)Jenkins.getInstance().getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class);
+            = (AuthorizeProjectStrategyWithGlobalSecurityConfiguration.DescriptorImpl)Jenkins.get().getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class);
         AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.DescriptorImpl alternateDescriptor
-            = (AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.DescriptorImpl)Jenkins.getInstance().getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class);
+            = (AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.DescriptorImpl)Jenkins.get().getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class);
         
         final String value1 = "value1 for AuthorizeProjectStrategyWithGlobalSecurityConfigurationValueField";
         final String alternateValue1 = "value1 for AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration";
@@ -472,7 +472,7 @@ public class ProjectQueueItemAuthenticatorTest {
         
         @Override
         public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
-            return User.get(name).impersonate();
+            return User.getById(name, true).impersonate();
         }
         
         @TestExtension
@@ -498,7 +498,8 @@ public class ProjectQueueItemAuthenticatorTest {
     }
     
     public static class AuthorizationRecordAction extends InvisibleAction {
-        public final Authentication authentication;
+        // transient because the UsernamePasswordAuthenticationToken is forbidden to be serialized by JEP-200
+        public final transient Authentication authentication;
         
         public AuthorizationRecordAction(Authentication authentication) {
             this.authentication = authentication;
@@ -540,14 +541,12 @@ public class ProjectQueueItemAuthenticatorTest {
             j.assertBuildStatusSuccess(b);
             assertEquals(ACL.SYSTEM, b.getAction(AuthorizationRecordAction.class).authentication);
         }
-        
         {
             WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "test"+j.jenkins.getItems().size());
             p.addProperty(new AuthorizeProjectProperty(new AuthorizeProjectStrategyWithOldSignature("test1")));
             p.setDefinition(new CpsFlowDefinition("node{ step([$class: 'AuthorizationCheckSimpleBuilder']); }", true));
             WorkflowRun b = p.scheduleBuild2(0).get();
             j.assertBuildStatusSuccess(b);
-            
             // Strategies with old signatures don't work for Jobs.
             assertEquals(ACL.SYSTEM, b.getAction(AuthorizationRecordAction.class).authentication);
         }
@@ -555,11 +554,11 @@ public class ProjectQueueItemAuthenticatorTest {
         {
             WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "test"+j.jenkins.getItems().size());
             p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1")));
-            User.get("test1");  // create
+            User.getById("test1", true);  // create
             p.setDefinition(new CpsFlowDefinition("node{ step([$class: 'AuthorizationCheckSimpleBuilder']); }", true));
             WorkflowRun b = p.scheduleBuild2(0).get();
             j.assertBuildStatusSuccess(b);
-            assertEquals(User.get("test1").impersonate(), b.getAction(AuthorizationRecordAction.class).authentication);
+            assertEquals(User.getById("test1", false).impersonate(), b.getAction(AuthorizationRecordAction.class).authentication);
         }
     }
 }
