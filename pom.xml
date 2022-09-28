@@ -7,17 +7,17 @@
   </parent>
 
   <artifactId>authorize-project</artifactId>
-  <version>1.4.1-SNAPSHOT</version>
+  <version>${revision}${changelist}</version>
   <packaging>hpi</packaging>
   <name>Authorize Project</name>
   <description>Configure projects to run with specified authorization.</description>
   <url>https://github.com/jenkinsci/authorize-project-plugin</url>
 
   <scm>
-    <connection>scm:git:https://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
-    <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
-    <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
-    <tag>HEAD</tag>
+    <connection>scm:git:https://github.com/${gitHubRepo}.git</connection>
+    <developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
+    <url>https://github.com/${gitHubRepo}</url>
+    <tag>${scmTag}</tag>
   </scm>
 
   <developers>
@@ -36,6 +36,9 @@
   </licenses>
 
   <properties>
+    <revision>1.4.1</revision>
+    <changelist>-SNAPSHOT</changelist>
+    <gitHubRepo>jenkinsci/authorize-project-plugin</gitHubRepo>
     <jenkins.version>2.235.1</jenkins.version>
     <java.level>8</java.level>
   </properties>
