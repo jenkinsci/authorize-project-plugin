@@ -1,1 +1,6 @@
-buildPlugin()
+buildPlugin(failFast: false,
+            configurations: [
+                [platform: 'linux',   jdk: '17', jenkins: '2.371'],
+                [platform: 'linux',   jdk: '11', jenkins: '2.361.1'],
+                [platform: 'windows', jdk:  '8'],
+            ])
