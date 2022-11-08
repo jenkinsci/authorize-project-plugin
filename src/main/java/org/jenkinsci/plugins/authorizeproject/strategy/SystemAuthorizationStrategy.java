@@ -188,7 +188,7 @@ public class SystemAuthorizationStrategy extends AuthorizeProjectStrategy {
                 throws FormException {
             SystemAuthorizationStrategy result = (SystemAuthorizationStrategy) super.newInstance(req, formData);
             Jenkins instance = Jenkins.get();
-            if (instance == null || !instance.hasPermission(Jenkins.RUN_SCRIPTS)) {
+            if (!instance.hasPermission(Jenkins.RUN_SCRIPTS)) {
                 Job job = req.findAncestorObject(Job.class);
                 if (job != null) {
                     if (!(permitReconfiguration && getCurrentStrategy(job) != null)) {
