@@ -27,9 +27,10 @@ package org.jenkinsci.plugins.authorizeproject.testutil;
 import hudson.model.Describable;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jenkins.security.QueueItemAuthenticatorConfiguration;
 
@@ -42,21 +43,20 @@ import com.gargoylesoftware.htmlunit.WebResponse;
  *
  */
 public class AuthorizeProjectJenkinsRule extends JenkinsRule {
-    private Map<Class<? extends Describable<?>>, Boolean> strategyEnabledMapByClass;
+    private Set<Class<? extends Describable<?>>> enabledStrategiesByClass;
+    private Set<Class<? extends Describable<?>>> disabledStrategiesByClass;
     
     public AuthorizeProjectJenkinsRule() {
-        this(Collections.<Class<? extends Describable<?>>, Boolean>emptyMap());
+        this(Collections.emptySet(), Collections.emptySet());
     }
     
-    public AuthorizeProjectJenkinsRule(Class<? extends Describable<?>>... strategiesToEnabled) {
-        this(new HashMap<Class<? extends Describable<?>>, Boolean>());
-        for(Class<? extends Describable<?>> strategy: strategiesToEnabled) {
-            this.strategyEnabledMapByClass.put(strategy, true);
-        }
+    public AuthorizeProjectJenkinsRule(Class<? extends Describable<?>>... enabledStrategiesByClass) {
+        this(Stream.of(enabledStrategiesByClass).collect(Collectors.toSet()), Collections.emptySet());
     }
     
-    public AuthorizeProjectJenkinsRule(Map<Class<? extends Describable<?>>, Boolean> strategyEnabledMapByClass) {
-        this.strategyEnabledMapByClass = strategyEnabledMapByClass;
+    public AuthorizeProjectJenkinsRule(Set<Class<? extends Describable<?>>> enabledStrategiesByClass, Set<Class<? extends Describable<?>>> disabledStrategiesByClass) {
+        this.enabledStrategiesByClass = enabledStrategiesByClass;
+        this.disabledStrategiesByClass = disabledStrategiesByClass;
     }
     
     @Override
@@ -77,13 +77,14 @@ public class AuthorizeProjectJenkinsRule extends JenkinsRule {
     
     public void before() throws Throwable {
         super.before();
-        Map<String, Boolean> strategyEnabledMap = new HashMap<String, Boolean>();
-        for(Entry<Class<? extends Describable<?>>, Boolean> e: strategyEnabledMapByClass.entrySet()) {
-            strategyEnabledMap.put(
-                    jenkins.getDescriptor(e.getKey()).getId(),
-                    e.getValue()
-            );
+        Set<String> enabledStrategies = new HashSet<>();
+        Set<String> disabledStrategies = new HashSet<>();
+        for (Class<? extends Describable<?>> clazz : enabledStrategiesByClass) {
+            enabledStrategies.add(jenkins.getDescriptor(clazz).getId());
         }
-        QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new ProjectQueueItemAuthenticator(strategyEnabledMap));
+        for (Class<? extends Describable<?>> clazz : disabledStrategiesByClass) {
+            disabledStrategies.add(jenkins.getDescriptor(clazz).getId());
+        }
+        QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new ProjectQueueItemAuthenticator(enabledStrategies, disabledStrategies));
     }
 }
