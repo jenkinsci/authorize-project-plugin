@@ -74,6 +74,16 @@
       <artifactId>workflow-cps</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>io.jenkins</groupId>
+      <artifactId>configuration-as-code</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.jenkins.configuration-as-code</groupId>
+      <artifactId>test-harness</artifactId>
+      <scope>test</scope>
+    </dependency>
     <!-- Required to avoid cyclic dependency -->
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
