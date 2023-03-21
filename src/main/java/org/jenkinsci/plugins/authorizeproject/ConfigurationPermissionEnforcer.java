@@ -9,6 +9,7 @@ import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -49,7 +50,7 @@ public class ConfigurationPermissionEnforcer extends JobProperty<Job<?,?>> {
          * {@inheritDoc}
          */
         @Override
-        public JobProperty<?> newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+        public JobProperty<?> newInstance(@NonNull StaplerRequest req, JSONObject formData) throws FormException {
             Job<?,?> job = req.findAncestorObject(Job.class);
             AccessControlled context = req.findAncestorObject(AccessControlled.class);
             checkConfigurePermission(job, context);

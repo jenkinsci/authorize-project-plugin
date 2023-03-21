@@ -26,9 +26,9 @@ package org.jenkinsci.plugins.authorizeproject;
 
 import static org.junit.Assert.*;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import jenkins.model.Jenkins;
 import jenkins.security.QueueItemAuthenticatorConfiguration;
@@ -214,11 +214,11 @@ public class ProjectQueueItemAuthenticatorTest {
         // can be reconfigured if it is enabled.
         assertEquals(AnonymousAuthorizationStrategy.class, p.getProperty(AuthorizeProjectProperty.class).getStrategy().getClass());
 
-        Map<String, Boolean> strategyEnabledMap = new HashMap<String, Boolean>();
-        strategyEnabledMap.put(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class).getId(), false);
+        Set<String> enabledStrategies = Collections.emptySet();
+        Set<String> disabledStrategies = Collections.singleton(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class).getId());
 
         QueueItemAuthenticatorConfiguration.get().getAuthenticators().clear();
-        QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new ProjectQueueItemAuthenticator(strategyEnabledMap));
+        QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new ProjectQueueItemAuthenticator(enabledStrategies, disabledStrategies));
 
         assertFalse(ProjectQueueItemAuthenticator.getConfigured().isStrategyEnabled(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class)));
 
@@ -241,11 +241,11 @@ public class ProjectQueueItemAuthenticatorTest {
         j.assertBuildStatusSuccess(p.scheduleBuild2(0));
         assertEquals(Jenkins.ANONYMOUS, checker.authentication);
         
-        Map<String, Boolean> strategyEnabledMap = new HashMap<String, Boolean>();
-        strategyEnabledMap.put(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class).getId(), false);
+        Set<String> enabledStrategies = Collections.emptySet();
+        Set<String> disabledStrategies = Collections.singleton(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class).getId());
         
         QueueItemAuthenticatorConfiguration.get().getAuthenticators().clear();
-        QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new ProjectQueueItemAuthenticator(strategyEnabledMap));
+        QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new ProjectQueueItemAuthenticator(enabledStrategies, disabledStrategies));
         
         assertFalse(ProjectQueueItemAuthenticator.getConfigured().isStrategyEnabled(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class)));
         
@@ -424,36 +424,51 @@ public class ProjectQueueItemAuthenticatorTest {
         }
         
         // enabled / disabled preservation
+        Set<String> enabledStrategies;
+        Set<String> disabledStrategies;
+
         // all are enabled
-        Map<String, Boolean> strategyEnabledMap = new HashMap<String, Boolean>();
-        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration.class).getId(), true);
-        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class).getId(), true);
-        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class).getId(), true);
-        assertStrategyEnablingConfigurationPreserved(strategyEnabledMap);
+        enabledStrategies = new HashSet<>();
+        disabledStrategies = new HashSet<>();
+        enabledStrategies.add(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration.class).getId());
+        enabledStrategies.add(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class).getId());
+        enabledStrategies.add(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class).getId());
+        assertStrategyEnablingConfigurationPreserved(enabledStrategies, disabledStrategies);
         
         // all are disabled
-        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration.class).getId(), false);
-        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class).getId(), false);
-        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class).getId(), false);
-        assertStrategyEnablingConfigurationPreserved(strategyEnabledMap);
+        enabledStrategies = new HashSet<>();
+        disabledStrategies = new HashSet<>();
+        disabledStrategies.add(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration.class).getId());
+        disabledStrategies.add(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class).getId());
+        disabledStrategies.add(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class).getId());
+        assertStrategyEnablingConfigurationPreserved(enabledStrategies, disabledStrategies);
         
         // mixed
-        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration.class).getId(), false);
-        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class).getId(), true);
-        strategyEnabledMap.put(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class).getId(), false);
-        assertStrategyEnablingConfigurationPreserved(strategyEnabledMap);
+        enabledStrategies = new HashSet<>();
+        disabledStrategies = new HashSet<>();
+        disabledStrategies.add(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration.class).getId());
+        enabledStrategies.add(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class).getId());
+        disabledStrategies.add(j.jenkins.getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class).getId());
+        assertStrategyEnablingConfigurationPreserved(enabledStrategies, disabledStrategies);
     }
     
-    public void assertStrategyEnablingConfigurationPreserved(Map<String, Boolean> strategyEnabledMap) throws Exception {
+    public void assertStrategyEnablingConfigurationPreserved(Set<String> enabledStrategies, Set<String> disabledStrategies) throws Exception {
         QueueItemAuthenticatorConfiguration.get().getAuthenticators().clear();
-        QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new ProjectQueueItemAuthenticator(strategyEnabledMap));
+        QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new ProjectQueueItemAuthenticator(enabledStrategies, disabledStrategies));
         j.submit(j.createWebClient().goTo("configureSecurity").getFormByName("config"));
-        for (Entry<String, Boolean> entry: strategyEnabledMap.entrySet()) {
-            assertEquals(
-                    entry.getKey(),
-                    entry.getValue(),
+        for (String enabledStrategy : enabledStrategies) {
+            assertTrue(
+                    enabledStrategy,
                     ProjectQueueItemAuthenticator.getConfigured().isStrategyEnabled(
-                            j.jenkins.getDescriptor(entry.getKey())
+                            j.jenkins.getDescriptor(enabledStrategy)
+                    )
+            );
+        }
+        for (String disabledStrategy : disabledStrategies) {
+            assertFalse(
+                    disabledStrategy,
+                    ProjectQueueItemAuthenticator.getConfigured().isStrategyEnabled(
+                            j.jenkins.getDescriptor(disabledStrategy)
                     )
             );
         }

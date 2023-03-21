@@ -1,0 +1,8 @@
+security:
+  queueItemAuthenticator:
+    authenticators:
+      - global:
+          strategy:
+            specificUsersAuthorizationStrategy:
+              dontRestrictJobConfiguration: true
+              userid: "some-user"
