@@ -196,15 +196,15 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
         if (context == null) {
             context = Jenkins.get();
         }
-        try {
-            checkJobConfigurePermission(context);
-        } catch (AccessDeniedException e) {
-            throw new InvalidObjectException(e.getMessage());
+        if (!hasJobConfigurePermission(context)) {
+            String name = Jenkins.getAuthentication().getName();
+            String userNotAuthorizedForJob = Messages.AuthorizeProjectStrategy_UserNotAuthorizedForJob(name);
+            throw new InvalidObjectException(userNotAuthorizedForJob);
         }
-        try {
-            checkAuthorizationConfigurePermission(context);
-        } catch (AccessDeniedException e) {
-            throw new InvalidObjectException(e.getMessage());
+        if (!hasAuthorizationConfigurePermission(context)) {
+            String name = Jenkins.getAuthentication().getName();
+            String userNotAuthorized = Messages.AuthorizeProjectStrategy_UserNotAuthorized(name);
+            throw new InvalidObjectException(userNotAuthorized);
         }
     }
 }
