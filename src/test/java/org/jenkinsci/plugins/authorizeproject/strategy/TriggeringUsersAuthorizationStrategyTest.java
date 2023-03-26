@@ -29,6 +29,7 @@ import static org.junit.Assert.*;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
+import hudson.security.ACLContext;
 import jenkins.model.Jenkins;
 import hudson.model.FreeStyleBuild;
 import hudson.model.Cause;
@@ -37,8 +38,6 @@ import hudson.model.User;
 import hudson.security.ACL;
 import hudson.tasks.BuildTrigger;
 
-import org.acegisecurity.context.SecurityContext;
-import org.acegisecurity.context.SecurityContextHolder;
 import org.acegisecurity.providers.UsernamePasswordAuthenticationToken;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizationCheckBuilder;
@@ -173,22 +172,16 @@ public class TriggeringUsersAuthorizationStrategyTest {
         AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
         p.getBuildersList().add(checker);
         
-        SecurityContext orig = ACL.impersonate(new UsernamePasswordAuthenticationToken("validuser", "validuser"));
-        try {
-            j.assertBuildStatusSuccess(p.scheduleBuild2(0, new Cause.UserIdCause()).get(10, TimeUnit.SECONDS));
-        } finally {
-            SecurityContextHolder.setContext(orig);
+        try (ACLContext ignored = ACL.as(new UsernamePasswordAuthenticationToken("validuser", "validuser"))) {
+             j.assertBuildStatusSuccess(p.scheduleBuild2(0, new Cause.UserIdCause()).get(10, TimeUnit.SECONDS));
         }
         assertEquals("validuser", checker.authentication.getName());
         
         // In case of specifying an invalid user,
         // falls back to anonymous.
         // And the build should not be blocked.
-        orig = ACL.impersonate(new UsernamePasswordAuthenticationToken("invaliduser", "invaliduser"));
-        try {
+        try (ACLContext ignored = ACL.as(new UsernamePasswordAuthenticationToken("invaliduser", "invaliduser"))) {
             j.assertBuildStatusSuccess(p.scheduleBuild2(0, new Cause.UserIdCause()).get(10, TimeUnit.SECONDS));
-        } finally {
-            SecurityContextHolder.setContext(orig);
         }
         assertEquals(Jenkins.ANONYMOUS, checker.authentication);
     }
