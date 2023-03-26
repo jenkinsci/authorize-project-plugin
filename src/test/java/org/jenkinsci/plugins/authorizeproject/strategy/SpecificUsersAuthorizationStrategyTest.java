@@ -79,9 +79,6 @@ import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 import com.gargoylesoftware.htmlunit.xml.XmlPage;
 import com.google.common.collect.Sets;
 
-/**
- *
- */
 public class SpecificUsersAuthorizationStrategyTest {
     @Rule
     public JenkinsRule j = new AuthorizeProjectJenkinsRule(SpecificUsersAuthorizationStrategy.class);
@@ -350,8 +347,8 @@ public class SpecificUsersAuthorizationStrategyTest {
         srcProject.save();
         
         WebClient wc = j.createWebClient();
-        wc.login("test1", "test1");
-        
+        wc.login("test1");
+
         // GET config.xml of srcProject (userid is set to test1)
         String configXml = getConfigXml(wc.goToXml(String.format("%s/config.xml", srcProject.getUrl())));
         
@@ -404,8 +401,8 @@ public class SpecificUsersAuthorizationStrategyTest {
         srcProject.save();
         
         WebClient wc = j.createWebClient();
-        wc.login("test1", "test1");
-        
+        wc.login("test1");
+
         // GET config.xml of srcProject (userid is set to admin)
         String configXml = getConfigXml(wc.goToXml(String.format("%s/config.xml", srcProject.getUrl())));
         
@@ -463,7 +460,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         srcProject.save();
 
         WebClient wc = j.createWebClient();
-        wc.login("test1", "test1");
+        wc.login("test1");
 
         // GET config.xml of srcProject (userid is set to test1)
         String configXml = null;
@@ -531,8 +528,8 @@ public class SpecificUsersAuthorizationStrategyTest {
         srcProject.save();
         
         WebClient wc = j.createWebClient();
-        wc.login("test1", "test1");
-        
+        wc.login("test1");
+
         // GET config.xml of srcProject (userid is set to admin)
         String configXml = null;
         {
@@ -946,8 +943,8 @@ public class SpecificUsersAuthorizationStrategyTest {
         p.save();
         
         WebClient wc = j.createWebClient();
-        wc.login("test1", "test1");
-        
+        wc.login("test1");
+
         j.submit(wc.getPage(p, "configure").getFormByName("config"));
     }
 
@@ -960,8 +957,8 @@ public class SpecificUsersAuthorizationStrategyTest {
         p.save();
         
         WebClient wc = j.createWebClient();
-        wc.login("test2", "test2");
-        
+        wc.login("test2");
+
         try {
             j.submit(wc.getPage(p, "configure").getFormByName("config"));
         } catch (FailingHttpStatusCodeException e) {
@@ -980,8 +977,8 @@ public class SpecificUsersAuthorizationStrategyTest {
         p.save();
         
         WebClient wc = j.createWebClient();
-        wc.login("test2", "test2");
-        
+        wc.login("test2");
+
         j.submit(wc.getPage(p, "configure").getFormByName("config"));
     }
 
@@ -1000,8 +997,8 @@ public class SpecificUsersAuthorizationStrategyTest {
         p.save();
         
         WebClient wc = j.createWebClient();
-        wc.login("admin", "admin");
-        
+        wc.login("admin");
+
         j.submit(wc.getPage(p, "configure").getFormByName("config"));
     }
 
@@ -1021,7 +1018,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         p.save();
 
         WebClient wc = j.createWebClient();
-        wc.login("test2", "test2");
+        wc.login("test2");
 
         try {
             j.submit(wc.getPage(p, "configure").getFormByName("config"));

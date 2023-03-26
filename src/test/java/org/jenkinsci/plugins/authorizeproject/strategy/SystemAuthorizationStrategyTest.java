@@ -66,9 +66,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
-/**
- *
- */
 public class SystemAuthorizationStrategyTest {
     @Rule
     public JenkinsRule j = new AuthorizeProjectJenkinsRule(SystemAuthorizationStrategy.class);
@@ -171,7 +168,7 @@ public class SystemAuthorizationStrategyTest {
         srcProject.save();
         
         WebClient wc = j.createWebClient();
-        wc.login("admin", "admin");
+        wc.login("admin");
         
         // GET config.xml of srcProject
         String configXml = getConfigXml(wc.goToXml(String.format("%s/config.xml", srcProject.getUrl())));
@@ -219,7 +216,7 @@ public class SystemAuthorizationStrategyTest {
         srcProject.save();
         
         WebClient wc = j.createWebClient();
-        wc.login("test1", "test1");
+        wc.login("test1");
 
         // we want to verify that you cannot clone a job even if you can reconfigure a job that uses this strategy
         j.getInstance().getDescriptorByType(SystemAuthorizationStrategy.DescriptorImpl.class)
@@ -276,7 +273,7 @@ public class SystemAuthorizationStrategyTest {
         srcProject.save();
         
         WebClient wc = j.createWebClient();
-        wc.login("admin", "admin");
+        wc.login("admin");
         
         // GET config.xml of srcProject
         String configXml = null;
@@ -340,7 +337,7 @@ public class SystemAuthorizationStrategyTest {
         srcProject.save();
         
         WebClient wc = j.createWebClient();
-        wc.login("test1", "test1");
+        wc.login("test1");
 
         // we want to verify that you cannot clone a job even if you can reconfigure a job that uses this strategy
         j.getInstance().getDescriptorByType(SystemAuthorizationStrategy.DescriptorImpl.class).setPermitReconfiguration(true);

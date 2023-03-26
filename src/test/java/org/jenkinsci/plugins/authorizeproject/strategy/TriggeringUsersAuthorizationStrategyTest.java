@@ -49,9 +49,6 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.JenkinsRule.WebClient;
 import org.jvnet.hudson.test.recipes.LocalData;
 
-/**
- *
- */
 public class TriggeringUsersAuthorizationStrategyTest {
     @Rule
     public JenkinsRule j = new AuthorizeProjectJenkinsRule();
@@ -105,7 +102,7 @@ public class TriggeringUsersAuthorizationStrategyTest {
         // if triggered from a user, run in the privilege of that user.
         {
             assertNull(p.getLastBuild());
-            WebClient wc = j.createWebClient().login("test1", "test1");
+            WebClient wc = j.createWebClient().login("test1");
             triggerBuildWithoutParameters(wc, p);
             j.waitUntilNoActivity();
             FreeStyleBuild b = p.getLastBuild();
@@ -119,7 +116,7 @@ public class TriggeringUsersAuthorizationStrategyTest {
         // test with another user.
         {
             assertNull(p.getLastBuild());
-            WebClient wc = j.createWebClient().login("test2", "test2");
+            WebClient wc = j.createWebClient().login("test2");
             triggerBuildWithoutParameters(wc, p);
             j.waitUntilNoActivity();
             FreeStyleBuild b = p.getLastBuild();
@@ -147,7 +144,7 @@ public class TriggeringUsersAuthorizationStrategyTest {
         // if triggered from a user, its downstream runs in the privilege of that user.
         {
             assertNull(p.getLastBuild());
-            WebClient wc = j.createWebClient().login("test1", "test1");
+            WebClient wc = j.createWebClient().login("test1");
             triggerBuildWithoutParameters(wc, upstream);
             j.waitUntilNoActivity();
             FreeStyleBuild b = p.getLastBuild();

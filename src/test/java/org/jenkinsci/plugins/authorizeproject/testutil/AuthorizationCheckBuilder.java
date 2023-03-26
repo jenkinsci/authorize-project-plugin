@@ -37,9 +37,6 @@ import hudson.model.BuildListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 
-/**
- *
- */
 public class AuthorizationCheckBuilder extends Builder {
 
     // "transient" is required for exclusion from serialization - see https://jenkins.io/redirect/class-filter/

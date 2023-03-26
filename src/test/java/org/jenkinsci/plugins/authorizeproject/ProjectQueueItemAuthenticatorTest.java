@@ -74,9 +74,6 @@ import java.io.IOException;
 import hudson.FilePath;
 import hudson.Launcher;
 
-/**
- *
- */
 public class ProjectQueueItemAuthenticatorTest {
     @Rule
     public JenkinsRule j = new AuthorizeProjectJenkinsRule(SpecificUsersAuthorizationStrategy.class);

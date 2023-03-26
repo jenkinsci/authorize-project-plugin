@@ -39,9 +39,6 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 import com.gargoylesoftware.htmlunit.WebResponse;
 
-/**
- *
- */
 public class AuthorizeProjectJenkinsRule extends JenkinsRule {
     private Set<Class<? extends Describable<?>>> enabledStrategiesByClass;
     private Set<Class<? extends Describable<?>>> disabledStrategiesByClass;
