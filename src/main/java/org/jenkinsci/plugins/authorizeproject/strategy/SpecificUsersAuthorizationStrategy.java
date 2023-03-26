@@ -255,7 +255,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
     protected Object readResolve() throws ObjectStreamException {
         SpecificUsersAuthorizationStrategy self = (SpecificUsersAuthorizationStrategy)super.readResolve();
         if (self.noNeedReauthentication != null) {
-            self.setDontRestrictJobConfiguration(self.noNeedReauthentication.booleanValue());
+            self.setDontRestrictJobConfiguration(self.noNeedReauthentication);
         }
         return self;
     }
