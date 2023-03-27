@@ -41,7 +41,7 @@
     <revision>1.5.2</revision>
     <changelist>-SNAPSHOT</changelist>
     <gitHubRepo>jenkinsci/authorize-project-plugin</gitHubRepo>
-    <jenkins.version>2.361.4</jenkins.version>
+    <jenkins.version>2.375.4</jenkins.version>
     <spotbugs.effort>Max</spotbugs.effort>
     <spotbugs.threshold>Low</spotbugs.threshold>
   </properties>
@@ -50,8 +50,8 @@
     <dependencies>
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
-        <artifactId>bom-2.361.x</artifactId>
-        <version>1945.v13a_1306588ff</version>
+        <artifactId>bom-2.375.x</artifactId>
+        <version>1948.veb_1fd345d3a_e</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>
