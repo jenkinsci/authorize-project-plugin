@@ -3,7 +3,7 @@ package org.jenkinsci.plugins.authorizeproject;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import hudson.util.DescribableList;
 import io.jenkins.plugins.casc.ConfigurationContext;
@@ -12,8 +12,7 @@ import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
 import io.jenkins.plugins.casc.misc.JenkinsConfiguredWithCodeRule;
 import io.jenkins.plugins.casc.misc.Util;
 import io.jenkins.plugins.casc.model.CNode;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Set;
 import jenkins.security.QueueItemAuthenticator;
 import jenkins.security.QueueItemAuthenticatorConfiguration;
 import jenkins.security.QueueItemAuthenticatorDescriptor;
@@ -101,8 +100,8 @@ public class ConfigurationAsCodeTest {
         ProjectQueueItemAuthenticator queueItemAuthenticator = authenticators.get(ProjectQueueItemAuthenticator.class);
 
         assertThat(authenticators, hasSize(1));
-        assertThat(queueItemAuthenticator.getDisabledStrategies(), equalTo(new HashSet<>(Arrays.asList("org.jenkinsci.plugins.authorizeproject.strategy.SystemAuthorizationStrategy", "org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy", "org.jenkinsci.plugins.authorizeproject.strategy.TriggeringUsersAuthorizationStrategy"))));
-        assertThat(queueItemAuthenticator.getEnabledStrategies(), equalTo(new HashSet<>(Arrays.asList("org.jenkinsci.plugins.authorizeproject.strategy.AnonymousAuthorizationStrategy"))));
+        assertThat(queueItemAuthenticator.getDisabledStrategies(), equalTo(Set.of(SystemAuthorizationStrategy.class.getName(), SpecificUsersAuthorizationStrategy.class.getName(), TriggeringUsersAuthorizationStrategy.class.getName())));
+        assertThat(queueItemAuthenticator.getEnabledStrategies(), equalTo(Set.of(AnonymousAuthorizationStrategy.class.getName())));
     }
 
     @Test
@@ -129,7 +128,7 @@ public class ConfigurationAsCodeTest {
         ProjectQueueItemAuthenticator queueItemAuthenticator = authenticators.get(ProjectQueueItemAuthenticator.class);
 
         assertThat(authenticators, hasSize(1));
-        assertThat(queueItemAuthenticator.getDisabledStrategies(), equalTo(new HashSet<>(Arrays.asList(SpecificUsersAuthorizationStrategy.class.getName(), SystemAuthorizationStrategy.class.getName()))));
-        assertThat(queueItemAuthenticator.getEnabledStrategies(), equalTo(new HashSet<>(Arrays.asList(AnonymousAuthorizationStrategy.class.getName(), TriggeringUsersAuthorizationStrategy.class.getName()))));
+        assertThat(queueItemAuthenticator.getDisabledStrategies(), equalTo(Set.of(SpecificUsersAuthorizationStrategy.class.getName(), SystemAuthorizationStrategy.class.getName())));
+        assertThat(queueItemAuthenticator.getEnabledStrategies(), equalTo(Set.of(AnonymousAuthorizationStrategy.class.getName(), TriggeringUsersAuthorizationStrategy.class.getName())));
     }
 }

@@ -63,7 +63,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
 public class SystemAuthorizationStrategyTest {
@@ -241,11 +242,7 @@ public class SystemAuthorizationStrategyTest {
         );
         req.setRequestBody(configXml);
         
-        try {
-            wc.getPage(req);
-            fail();
-        } catch(FailingHttpStatusCodeException e) {
-        }
+        assertThrows(FailingHttpStatusCodeException.class, () -> wc.getPage(req));
         
         {
             FreeStyleProject p = j.jenkins.getItemByFullName(projectName, FreeStyleProject.class);

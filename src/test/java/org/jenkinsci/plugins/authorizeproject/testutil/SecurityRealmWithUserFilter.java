@@ -28,16 +28,13 @@ import java.util.List;
 
 import hudson.security.SecurityRealm;
 
-import org.acegisecurity.userdetails.UserDetails;
-import org.acegisecurity.userdetails.UserDetailsService;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.springframework.dao.DataAccessException;
 
 /**
  * Wraps other {@link SecurityRealm},
  * and throws {@link UsernameNotFoundException} for unknown users.
- * 
+ * <p>
  * Expected to be used with {@link JenkinsRule#createDummySecurityRealm()}
  */
 public class SecurityRealmWithUserFilter extends SecurityRealm {
@@ -54,18 +51,13 @@ public class SecurityRealmWithUserFilter extends SecurityRealm {
         final SecurityComponents baseComponent = baseSecurityRealm.createSecurityComponents();
         return new SecurityComponents(
                 baseComponent.manager,
-                new UserDetailsService() {
-                    @Override
-                    public UserDetails loadUserByUsername(String username)
-                            throws UsernameNotFoundException, DataAccessException
-                    {
+                username -> {
                         if (!validUserList.contains(username)) {
                             throw new UsernameNotFoundException(
                                     String.format("%s is not listed as valid username.", username)
                             );
                         }
                         return baseComponent.userDetails.loadUserByUsername(username);
-                    }
                 },
                 baseComponent.rememberMe
         );

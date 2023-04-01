@@ -40,7 +40,6 @@ import hudson.model.Queue;
 import hudson.util.FormApply;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -102,7 +101,7 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
         }
         if (DescriptorVisibilityFilter.apply(
                 ProjectQueueItemAuthenticator.getConfigured(),
-                Collections.singletonList(strategy.getDescriptor())
+                List.of(strategy.getDescriptor())
         ).isEmpty()) {
             LOGGER.log(
                     Level.WARNING,
@@ -151,7 +150,7 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
 
     /**
      * Descriptor for {@link AuthorizeProjectProperty}.
-     *
+     * <p>
      * Provides functions for displaying.
      */
     @Extension
@@ -193,7 +192,7 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
         public List<Descriptor<AuthorizeProjectStrategy>> getEnabledAuthorizeProjectStrategyDescriptorList() {
             ProjectQueueItemAuthenticator authenticator = ProjectQueueItemAuthenticator.getConfigured();
             if (authenticator == null) {
-                return Collections.emptyList();
+                return List.of();
             }
             return DescriptorVisibilityFilter.apply(authenticator, AuthorizeProjectStrategy.all());
         }
@@ -337,7 +336,7 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
         @NonNull
         @Override
         public Collection<? extends Action> createFor(@NonNull Job target) {
-            return Collections.<Action>singletonList(new AuthorizationAction((Job<?, ?>) target));
+            return List.of(new AuthorizationAction((Job<?, ?>) target));
         }
     }
 }
