@@ -35,7 +35,7 @@ import hudson.security.SecurityRealm;
 import hudson.util.FormValidation;
 
 import java.io.ObjectStreamException;
-import java.util.Collections;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
@@ -136,7 +136,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
     static boolean authenticate(String userId, boolean useApitoken, String apitoken, String password) {
         if (useApitoken) {
             if (apitoken != null) {
-                User u = User.get(userId, false, Collections.emptyMap());
+                User u = User.get(userId, false, Map.of());
                 if (u != null) {
                     ApiTokenProperty p = u.getProperty(ApiTokenProperty.class);
                     if (p != null && p.matchesPassword(apitoken)) {
@@ -182,17 +182,14 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
 
     /**
      * Run builds as a specified user.
-     * 
+     * <p>
      * If the user is invalid, run as anonymous.
      * 
-     * @param project
-     * @param item
-     * @return
      * @see org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy#authenticate(hudson.model.Job, hudson.model.Queue.Item)
      */
     @Override
     public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
-        User u = User.get(getUserid(), false, Collections.emptyMap());
+        User u = User.get(getUserid(), false, Map.of());
         if (u == null) {
             // fallback to anonymous
             return Jenkins.ANONYMOUS;
@@ -227,9 +224,6 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
 
     /**
      * Return {@link SpecificUsersAuthorizationStrategy} configured in a project.
-     * 
-     * @param project
-     * @return
      */
     protected static SpecificUsersAuthorizationStrategy getCurrentStrategy(Job<?,?> project) {
         if (project == null) {
@@ -290,7 +284,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         
         /**
          * Checks password field is required in configuration page.
-         * 
+         * <p>
          * This is called asynchronously.
          * 
          * @param req the request.

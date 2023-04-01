@@ -26,7 +26,6 @@ package org.jenkinsci.plugins.authorizeproject;
 
 import static org.junit.Assert.*;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -211,8 +210,8 @@ public class ProjectQueueItemAuthenticatorTest {
         // can be reconfigured if it is enabled.
         assertEquals(AnonymousAuthorizationStrategy.class, p.getProperty(AuthorizeProjectProperty.class).getStrategy().getClass());
 
-        Set<String> enabledStrategies = Collections.emptySet();
-        Set<String> disabledStrategies = Collections.singleton(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class).getId());
+        Set<String> enabledStrategies = Set.of();
+        Set<String> disabledStrategies = Set.of(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class).getId());
 
         QueueItemAuthenticatorConfiguration.get().getAuthenticators().clear();
         QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new ProjectQueueItemAuthenticator(enabledStrategies, disabledStrategies));
@@ -238,8 +237,8 @@ public class ProjectQueueItemAuthenticatorTest {
         j.assertBuildStatusSuccess(p.scheduleBuild2(0));
         assertEquals(Jenkins.ANONYMOUS, checker.authentication);
         
-        Set<String> enabledStrategies = Collections.emptySet();
-        Set<String> disabledStrategies = Collections.singleton(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class).getId());
+        Set<String> enabledStrategies = Set.of();
+        Set<String> disabledStrategies = Set.of(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class).getId());
         
         QueueItemAuthenticatorConfiguration.get().getAuthenticators().clear();
         QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new ProjectQueueItemAuthenticator(enabledStrategies, disabledStrategies));

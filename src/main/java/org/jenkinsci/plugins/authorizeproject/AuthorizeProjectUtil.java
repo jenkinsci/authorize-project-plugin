@@ -40,13 +40,6 @@ import org.kohsuke.stapler.StaplerRequest;
 public class AuthorizeProjectUtil {
     /**
      * Create a new {@link Describable} object from user inputs.
-     * 
-     * @param req
-     * @param formData
-     * @param fieldName
-     * @param clazz
-     * @return
-     * @throws FormException
      */
     public static <T extends Describable<?>> T bindJSONWithDescriptor(
             StaplerRequest req,

@@ -24,7 +24,6 @@
 
 package org.jenkinsci.plugins.authorizeproject;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -66,7 +65,7 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
      */
     @Deprecated
     public ProjectQueueItemAuthenticator() {
-        this(Collections.emptySet(), Collections.emptySet());
+        this(Set.of(), Set.of());
     }
     
     @Deprecated
@@ -96,8 +95,6 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
     }
     
     /**
-     * @param item
-     * @return
      * @see jenkins.security.QueueItemAuthenticator#authenticate(hudson.model.Queue.Item)
      */
     @Override

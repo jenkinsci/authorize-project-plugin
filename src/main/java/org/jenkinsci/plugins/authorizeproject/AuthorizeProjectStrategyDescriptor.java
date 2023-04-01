@@ -103,10 +103,6 @@ public abstract class AuthorizeProjectStrategyDescriptor extends Descriptor<Auth
     /**
      * Invoked when configuration is submitted from "Configure Global Security" as a child of {@link ProjectQueueItemAuthenticator}.
      * You should call save() by yourself.
-     * 
-     * @param req
-     * @param js
-     * @throws FormException
      */
     public void configureFromGlobalSecurity(StaplerRequest req, JSONObject js) throws FormException {
     }

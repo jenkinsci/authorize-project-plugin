@@ -26,7 +26,6 @@ package org.jenkinsci.plugins.authorizeproject.testutil;
 
 import hudson.model.Describable;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -44,11 +43,12 @@ public class AuthorizeProjectJenkinsRule extends JenkinsRule {
     private Set<Class<? extends Describable<?>>> disabledStrategiesByClass;
     
     public AuthorizeProjectJenkinsRule() {
-        this(Collections.emptySet(), Collections.emptySet());
+        this(Set.of(), Set.of());
     }
     
+    @SafeVarargs
     public AuthorizeProjectJenkinsRule(Class<? extends Describable<?>>... enabledStrategiesByClass) {
-        this(Stream.of(enabledStrategiesByClass).collect(Collectors.toSet()), Collections.emptySet());
+        this(Stream.of(enabledStrategiesByClass).collect(Collectors.toSet()), Set.of());
     }
     
     public AuthorizeProjectJenkinsRule(Set<Class<? extends Describable<?>>> enabledStrategiesByClass, Set<Class<? extends Describable<?>>> disabledStrategiesByClass) {

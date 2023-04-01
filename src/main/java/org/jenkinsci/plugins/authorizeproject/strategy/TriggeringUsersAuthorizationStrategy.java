@@ -35,7 +35,7 @@ import hudson.model.Job;
 import hudson.model.Queue;
 import hudson.model.Run;
 import hudson.model.User;
-import java.util.Collections;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -67,7 +67,7 @@ public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrate
     public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
         Cause.UserIdCause cause = getRootUserIdCause(item);
         if (cause != null) {
-            User u = User.get(cause.getUserId(), false, Collections.emptyMap());
+            User u = User.get(cause.getUserId(), false, Map.of());
             if (u == null) {
                 return Jenkins.ANONYMOUS;
             }
@@ -83,7 +83,7 @@ public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrate
     
     /**
      * Returns a cause who triggered this build.
-     * 
+     * <p>
      * If this is a downstream build, search upstream builds.
      * 
      * @param item the item to query the triggering user of.
