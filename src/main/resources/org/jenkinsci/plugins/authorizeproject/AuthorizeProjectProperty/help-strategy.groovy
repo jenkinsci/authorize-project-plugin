@@ -28,7 +28,7 @@ import jenkins.model.Jenkins
 
 st = namespace("jelly:stapler")
 
-def descriptor = Jenkins.instance.getDescriptorOrDie(AuthorizeProjectProperty.class)
+def descriptor = Jenkins.get().getDescriptorOrDie(AuthorizeProjectProperty.class)
 
 def myselfName = descriptor.plugin.shortName
 

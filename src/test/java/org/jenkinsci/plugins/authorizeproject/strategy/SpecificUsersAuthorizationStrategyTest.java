@@ -31,8 +31,8 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -77,7 +77,6 @@ import com.gargoylesoftware.htmlunit.html.HtmlCheckBoxInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 import com.gargoylesoftware.htmlunit.xml.XmlPage;
-import com.google.common.collect.Sets;
 
 public class SpecificUsersAuthorizationStrategyTest {
     @Rule
@@ -183,7 +182,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     
     @Test
     @LocalData
-    public void testAuthenticateWithPassword() throws Exception {
+    public void testAuthenticateWithPassword() {
         assertTrue(SpecificUsersAuthorizationStrategy.authenticate("test1", false, null, "test1"));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", false, null, "test2"));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", false, null, ""));
@@ -271,7 +270,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     public void testUserNotFoundException() throws Exception {
         j.jenkins.setSecurityRealm(new SecurityRealmWithUserFilter(
                 j.createDummySecurityRealm(),
-                Arrays.asList("validuser")
+                List.of("validuser")
         ));
         
         // Users should be created before the test.
@@ -422,11 +421,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         );
         req.setRequestBody(configXml);
         
-        try {
-            wc.getPage(req);
-            fail();
-        } catch(FailingHttpStatusCodeException e) {
-        }
+        assertThrows(FailingHttpStatusCodeException.class, () -> wc.getPage(req));
         
         {
             FreeStyleProject p = j.jenkins.getItemByFullName(projectName, FreeStyleProject.class);
@@ -663,7 +658,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         srcProject.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin")));
         {
             Map<Permission, Set<String>> authMap = new HashMap<>();
-            authMap.put(Item.EXTENDED_READ, Sets.newHashSet("test1"));
+            authMap.put(Item.EXTENDED_READ, Set.of("test1"));
             srcProject.addProperty(new AuthorizationMatrixProperty(authMap));
         }
         srcProject.save();
@@ -689,7 +684,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         FreeStyleProject destProject = j.createFreeStyleProject();
         {
             Map<Permission, Set<String>> authMap = new HashMap<>();
-            authMap.put(Jenkins.ADMINISTER, Sets.newHashSet("test1"));
+            authMap.put(Jenkins.ADMINISTER, Set.of("test1"));
             destProject.addProperty(new AuthorizationMatrixProperty(authMap));
         }
         destProject.save();
@@ -990,8 +985,8 @@ public class SpecificUsersAuthorizationStrategyTest {
         p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1")));
         {
             Map<Permission, Set<String>> authMap = new HashMap<>();
-            authMap.put(Item.READ, Sets.newHashSet("test1"));
-            authMap.put(Item.CONFIGURE, Sets.newHashSet("test1"));
+            authMap.put(Item.READ, Set.of("test1"));
+            authMap.put(Item.CONFIGURE, Set.of("test1"));
             p.addProperty(new AuthorizationMatrixProperty(authMap));
         }
         p.save();
@@ -1010,9 +1005,9 @@ public class SpecificUsersAuthorizationStrategyTest {
         p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("test1")));
         {
             Map<Permission, Set<String>> authMap = new HashMap<>();
-            authMap.put(Item.READ, Sets.newHashSet("test1"));
-            authMap.put(Item.CONFIGURE, Sets.newHashSet("test1"));
-            authMap.put(Jenkins.ADMINISTER, Sets.newHashSet("test2"));
+            authMap.put(Item.READ, Set.of("test1"));
+            authMap.put(Item.CONFIGURE, Set.of("test1"));
+            authMap.put(Jenkins.ADMINISTER, Set.of("test2"));
             p.addProperty(new AuthorizationMatrixProperty(authMap));
         }
         p.save();

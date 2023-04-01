@@ -48,8 +48,6 @@ public class AnonymousAuthorizationStrategy extends AuthorizeProjectStrategy {
     /**
      * Authorize builds as anonymous.
      * 
-     * @param project
-     * @param item
      * @return anonymous authorization
      * @see org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy#authenticate(hudson.model.Job, hudson.model.Queue.Item)
      */

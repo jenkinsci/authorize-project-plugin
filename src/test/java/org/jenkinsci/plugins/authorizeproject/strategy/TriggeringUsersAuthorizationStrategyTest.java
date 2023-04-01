@@ -26,7 +26,7 @@ package org.jenkinsci.plugins.authorizeproject.strategy;
 
 import static org.junit.Assert.*;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import hudson.security.ACLContext;
@@ -160,7 +160,7 @@ public class TriggeringUsersAuthorizationStrategyTest {
     public void testUserNotFoundException() throws Exception {
         j.jenkins.setSecurityRealm(new SecurityRealmWithUserFilter(
                 j.createDummySecurityRealm(),
-                Arrays.asList("validuser")
+                List.of("validuser")
         ));
         
         // Users should be created before the test.
