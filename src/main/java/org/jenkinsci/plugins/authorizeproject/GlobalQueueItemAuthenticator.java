@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import jenkins.security.QueueItemAuthenticator;
 import jenkins.security.QueueItemAuthenticatorDescriptor;
 import net.sf.json.JSONObject;
-
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.authorizeproject.strategy.AnonymousAuthorizationStrategy;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -50,12 +49,14 @@ public class GlobalQueueItemAuthenticator extends QueueItemAuthenticator {
          * @return Descriptors for {@link AuthorizeProjectStrategy} applicable to {@link GlobalQueueItemAuthenticator}.
          */
         public Iterable<Descriptor<AuthorizeProjectStrategy>> getStrategyDescriptors() {
-            return AuthorizeProjectStrategy.all().stream().filter(d -> {
-                            if (!(d instanceof AuthorizeProjectStrategyDescriptor)) {
-                                return true;
-                            }
-                            return ((AuthorizeProjectStrategyDescriptor)d).isApplicableToGlobal();
-            }).collect(Collectors.toList());
+            return AuthorizeProjectStrategy.all().stream()
+                    .filter(d -> {
+                        if (!(d instanceof AuthorizeProjectStrategyDescriptor)) {
+                            return true;
+                        }
+                        return ((AuthorizeProjectStrategyDescriptor) d).isApplicableToGlobal();
+                    })
+                    .collect(Collectors.toList());
         }
 
         public AuthorizeProjectStrategy getDefaultStrategy() {
@@ -66,18 +67,17 @@ public class GlobalQueueItemAuthenticator extends QueueItemAuthenticator {
          * Creates new {@link GlobalQueueItemAuthenticator} from inputs.
          * This is required to call {@link hudson.model.Descriptor#newInstance(StaplerRequest, JSONObject)}
          * of {@link AuthorizeProjectProperty}.
-         * 
+         *
          * @see hudson.model.Descriptor#newInstance(org.kohsuke.stapler.StaplerRequest, net.sf.json.JSONObject)
          */
         @Override
-        public GlobalQueueItemAuthenticator newInstance(StaplerRequest req, JSONObject formData)
-                throws FormException
-        {
-            if(formData == null || formData.isNullObject()) {
+        public GlobalQueueItemAuthenticator newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+            if (formData == null || formData.isNullObject()) {
                 return null;
             }
-            AuthorizeProjectStrategy strategy = AuthorizeProjectUtil.bindJSONWithDescriptor(req, formData, "strategy", AuthorizeProjectStrategy.class);
-            
+            AuthorizeProjectStrategy strategy = AuthorizeProjectUtil.bindJSONWithDescriptor(
+                    req, formData, "strategy", AuthorizeProjectStrategy.class);
+
             return new GlobalQueueItemAuthenticator(strategy);
         }
     }

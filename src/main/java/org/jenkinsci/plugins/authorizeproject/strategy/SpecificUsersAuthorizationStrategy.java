@@ -1,18 +1,18 @@
 /*
  * The MIT License
- * 
+ *
  * Copyright (c) 2013 IKEDA Yasuyuki
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -33,7 +33,6 @@ import hudson.security.AbstractPasswordBasedSecurityRealm;
 import hudson.security.AccessControlled;
 import hudson.security.SecurityRealm;
 import hudson.util.FormValidation;
-
 import java.io.ObjectStreamException;
 import java.util.Map;
 import java.util.logging.Level;
@@ -63,7 +62,7 @@ import org.kohsuke.stapler.StaplerRequest;
 public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy {
     private static Logger LOGGER = Logger.getLogger(SpecificUsersAuthorizationStrategy.class.getName());
     private final String userid;
-    
+
     /*
      * The fields "useApitoken", "apitoken", and "password" are part of the @DataBoundConstructor annotated constructor,
      * but they are only required for validation during form submission. They are put here and marked restricted and
@@ -78,11 +77,10 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
     @Restricted(DoNotUse.class)
     private transient String password;
 
-    private final static Authentication[] BUILTIN_USERS = {
-            ACL.SYSTEM,
-            Jenkins.ANONYMOUS,
+    private static final Authentication[] BUILTIN_USERS = {
+        ACL.SYSTEM, Jenkins.ANONYMOUS,
     };
-    
+
     /**
      * @return id of the user to run builds as.
      */
@@ -125,8 +123,8 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
     }
 
     @DataBoundConstructor
-    public SpecificUsersAuthorizationStrategy(String userid, boolean useApitoken,
-                                              String apitoken, String password) throws AccessDeniedException {
+    public SpecificUsersAuthorizationStrategy(String userid, boolean useApitoken, String apitoken, String password)
+            throws AccessDeniedException {
         this(userid);
         if (isAuthenticationRequired(getUserid()) && !authenticate(getUserid(), useApitoken, apitoken, password)) {
             throw new AccessDeniedException(Messages.SpecificUsersAuthorizationStrategy_userid_authenticate());
@@ -148,9 +146,11 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         } else {
             if (password != null) {
                 try {
-                    Jenkins.get().getSecurityRealm().getSecurityComponents().manager.authenticate(
-                            new UsernamePasswordAuthenticationToken(userId, password)
-                    );
+                    Jenkins.get()
+                            .getSecurityRealm()
+                            .getSecurityComponents()
+                            .manager
+                            .authenticate(new UsernamePasswordAuthenticationToken(userId, password));
                     // supplied password matches
                     return true;
                 } catch (Exception e) { // handles any exception including NPE.
@@ -184,7 +184,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
      * Run builds as a specified user.
      * <p>
      * If the user is invalid, run as anonymous.
-     * 
+     *
      * @see org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy#authenticate(hudson.model.Job, hudson.model.Queue.Item)
      */
     @Override
@@ -225,29 +225,29 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
     /**
      * Return {@link SpecificUsersAuthorizationStrategy} configured in a project.
      */
-    protected static SpecificUsersAuthorizationStrategy getCurrentStrategy(Job<?,?> project) {
+    protected static SpecificUsersAuthorizationStrategy getCurrentStrategy(Job<?, ?> project) {
         if (project == null) {
             return null;
         }
-        
+
         AuthorizeProjectProperty prop = project.getProperty(AuthorizeProjectProperty.class);
         if (prop == null) {
             return null;
         }
-        
+
         if (!(prop.getStrategy() instanceof SpecificUsersAuthorizationStrategy)) {
             return null;
         }
-        
-        return (SpecificUsersAuthorizationStrategy)prop.getStrategy();
+
+        return (SpecificUsersAuthorizationStrategy) prop.getStrategy();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     @Override
     protected Object readResolve() throws ObjectStreamException {
-        SpecificUsersAuthorizationStrategy self = (SpecificUsersAuthorizationStrategy)super.readResolve();
+        SpecificUsersAuthorizationStrategy self = (SpecificUsersAuthorizationStrategy) super.readResolve();
         if (self.noNeedReauthentication != null) {
             self.setDontRestrictJobConfiguration(self.noNeedReauthentication);
         }
@@ -267,7 +267,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         public String getDisplayName() {
             return Messages.SpecificUsersAuthorizationStrategy_DisplayName();
         }
-        
+
         /**
          * Helper method for computing the check password URL.
          *
@@ -276,17 +276,16 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         @Restricted(NoExternalUse.class) // used by stapler/jelly
         @SuppressWarnings("unused")
         public String calcCheckPasswordRequestedUrl() {
-            return String.format("'%s/%s/checkPasswordRequested' + qs(this).nearBy('userid')",
-                    getCurrentDescriptorByNameUrl(),
-                    getDescriptorUrl()
-            );
+            return String.format(
+                    "'%s/%s/checkPasswordRequested' + qs(this).nearBy('userid')",
+                    getCurrentDescriptorByNameUrl(), getDescriptorUrl());
         }
-        
+
         /**
          * Checks password field is required in configuration page.
          * <p>
          * This is called asynchronously.
-         * 
+         *
          * @param req the request.
          * @param userid the userid.
          * @return "true" if password field is required. this should be evaluated as JavaScript.
@@ -296,7 +295,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         public String doCheckPasswordRequested(StaplerRequest req, @QueryParameter String userid) {
             return Boolean.toString(isAuthenticationRequired(userid.trim()));
         }
-        
+
         /**
          * Checks the userid against the blacklist of invalid users.
          * @param userid the userid
@@ -308,14 +307,14 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             if (StringUtils.isBlank(userid)) {
                 return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_userid_required());
             }
-            for (Authentication a: BUILTIN_USERS) {
+            for (Authentication a : BUILTIN_USERS) {
                 if (AuthorizeProjectUtil.userIdEquals(userid, a.getPrincipal().toString())) {
                     return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_userid_builtin());
                 }
             }
             return FormValidation.ok();
         }
-        
+
         /**
          * Checks the supplied password.
          *
@@ -331,17 +330,16 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
                 @QueryParameter String userid,
                 @QueryParameter String password,
                 @QueryParameter String apitoken,
-                @QueryParameter boolean useApitoken
-        ) {
+                @QueryParameter boolean useApitoken) {
             if (!isAuthenticationRequired(userid.trim())) {
                 // authentication is not required.
                 return FormValidation.ok();
             }
-            
+
             if (useApitoken ? StringUtils.isBlank(apitoken) : StringUtils.isBlank(password)) {
                 return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_password_required());
             }
-            
+
             return FormValidation.ok();
         }
 
@@ -356,9 +354,11 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
          * @return a warning message for {@code dontRestrictJobConfiguration} if it is {@code true}
          * @see SpecificUsersAuthorizationStrategy#setDontRestrictJobConfiguration(boolean)
          */
-        public FormValidation doCheckDontRestrictJobConfiguration(@QueryParameter boolean dontRestrictJobConfiguration) {
+        public FormValidation doCheckDontRestrictJobConfiguration(
+                @QueryParameter boolean dontRestrictJobConfiguration) {
             if (dontRestrictJobConfiguration) {
-                return FormValidation.warning(Messages.SpecificUsersAuthorizationStrategy_dontRestrictJobConfiguration_usage());
+                return FormValidation.warning(
+                        Messages.SpecificUsersAuthorizationStrategy_dontRestrictJobConfiguration_usage());
             }
             return FormValidation.ok();
         }
@@ -373,7 +373,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         public boolean isUseApitoken() {
             return !(Jenkins.get().getSecurityRealm() instanceof AbstractPasswordBasedSecurityRealm);
         }
-        
+
         /**
          * {@link SpecificUsersAuthorizationStrategy} should be disabled by default for JENKINS-28298
          * @return false

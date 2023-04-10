@@ -1,18 +1,18 @@
 /*
  * The MIT License
- * 
+ *
  * Copyright (c) 2013 IKEDA Yasuyuki
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,31 +24,26 @@
 
 package org.jenkinsci.plugins.authorizeproject;
 
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import hudson.Extension;
+import hudson.model.AbstractProject;
+import hudson.model.Descriptor;
+import hudson.model.DescriptorVisibilityFilter;
+import hudson.model.Job;
+import hudson.model.Queue;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import hudson.Extension;
-import hudson.model.DescriptorVisibilityFilter;
-import hudson.model.AbstractProject;
-import hudson.model.Descriptor;
-import hudson.model.Job;
-import hudson.model.Queue;
-
-import edu.umd.cs.findbugs.annotations.CheckForNull;
-
+import jenkins.security.QueueItemAuthenticator;
+import jenkins.security.QueueItemAuthenticatorConfiguration;
+import jenkins.security.QueueItemAuthenticatorDescriptor;
 import net.sf.json.JSONObject;
-
 import org.acegisecurity.Authentication;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
-
-import jenkins.security.QueueItemAuthenticatorConfiguration;
-import jenkins.security.QueueItemAuthenticatorDescriptor;
-import jenkins.security.QueueItemAuthenticator;
 
 /**
  * Authorize builds of projects configured with {@link AuthorizeProjectProperty}.
@@ -58,18 +53,18 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
     private final Set<String> disabledStrategies;
 
     @Deprecated
-    private transient Map<String,Boolean> strategyEnabledMap;
-    
+    private transient Map<String, Boolean> strategyEnabledMap;
+
     /**
-     * 
+     *
      */
     @Deprecated
     public ProjectQueueItemAuthenticator() {
         this(Set.of(), Set.of());
     }
-    
+
     @Deprecated
-    public ProjectQueueItemAuthenticator(Map<String,Boolean> strategyEnabledMap) {
+    public ProjectQueueItemAuthenticator(Map<String, Boolean> strategyEnabledMap) {
         this(
                 strategyEnabledMap.entrySet().stream()
                         .filter(e -> e.getValue().equals(true))
@@ -80,7 +75,7 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
                         .map(Map.Entry::getKey)
                         .collect(Collectors.toSet()));
     }
-    
+
     @DataBoundConstructor
     public ProjectQueueItemAuthenticator(Set<String> enabledStrategies, Set<String> disabledStrategies) {
         this.enabledStrategies = enabledStrategies;
@@ -93,7 +88,7 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
         }
         return this;
     }
-    
+
     /**
      * @see jenkins.security.QueueItemAuthenticator#authenticate(hudson.model.Queue.Item)
      */
@@ -103,9 +98,9 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
         if (!(item.task instanceof Job)) {
             return null;
         }
-        Job<?, ?> project = (Job<?,?>)item.task;
+        Job<?, ?> project = (Job<?, ?>) item.task;
         if (project instanceof AbstractProject) {
-            project = ((AbstractProject<?,?>)project).getRootProject();
+            project = ((AbstractProject<?, ?>) project).getRootProject();
         }
         AuthorizeProjectProperty prop = project.getProperty(AuthorizeProjectProperty.class);
         if (prop == null) {
@@ -113,10 +108,10 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
         }
         return prop.authenticate(item);
     }
-    
+
     @Deprecated
     public Map<String, Boolean> getStrategyEnabledMap() {
-        Map<String,Boolean> strategyEnabledMap = new HashMap<>();
+        Map<String, Boolean> strategyEnabledMap = new HashMap<>();
         for (String strategy : enabledStrategies) {
             strategyEnabledMap.put(strategy, true);
         }
@@ -125,7 +120,7 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
         }
         return strategyEnabledMap;
     }
-    
+
     public Set<String> getEnabledStrategies() {
         return enabledStrategies;
     }
@@ -134,8 +129,7 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
         return disabledStrategies;
     }
 
-    public boolean isStrategyEnabled(Descriptor<?> d)
-    {
+    public boolean isStrategyEnabled(Descriptor<?> d) {
         if (enabledStrategies.contains(d.getId())) {
             return true;
         }
@@ -150,7 +144,7 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
 
         return true;
     }
-    
+
     /**
      *
      */
@@ -164,23 +158,23 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
         public String getDisplayName() {
             return Messages.ProjectQueueItemAuthenticator_DisplayName();
         }
-        
+
         @Deprecated
         public List<AuthorizeProjectStrategyDescriptor> getDescriptorsForGlobalSecurityConfigPage() {
             return AuthorizeProjectStrategyDescriptor.getDescriptorsForGlobalSecurityConfigPage();
         }
-        
+
         /**
          * @return all installed {@link AuthorizeProjectStrategy}
          */
         public List<Descriptor<AuthorizeProjectStrategy>> getAvailableDescriptorList() {
             return AuthorizeProjectStrategy.all();
         }
-        
+
         /**
          * Creates new {@link ProjectQueueItemAuthenticator} from inputs.
          * Additional to that, configure global configurations of {@link AuthorizeProjectStrategy}.
-         * 
+         *
          * @param req the request.
          * @param formData the form data.
          * @return the authenticator.
@@ -188,61 +182,56 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
          * @see hudson.model.Descriptor#newInstance(org.kohsuke.stapler.StaplerRequest, net.sf.json.JSONObject)
          */
         @Override
-        public ProjectQueueItemAuthenticator newInstance(StaplerRequest req, JSONObject formData)
-                throws FormException
-        {
+        public ProjectQueueItemAuthenticator newInstance(StaplerRequest req, JSONObject formData) throws FormException {
             Set<String> enabledStrategies = new HashSet<>();
             Set<String> disabledStrategies = new HashSet<>();
-            
+
             for (Descriptor<AuthorizeProjectStrategy> d : getAvailableDescriptorList()) {
                 String name = d.getJsonSafeClassName();
                 if (formData.has(name)) {
                     enabledStrategies.add(d.getId());
-                    if (
-                            d instanceof AuthorizeProjectStrategyDescriptor
-                            && ((AuthorizeProjectStrategyDescriptor)d).getGlobalSecurityConfigPage() != null
-                    ) {
-                        ((AuthorizeProjectStrategyDescriptor)d).configureFromGlobalSecurity(req, formData.getJSONObject(name));
+                    if (d instanceof AuthorizeProjectStrategyDescriptor
+                            && ((AuthorizeProjectStrategyDescriptor) d).getGlobalSecurityConfigPage() != null) {
+                        ((AuthorizeProjectStrategyDescriptor) d)
+                                .configureFromGlobalSecurity(req, formData.getJSONObject(name));
                     }
                 } else {
                     disabledStrategies.add(d.getId());
                 }
             }
-            
+
             return new ProjectQueueItemAuthenticator(enabledStrategies, disabledStrategies);
         }
     }
-    
+
     /**
      * @return instance configured in Global Security configuration.
      */
     public static ProjectQueueItemAuthenticator getConfigured() {
-        for (QueueItemAuthenticator authenticator: QueueItemAuthenticatorConfiguration.get().getAuthenticators()) {
+        for (QueueItemAuthenticator authenticator :
+                QueueItemAuthenticatorConfiguration.get().getAuthenticators()) {
             if (authenticator instanceof ProjectQueueItemAuthenticator) {
-                return (ProjectQueueItemAuthenticator)authenticator;
+                return (ProjectQueueItemAuthenticator) authenticator;
             }
         }
         return null;
     }
-    
+
     /**
      * @return whether Jenkins is configured to use {@link ProjectQueueItemAuthenticator}.
      */
     public static boolean isConfigured() {
         return getConfigured() != null;
     }
-    
+
     @Extension
-    public static class DescriptorVisibilityFilterImpl extends DescriptorVisibilityFilter
-    {
+    public static class DescriptorVisibilityFilterImpl extends DescriptorVisibilityFilter {
         @Override
-        public boolean filter(Object context, @SuppressWarnings("rawtypes") Descriptor descriptor)
-        {
-            if(!(context instanceof ProjectQueueItemAuthenticator))
-            {
+        public boolean filter(Object context, @SuppressWarnings("rawtypes") Descriptor descriptor) {
+            if (!(context instanceof ProjectQueueItemAuthenticator)) {
                 return true;
             }
-            return ((ProjectQueueItemAuthenticator)context).isStrategyEnabled(descriptor);
+            return ((ProjectQueueItemAuthenticator) context).isStrategyEnabled(descriptor);
         }
     }
 }

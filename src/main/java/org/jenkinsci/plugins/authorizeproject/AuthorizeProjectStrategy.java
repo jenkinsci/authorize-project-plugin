@@ -1,18 +1,18 @@
 /*
  * The MIT License
- * 
+ *
  * Copyright (c) 2013 IKEDA Yasuyuki
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -34,7 +34,6 @@ import hudson.model.Job;
 import hudson.model.Queue;
 import hudson.security.ACL;
 import hudson.security.AccessControlled;
-
 import java.io.InvalidObjectException;
 import java.io.ObjectStreamException;
 import java.util.logging.Level;
@@ -57,37 +56,31 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
     public static DescriptorExtensionList<AuthorizeProjectStrategy, Descriptor<AuthorizeProjectStrategy>> all() {
         return Jenkins.get().getDescriptorList(AuthorizeProjectStrategy.class);
     }
-    
+
     /**
      * Returns the {@link Authentication} for the build.
-     * 
+     *
      * @param project the project to run.
      * @param item the item in queue, which will be a build.
      * @return {@code true} if authentication was successful
      */
     public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
-        if(!Util.isOverridden(
-                AuthorizeProjectStrategy.class,
-                getClass(),
-                "authenticate",
-                AbstractProject.class,
-                Queue.Item.class
-        )) {
+        if (!Util.isOverridden(
+                AuthorizeProjectStrategy.class, getClass(), "authenticate", AbstractProject.class, Queue.Item.class)) {
             throw new AbstractMethodError();
         }
-        
+
         if (!(project instanceof AbstractProject)) {
             Descriptor<?> d = Jenkins.get().getDescriptor(getClass());
             LOGGER.log(
                     Level.WARNING,
                     "This authorization strategy ({0}) is designed for authorize-project < 1.1.0 and not applicable for non-AbstractProjects (like WorkflowJob). ignored.",
-                    (d != null)?d.getDisplayName():getClass().getName()
-            );
+                    (d != null) ? d.getDisplayName() : getClass().getName());
             return null;
         }
-        return authenticate((AbstractProject<?,?>)project, item);
+        return authenticate((AbstractProject<?, ?>) project, item);
     }
-    
+
     /**
      * Old {@link AbstractProject} based version of {@link #authenticate(Job, Queue.Item)}.
      *
@@ -98,7 +91,7 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
      */
     @Deprecated
     public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
-        return authenticate((Job<?,?>)project, item);
+        return authenticate((Job<?, ?>) project, item);
     }
 
     /**
@@ -106,7 +99,7 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
      */
     @Override
     public AuthorizeProjectStrategyDescriptor getDescriptor() {
-        return (AuthorizeProjectStrategyDescriptor)super.getDescriptor();
+        return (AuthorizeProjectStrategyDescriptor) super.getDescriptor();
     }
 
     /**
@@ -119,11 +112,10 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
     public final void checkJobConfigurePermission(AccessControlled context) {
         if (!hasJobConfigurePermission(context)) {
             throw new AccessDeniedException(Messages.AuthorizeProjectStrategy_UserNotAuthorizedForJob(
-                    Jenkins.getAuthentication().getName()
-            ));
+                    Jenkins.getAuthentication().getName()));
         }
     }
-    
+
     /**
      * Tests if the job can be reconfigured by the current user when this strategy is the configured strategy.
      * Users with {@link Jenkins#ADMINISTER} permission skips this check.
@@ -146,8 +138,7 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
     public final void checkAuthorizationConfigurePermission(AccessControlled context) {
         if (!hasAuthorizationConfigurePermission(context)) {
             throw new AccessDeniedException(Messages.AuthorizeProjectStrategy_UserNotAuthorized(
-                    Jenkins.getAuthentication().getName()
-            ));
+                    Jenkins.getAuthentication().getName()));
         }
     }
 

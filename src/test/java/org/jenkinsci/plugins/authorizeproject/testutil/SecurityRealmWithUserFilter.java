@@ -1,18 +1,18 @@
 /*
  * The MIT License
- * 
+ *
  * Copyright (c) 2016 IKEDA Yasuyuki
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,10 +24,8 @@
 
 package org.jenkinsci.plugins.authorizeproject.testutil;
 
-import java.util.List;
-
 import hudson.security.SecurityRealm;
-
+import java.util.List;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -40,26 +38,24 @@ import org.jvnet.hudson.test.JenkinsRule;
 public class SecurityRealmWithUserFilter extends SecurityRealm {
     private final SecurityRealm baseSecurityRealm;
     private final List<String> validUserList;
-    
+
     public SecurityRealmWithUserFilter(SecurityRealm baseSecurityRealm, List<String> validUserList) {
         this.baseSecurityRealm = baseSecurityRealm;
         this.validUserList = validUserList;
     }
-    
+
     @Override
     public SecurityComponents createSecurityComponents() {
         final SecurityComponents baseComponent = baseSecurityRealm.createSecurityComponents();
         return new SecurityComponents(
                 baseComponent.manager,
                 username -> {
-                        if (!validUserList.contains(username)) {
-                            throw new UsernameNotFoundException(
-                                    String.format("%s is not listed as valid username.", username)
-                            );
-                        }
-                        return baseComponent.userDetails.loadUserByUsername(username);
+                    if (!validUserList.contains(username)) {
+                        throw new UsernameNotFoundException(
+                                String.format("%s is not listed as valid username.", username));
+                    }
+                    return baseComponent.userDetails.loadUserByUsername(username);
                 },
-                baseComponent.rememberMe
-        );
+                baseComponent.rememberMe);
     }
 }
