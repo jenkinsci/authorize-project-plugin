@@ -1,5 +1,8 @@
 package org.jenkinsci.plugins.authorizeproject;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import hudson.model.FreeStyleProject;
 import hudson.model.User;
 import hudson.security.ACL;
@@ -17,13 +20,9 @@ import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.JenkinsRule.WebClient;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 public class GlobalQueueItemAuthenticatorTest {
     @Rule
     public JenkinsRule j = new AuthorizeProjectJenkinsRule();
-
 
     @Test
     public void testWorkForFreeStyleProject() throws Exception {
@@ -43,8 +42,7 @@ public class GlobalQueueItemAuthenticatorTest {
         }
 
         authenticators.add(new GlobalQueueItemAuthenticator(
-                new SpecificUsersAuthorizationStrategy(User.getById("bob", true).getId()))
-        );
+                new SpecificUsersAuthorizationStrategy(User.getById("bob", true).getId())));
         // if configured, GlobalQueueItemAuthenticator takes effect
         {
             FreeStyleProject p = j.createFreeStyleProject();
@@ -84,33 +82,29 @@ public class GlobalQueueItemAuthenticatorTest {
             assertEquals("bob", checker.authentication.getPrincipal());
         }
     }
-    
+
     @Test
     public void testConfiguration() throws Exception {
-        GlobalQueueItemAuthenticator auth = new GlobalQueueItemAuthenticator(
-                new AnonymousAuthorizationStrategy()
-        );
+        GlobalQueueItemAuthenticator auth = new GlobalQueueItemAuthenticator(new AnonymousAuthorizationStrategy());
         QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(auth);
-        
+
         WebClient wc = j.createWebClient();
         j.submit(wc.goTo("configureSecurity").getFormByName("config"));
-        
+
         j.assertEqualDataBoundBeans(
                 auth,
-                QueueItemAuthenticatorConfiguration.get().getAuthenticators().get(GlobalQueueItemAuthenticator.class)
-        );
+                QueueItemAuthenticatorConfiguration.get().getAuthenticators().get(GlobalQueueItemAuthenticator.class));
     }
-    
+
     @Test
     public void testConfigurationWithDescriptorNewInstance() throws Exception {
-        GlobalQueueItemAuthenticator auth = new GlobalQueueItemAuthenticator(
-                new SpecificUsersAuthorizationStrategy("admin")
-        );
+        GlobalQueueItemAuthenticator auth =
+                new GlobalQueueItemAuthenticator(new SpecificUsersAuthorizationStrategy("admin"));
         QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(auth);
-        
+
         WebClient wc = j.createWebClient();
         j.submit(wc.goTo("configureSecurity").getFormByName("config"));
-        
+
         /*
         // as SpecificUsersAuthorizationStrategy is not annotated with @DataBoundConstructor,
         // assertEqualDataBoundBeans is not applicable.
@@ -119,12 +113,12 @@ public class GlobalQueueItemAuthenticatorTest {
                 QueueItemAuthenticatorConfiguration.get().getAuthenticators().get(GlobalQueueItemAuthenticator.class)
         );
         */
-        AuthorizeProjectStrategy strategy = QueueItemAuthenticatorConfiguration.get().getAuthenticators().get(GlobalQueueItemAuthenticator.class).getStrategy();
+        AuthorizeProjectStrategy strategy = QueueItemAuthenticatorConfiguration.get()
+                .getAuthenticators()
+                .get(GlobalQueueItemAuthenticator.class)
+                .getStrategy();
         assertEquals(SpecificUsersAuthorizationStrategy.class, strategy.getClass());
-        assertEquals(
-                "admin",
-                ((SpecificUsersAuthorizationStrategy)strategy).getUserid()
-        );
+        assertEquals("admin", ((SpecificUsersAuthorizationStrategy) strategy).getUserid());
         // Don't care about noNeedReauthentication
         // (It might be removed for GlobalQueueItemAuthenticator in future)
     }

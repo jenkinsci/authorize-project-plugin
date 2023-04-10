@@ -1,9 +1,9 @@
 package org.jenkinsci.plugins.authorizeproject;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 import hudson.util.DescribableList;
 import io.jenkins.plugins.casc.ConfigurationContext;
@@ -26,12 +26,14 @@ import org.jvnet.hudson.test.recipes.LocalData;
 
 public class ConfigurationAsCodeTest {
 
-    @Rule public JenkinsConfiguredWithCodeRule r = new JenkinsConfiguredWithCodeRule();
+    @Rule
+    public JenkinsConfiguredWithCodeRule r = new JenkinsConfiguredWithCodeRule();
 
     @Test
     @ConfiguredWithCode("ConfigurationAsCodeTest/global.config.AnonymousAuthorizationStrategy.yml")
     public void importGlobalAnonymousAuthorizationStrategy() {
-        DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators = QueueItemAuthenticatorConfiguration.get().getAuthenticators();
+        DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators =
+                QueueItemAuthenticatorConfiguration.get().getAuthenticators();
         GlobalQueueItemAuthenticator queueItemAuthenticator = authenticators.get(GlobalQueueItemAuthenticator.class);
 
         assertThat(authenticators, hasSize(1));
@@ -47,12 +49,15 @@ public class ConfigurationAsCodeTest {
     @Test
     @ConfiguredWithCode("ConfigurationAsCodeTest/global.config.SpecificUsersAuthorizationStrategy.yml")
     public void importGlobalSpecificUsersAuthorizationStrategy() {
-        DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators = QueueItemAuthenticatorConfiguration.get().getAuthenticators();
+        DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators =
+                QueueItemAuthenticatorConfiguration.get().getAuthenticators();
         GlobalQueueItemAuthenticator queueItemAuthenticator = authenticators.get(GlobalQueueItemAuthenticator.class);
 
         assertThat(authenticators, hasSize(1));
         assertThat(queueItemAuthenticator.getStrategy(), instanceOf(SpecificUsersAuthorizationStrategy.class));
-        assertThat(((SpecificUsersAuthorizationStrategy) queueItemAuthenticator.getStrategy()).getUserid(), equalTo("some-user"));
+        assertThat(
+                ((SpecificUsersAuthorizationStrategy) queueItemAuthenticator.getStrategy()).getUserid(),
+                equalTo("some-user"));
     }
 
     @Test
@@ -64,7 +69,8 @@ public class ConfigurationAsCodeTest {
     @Test
     @ConfiguredWithCode("ConfigurationAsCodeTest/global.config.SystemAuthorizationStrategy.yml")
     public void importGlobalSystemAuthorizationStrategy() {
-        DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators = QueueItemAuthenticatorConfiguration.get().getAuthenticators();
+        DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators =
+                QueueItemAuthenticatorConfiguration.get().getAuthenticators();
         GlobalQueueItemAuthenticator queueItemAuthenticator = authenticators.get(GlobalQueueItemAuthenticator.class);
 
         assertThat(authenticators, hasSize(1));
@@ -80,7 +86,8 @@ public class ConfigurationAsCodeTest {
     @Test
     @ConfiguredWithCode("ConfigurationAsCodeTest/global.config.TriggeringUsersAuthorizationStrategy.yml")
     public void importGlobalTriggeringUsersAuthorizationStrategy() {
-        DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators = QueueItemAuthenticatorConfiguration.get().getAuthenticators();
+        DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators =
+                QueueItemAuthenticatorConfiguration.get().getAuthenticators();
         GlobalQueueItemAuthenticator queueItemAuthenticator = authenticators.get(GlobalQueueItemAuthenticator.class);
 
         assertThat(authenticators, hasSize(1));
@@ -96,12 +103,20 @@ public class ConfigurationAsCodeTest {
     @Test
     @ConfiguredWithCode("ConfigurationAsCodeTest/project.config.all.yml")
     public void importProjectTriggeringUsersAuthorizationStrategy() {
-        DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators = QueueItemAuthenticatorConfiguration.get().getAuthenticators();
+        DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators =
+                QueueItemAuthenticatorConfiguration.get().getAuthenticators();
         ProjectQueueItemAuthenticator queueItemAuthenticator = authenticators.get(ProjectQueueItemAuthenticator.class);
 
         assertThat(authenticators, hasSize(1));
-        assertThat(queueItemAuthenticator.getDisabledStrategies(), equalTo(Set.of(SystemAuthorizationStrategy.class.getName(), SpecificUsersAuthorizationStrategy.class.getName(), TriggeringUsersAuthorizationStrategy.class.getName())));
-        assertThat(queueItemAuthenticator.getEnabledStrategies(), equalTo(Set.of(AnonymousAuthorizationStrategy.class.getName())));
+        assertThat(
+                queueItemAuthenticator.getDisabledStrategies(),
+                equalTo(Set.of(
+                        SystemAuthorizationStrategy.class.getName(),
+                        SpecificUsersAuthorizationStrategy.class.getName(),
+                        TriggeringUsersAuthorizationStrategy.class.getName())));
+        assertThat(
+                queueItemAuthenticator.getEnabledStrategies(),
+                equalTo(Set.of(AnonymousAuthorizationStrategy.class.getName())));
     }
 
     @Test
@@ -124,11 +139,20 @@ public class ConfigurationAsCodeTest {
     @LocalData
     @Test
     public void strategyEnabledMapMigration() {
-        DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators = QueueItemAuthenticatorConfiguration.get().getAuthenticators();
+        DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators =
+                QueueItemAuthenticatorConfiguration.get().getAuthenticators();
         ProjectQueueItemAuthenticator queueItemAuthenticator = authenticators.get(ProjectQueueItemAuthenticator.class);
 
         assertThat(authenticators, hasSize(1));
-        assertThat(queueItemAuthenticator.getDisabledStrategies(), equalTo(Set.of(SpecificUsersAuthorizationStrategy.class.getName(), SystemAuthorizationStrategy.class.getName())));
-        assertThat(queueItemAuthenticator.getEnabledStrategies(), equalTo(Set.of(AnonymousAuthorizationStrategy.class.getName(), TriggeringUsersAuthorizationStrategy.class.getName())));
+        assertThat(
+                queueItemAuthenticator.getDisabledStrategies(),
+                equalTo(Set.of(
+                        SpecificUsersAuthorizationStrategy.class.getName(),
+                        SystemAuthorizationStrategy.class.getName())));
+        assertThat(
+                queueItemAuthenticator.getEnabledStrategies(),
+                equalTo(Set.of(
+                        AnonymousAuthorizationStrategy.class.getName(),
+                        TriggeringUsersAuthorizationStrategy.class.getName())));
     }
 }

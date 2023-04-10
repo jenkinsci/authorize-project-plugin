@@ -1,18 +1,18 @@
 /*
  * The MIT License
- * 
+ *
  * Copyright (c) 2013 IKEDA Yasuyuki
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,6 +24,8 @@
 
 package org.jenkinsci.plugins.authorizeproject;
 
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.BulkChange;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
@@ -43,8 +45,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import edu.umd.cs.findbugs.annotations.CheckForNull;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 import jenkins.model.TransientActionFactory;
@@ -100,14 +100,12 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
             return null;
         }
         if (DescriptorVisibilityFilter.apply(
-                ProjectQueueItemAuthenticator.getConfigured(),
-                List.of(strategy.getDescriptor())
-        ).isEmpty()) {
+                        ProjectQueueItemAuthenticator.getConfigured(), List.of(strategy.getDescriptor()))
+                .isEmpty()) {
             LOGGER.log(
                     Level.WARNING,
                     "{0} is configured but disabled in the global-security configuration.",
-                    strategy.getDescriptor().getDisplayName()
-            );
+                    strategy.getDescriptor().getDisplayName());
             return null;
         }
         return strategy;
@@ -182,7 +180,7 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
          */
         @Deprecated
         public DescriptorExtensionList<AuthorizeProjectStrategy, Descriptor<AuthorizeProjectStrategy>>
-        getStrategyList() {
+                getStrategyList() {
             return AuthorizeProjectStrategy.all();
         }
 
@@ -196,7 +194,6 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
             }
             return DescriptorVisibilityFilter.apply(authenticator, AuthorizeProjectStrategy.all());
         }
-
     }
 
     /**
@@ -305,12 +302,11 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
                 job.save();
                 bc.commit();
                 return FormApply.success("../");
-            } catch (IOException e){
+            } catch (IOException e) {
                 bc.abort();
                 throw e;
             }
         }
-
     }
 
     /**
@@ -319,7 +315,7 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
      * @since 1.3.0
      */
     @SuppressWarnings("rawtypes")
-    @Extension(ordinal = Double.MAX_VALUE / 2)  // close to the top
+    @Extension(ordinal = Double.MAX_VALUE / 2) // close to the top
     public static class TransientActionFactoryImpl extends TransientActionFactory<Job> {
 
         /**

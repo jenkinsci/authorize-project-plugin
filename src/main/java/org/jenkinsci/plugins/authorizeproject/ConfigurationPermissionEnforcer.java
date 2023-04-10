@@ -1,5 +1,7 @@
 package org.jenkinsci.plugins.authorizeproject;
 
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Job;
 import hudson.model.JobProperty;
@@ -7,10 +9,6 @@ import hudson.model.JobPropertyDescriptor;
 import hudson.security.AccessControlled;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
-
-import edu.umd.cs.findbugs.annotations.CheckForNull;
-import edu.umd.cs.findbugs.annotations.NonNull;
-
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -23,13 +21,12 @@ import org.kohsuke.stapler.StaplerRequest;
  * @since 1.3.0
  */
 @Restricted(NoExternalUse.class) // TODO remove this class once a fix for JENKINS-38219 is available in baseline core
-public class ConfigurationPermissionEnforcer extends JobProperty<Job<?,?>> {
+public class ConfigurationPermissionEnforcer extends JobProperty<Job<?, ?>> {
     /**
      * Our constructor.
      */
     @DataBoundConstructor
-    public ConfigurationPermissionEnforcer() {
-    }
+    public ConfigurationPermissionEnforcer() {}
 
     /**
      * Extension to perform the restriction.
@@ -51,7 +48,7 @@ public class ConfigurationPermissionEnforcer extends JobProperty<Job<?,?>> {
          */
         @Override
         public JobProperty<?> newInstance(@NonNull StaplerRequest req, JSONObject formData) throws FormException {
-            Job<?,?> job = req.findAncestorObject(Job.class);
+            Job<?, ?> job = req.findAncestorObject(Job.class);
             AccessControlled context = req.findAncestorObject(AccessControlled.class);
             checkConfigurePermission(job, context);
             // we don't actually return a job property... just want to be called on every form submission.
@@ -69,7 +66,7 @@ public class ConfigurationPermissionEnforcer extends JobProperty<Job<?,?>> {
             if (Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
                 // allows any configurations by system administrators.
                 // It may not be allowed even if the user is an administrator of the job,
-                // 
+                //
                 return;
             }
             AuthorizeProjectProperty property = job.getProperty(AuthorizeProjectProperty.class);
