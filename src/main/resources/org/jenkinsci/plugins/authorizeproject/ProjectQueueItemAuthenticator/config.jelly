@@ -23,26 +23,9 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:local="local">
-  <d:taglib uri="local">
-    <d:tag name="blockWrapperTable" >
-      <j:choose>
-        <j:when test="${divBasedFormLayout}">
-          <div>
-
-            <d:invokeBody/>
-          </div>
-        </j:when>
-        <j:otherwise>
-          <table width="100%">
-            <d:invokeBody/>
-          </table>
-        </j:otherwise>
-      </j:choose>
-    </d:tag>
-  </d:taglib>
 <!-- configurations for AuthorizeProjectStrategy -->
   <f:entry title="${%Strategies}">
-    <local:blockWrapperTable>
+    <div>
       <j:forEach var="d" items="${descriptor.availableDescriptorList}">
         <j:scope>
           <j:set var="checked" value="${instance==null?d.enabledByDefault: instance.isStrategyEnabled(d)}" />
@@ -54,6 +37,6 @@ THE SOFTWARE.
           </f:optionalBlock>
         </j:scope>
       </j:forEach>
-    </local:blockWrapperTable>
+    </div>
   </f:entry>
 </j:jelly>

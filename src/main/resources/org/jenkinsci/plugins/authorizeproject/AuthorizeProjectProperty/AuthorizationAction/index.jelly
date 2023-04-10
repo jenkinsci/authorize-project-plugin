@@ -26,36 +26,6 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout"
          xmlns:f="/lib/form" xmlns:t="/lib/hudson" xmlns:d="jelly:define"
          xmlns:local="local">
-  <d:taglib uri="local">
-    <d:tag name="blockWrapperTr">
-      <j:choose>
-        <j:when test="${divBasedFormLayout}">
-          <div>
-            <d:invokeBody/>
-          </div>
-        </j:when>
-        <j:otherwise>
-          <tr>
-            <d:invokeBody/>
-          </tr>
-        </j:otherwise>
-      </j:choose>
-    </d:tag>
-    <d:tag name="blockWrapperTd">
-      <j:choose>
-        <j:when test="${divBasedFormLayout}">
-          <div>
-            <d:invokeBody/>
-          </div>
-        </j:when>
-        <j:otherwise>
-          <td>
-            <d:invokeBody/>
-          </td>
-        </j:otherwise>
-      </j:choose>
-    </d:tag>
-  </d:taglib>
   <l:layout title="${it.displayName}" norefresh="true" permission="${it.job.CONFIGURE}">
     <st:include it="${it.job}" page="sidepanel" optional="true"/>
     <l:main-panel>
@@ -67,11 +37,9 @@
       <p/>
       <div class="behavior-loading">${%LOADING}</div>
       <f:form action="authorize" method="post" name="config">
-        <local:blockWrapperTr>
-          <local:blockWrapperTd>
-            <input type="hidden" name="stapler-class-bag" value="true"/>
-          </local:blockWrapperTd>
-        </local:blockWrapperTr>
+        <div>
+          <input type="hidden" name="stapler-class-bag" value="true"/>
+        </div>
         <j:set var="instance" value="${it.property}"/>
         <j:set var="descriptor" value="${it.propertyDescriptor}"/>
         <f:optionalBlock name="${descriptor.jsonSafeClassName}" help="${descriptor.helpFile}"

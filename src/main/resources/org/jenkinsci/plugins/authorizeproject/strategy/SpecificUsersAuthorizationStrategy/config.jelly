@@ -23,25 +23,8 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:local="local">
-  <d:taglib uri="local">
-    <d:tag name="blockWrapperTable" >
-      <j:choose>
-        <j:when test="${divBasedFormLayout}">
-          <div class="specific-user-authorization">
-
-            <d:invokeBody/>
-          </div>
-        </j:when>
-        <j:otherwise>
-          <table style="width:100%" class="specific-user-authorization">
-            <d:invokeBody/>
-          </table>
-        </j:otherwise>
-      </j:choose>
-    </d:tag>
-  </d:taglib>
   <f:block>
-  <local:blockWrapperTable>
+  <div class="specific-user-authorization">
   <!--
     hetero-radio makes entries visible even they are hidden.
     So nest it not to handled by hetero-radio.
@@ -63,7 +46,7 @@ THE SOFTWARE.
     <f:checkbox />
   </f:entry>
   </j:if> <!-- authorizeProjectContext -->
-  </local:blockWrapperTable>
+  </div>
   <j:if test="${authorizeProjectContext != 'global'}">
   <st:once>
     <st:adjunct includes="org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy.checkPasswordRequested" />
