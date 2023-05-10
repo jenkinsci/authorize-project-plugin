@@ -66,36 +66,39 @@ Behaviour.specify(".specific-user-authorization", "checkPasswordRequired", 0, fu
     passwordHelpBlock,
   ];
   
-  passwordBlockList.each(function(f) {
+  passwordBlockList.forEach(function(f) {
     if (f != null) {
-      f.hide();
+      f.style.display = 'none';
     }
   });
   
   var onchange = function(evt) {
     var url = useridField.getAttribute("checkPasswordRequestedUrl");
     url = eval(url);
-    var ajax = new Ajax.Request(url, {
-      evalJS: false, // don't evaluate contents automatically.
-      onSuccess: function(response) {
-        var required = eval(response.responseText);
-        if (required) {
-          passwordBlockList.each(function(f) {
-            if (f != null) {
-              f.show();
-            }
-          });
-        } else {
-          passwordBlockList.each(function(f) {
-            if (f != null) {
-              f.hide();
-            }
-          });
-        }
-      },
+    fetch(url, {
+      method: "post",
+      headers: crumb.wrap({}),
+    }).then((rsp) => {
+      if (rsp.ok) {
+        rsp.json().then((required) => {
+          if (required) {
+            passwordBlockList.forEach(f => {
+              if (f != null) {
+                f.style.display = '';
+              }
+            });
+          } else {
+            passwordBlockList.forEach(f => {
+              if (f != null) {
+                f.style.display = 'none';
+              }
+            });
+          }
+        });
+      }
     });
   };
   
-  useridField.observe("change", onchange);
+  useridField.addEventListener("change", onchange);
   onchange.call(useridField);
 });
