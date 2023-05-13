@@ -44,17 +44,17 @@ Behaviour.specify(".specific-user-authorization", "passwordApiTokenSwitch", 0, f
   };
   
   var onchange = function() {
-    var e = this.up(".specific-user-authorization");
+    var e = this.closest(".specific-user-authorization");
     if (this.checked) {
-        e.down('.specific-user-authorization-password').hide();
-        e.down('.specific-user-authorization-apitoken').show();
+        e.querySelector('.specific-user-authorization-password').style.display = 'none';
+        e.querySelector('.specific-user-authorization-apitoken').style.display = '';
     } else {
-        e.down('.specific-user-authorization-password').show();
-        e.down('.specific-user-authorization-apitoken').hide();
+        e.querySelector('.specific-user-authorization-password').style.display = '';
+        e.querySelector('.specific-user-authorization-apitoken').style.display = 'none';
     }
   };
   
   var useApitokenField = findFormItem(e, "useApitoken", findChild(e));
-  useApitokenField.observe("click", onchange);
+  useApitokenField.addEventListener("click", onchange);
   onchange.call(useApitokenField);
 });
