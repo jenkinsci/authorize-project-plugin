@@ -247,7 +247,7 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
          */
         @Override
         public String getIconFileName() {
-            return ProjectQueueItemAuthenticator.isConfigured() ? "secure.png" : null;
+            return ProjectQueueItemAuthenticator.isConfigured() ? "symbol-lock-closed" : null;
         }
 
         /**
@@ -271,7 +271,7 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
          */
         @Override
         public String getIconClassName() {
-            return ProjectQueueItemAuthenticator.isConfigured() ? "icon-secure" : null;
+            return ProjectQueueItemAuthenticator.isConfigured() ? "symbol-lock-closed" : null;
         }
 
         /**

@@ -30,8 +30,7 @@
     <st:include it="${it.job}" page="sidepanel" optional="true"/>
     <l:main-panel>
       <h1>
-        <!-- TODO l:icon class="${it.iconClassName} icon-xlg" when context menu is icon spec aware-->
-        <l:icon class="icon-secure icon-xlg"/>
+        <l:icon class="${it.iconClassName} icon-xlg"/>
         ${it.displayName}
       </h1>
       <p/>
