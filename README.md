@@ -8,7 +8,7 @@ This plugin provides following features:
 
 -   You can configure projects to have their builds run with specified
     authorization.
-    -   This is an implementation for
+    -   This is an implementation of
         [QueueItemAuthenticator](http://javadoc.jenkins-ci.org/jenkins/security/QueueItemAuthenticator.html).
 -   Provides following ways to specify authorization.
     -   Run as the user who triggered the build.
@@ -18,14 +18,13 @@ This plugin provides following features:
     -   Run as anonymous.
     -   Run as the specified user.
         -   You are requested to enter the password of the specified
-            user except following cases:
+            user except in the following cases:
             -   You are an administrator.
             -   You are the specified user.
             -   The specified user is not changed from the last
                 configuration, and "No need for re-authentication" is
                 checked.
-                -   This can threaten your Jenkins security. Be careful
-                    to use.
+                -   This can be a security risk
         -   Configuring projects are allowed only to administrators and
             the user configured as the authorization.
             -   "Don't restrict job configuration" allows other users
@@ -41,22 +40,21 @@ This plugin provides following features:
 
 ## Screenshots
 
--   After installed Authorize Project plugin, you will find "Access
-    Control for Builds" in "Manage Jenkins" \> "Configure Global
+-   The plugin adds "Access Control for Builds" in "Manage Jenkins" \> "Configure Global
     Security". Adding "Configure Build Authorizations in Project
-    Configuration" enables Authorize Project plugin.  
+    Configuration" enables Authorize Project plugin.
     ![](docs/images/authorize-project_01_globalsecurity.png)
     -   You can also disable specific strategies in this page. Disabled
         strategies are never used for authorization.
--   A new side bar menu "Authorization" will appear in project pages.  
+-   A new side bar menu "Authorization" will appear in project pages.
     ![](docs/images/sidebar.png)
 -   You can select how to authorize builds of the project in the
-    "Authorization" page.  
+    "Authorization" page.
     ![](docs/images/authorization-page.png)
 -   When selecting "Run as Specific User", you can enter User ID with
     whose authorization builds will run. If you enter a user ID except
     yourself and have no administrative privilege, you are required to
-    enter the password of that user.  
+    enter the password of that user.
     ![](docs/images/authorization-page-specific-user.png)
     -   You can also use API token, especially for non password-based
         security realms.
@@ -76,7 +74,7 @@ overriding the following method:
 public abstract Authentication authenticate(hudson.model.AbstractProject<?, ?> project, hudson.model.Queue.Item item);
 ```
 
-Use `AuthorizeProjectStrategyDescriptor` for `Descriptor`.  
+Use `AuthorizeProjectStrategyDescriptor` for `Descriptor`.
 If you want to provide global configuration properties, do as following:
 
 -   `global-security.jelly` is displayed in "Configure Global Security"
