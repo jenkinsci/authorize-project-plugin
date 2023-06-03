@@ -1,10 +1,6 @@
 # Authorize Project Plugin for Jenkins
 
-[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/authorize-project.svg)](https://plugins.jenkins.io/authorize-project)
-[![GitHub release](https://img.shields.io/github/release/jenkinsci/authorize-project-plugin.svg?label=changelog)](https://github.com/jenkinsci/authorize-project-plugin/releases/latest)
-[![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/authorize-project.svg?color=blue)](https://plugins.jenkins.io/authorize-project)
-
-This plugin allows configuring projects to run with specified authorization.
+This plugin allows projects to run builds with specified authorization.
 
 ## What's this?
 
