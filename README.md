@@ -1,4 +1,4 @@
-# Autorize Project Plugin for Jenkins
+# Authorize Project Plugin for Jenkins
 
 [![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/authorize-project.svg)](https://plugins.jenkins.io/authorize-project)
 [![GitHub release](https://img.shields.io/github/release/jenkinsci/authorize-project-plugin.svg?label=changelog)](https://github.com/jenkinsci/authorize-project-plugin/releases/latest)
