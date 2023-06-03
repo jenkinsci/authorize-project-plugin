@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.authorizeproject;
 
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -7,6 +8,7 @@ import hudson.model.FreeStyleProject;
 import hudson.model.User;
 import hudson.security.ACL;
 import hudson.util.DescribableList;
+import hudson.util.VersionNumber;
 import jenkins.model.Jenkins;
 import jenkins.security.QueueItemAuthenticator;
 import jenkins.security.QueueItemAuthenticatorConfiguration;
@@ -15,6 +17,7 @@ import org.jenkinsci.plugins.authorizeproject.strategy.AnonymousAuthorizationStr
 import org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizationCheckBuilder;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRule;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -85,6 +88,8 @@ public class GlobalQueueItemAuthenticatorTest {
 
     @Test
     public void testConfiguration() throws Exception {
+        // HTMLUnit does not support the fetch JavaScript API, must skip test after 2.401.1
+        Assume.assumeThat(j.jenkins.getVersion().isOlderThan(new VersionNumber("2.402")), is(true));
         GlobalQueueItemAuthenticator auth = new GlobalQueueItemAuthenticator(new AnonymousAuthorizationStrategy());
         QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(auth);
 
@@ -98,6 +103,8 @@ public class GlobalQueueItemAuthenticatorTest {
 
     @Test
     public void testConfigurationWithDescriptorNewInstance() throws Exception {
+        // HTMLUnit does not support the fetch JavaScript API, must skip test after 2.401.1
+        Assume.assumeThat(j.jenkins.getVersion().isOlderThan(new VersionNumber("2.402")), is(true));
         GlobalQueueItemAuthenticator auth =
                 new GlobalQueueItemAuthenticator(new SpecificUsersAuthorizationStrategy("admin"));
         QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(auth);
