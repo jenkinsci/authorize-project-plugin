@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.authorizeproject;
 
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
 
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
@@ -46,6 +47,7 @@ import hudson.model.User;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
+import hudson.util.VersionNumber;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -61,6 +63,7 @@ import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRu
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -195,6 +198,8 @@ public class ProjectQueueItemAuthenticatorTest {
 
     @Test
     public void testDisabledInProjectAuthorization() throws Exception {
+        // HTMLUnit does not support the fetch JavaScript API, must skip test after 2.401.1
+        Assume.assumeThat(j.jenkins.getVersion().isOlderThan(new VersionNumber("2.402")), is(true));
         FreeStyleProject p = j.createFreeStyleProject();
         p.addProperty(new AuthorizeProjectProperty(new AnonymousAuthorizationStrategy()));
 
@@ -367,6 +372,8 @@ public class ProjectQueueItemAuthenticatorTest {
 
     @Test
     public void testGlobalSecurityConfiguration() throws Exception {
+        // HTMLUnit does not support the fetch JavaScript API, must skip test after 2.401.1
+        Assume.assumeThat(j.jenkins.getVersion().isOlderThan(new VersionNumber("2.402")), is(true));
         AuthorizeProjectStrategyWithGlobalSecurityConfiguration.DescriptorImpl descriptor =
                 (AuthorizeProjectStrategyWithGlobalSecurityConfiguration.DescriptorImpl)
                         Jenkins.get().getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class);
