@@ -59,9 +59,7 @@ This plugin provides following features:
     -   You can also use API token, especially for non password-based
         security realms.
 -   Configuring project settings by unauthorized users are forbidden
-    when you configure the authorization for the project. See [\#What's
-    this?](https://wiki.jenkins.io/display/JENKINS/Authorize+Project+plugin#AuthorizeProjectplugin-What%27sthis?)
-    for details.  
+    when you configure the authorization for the project. See [What's this](/)? for details.
     ![](docs/images/access-denied.png)
 
 ## Extension point
