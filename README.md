@@ -64,12 +64,15 @@ This plugin provides following features:
 
 ## Extension point
 
-A new way to authorize projects can be added with extending
-`org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy`,
+A new way to authorize projects can be added by extending
+[`AuthorizeProjectStrategy`](https://javadoc.jenkins.io/plugin/authorize-project/org/jenkinsci/plugins/authorizeproject/AuthorizeProjectStrategy.html),
 overriding the following method:
 
 ``` syntaxhighlighter-pre
-public abstract Authentication authenticate(hudson.model.AbstractProject<?, ?> project, hudson.model.Queue.Item item);
+public abstract Authentication authenticate(
+    hudson.model.AbstractProject<?, ?> project,
+    hudson.model.Queue.Item item
+);
 ```
 
 Use `AuthorizeProjectStrategyDescriptor` for `Descriptor`.
