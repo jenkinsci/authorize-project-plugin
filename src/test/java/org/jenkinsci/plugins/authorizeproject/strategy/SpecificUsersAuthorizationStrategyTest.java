@@ -26,13 +26,6 @@ package org.jenkinsci.plugins.authorizeproject.strategy;
 
 import static org.junit.Assert.*;
 
-import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
-import com.gargoylesoftware.htmlunit.HttpMethod;
-import com.gargoylesoftware.htmlunit.WebRequest;
-import com.gargoylesoftware.htmlunit.html.HtmlCheckBoxInput;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
-import com.gargoylesoftware.htmlunit.xml.XmlPage;
 import hudson.cli.CLICommandInvoker;
 import hudson.model.FreeStyleProject;
 import hudson.model.Item;
@@ -63,6 +56,13 @@ import javax.xml.transform.stream.StreamResult;
 import jenkins.model.Jenkins;
 import jenkins.security.ApiTokenProperty;
 import org.apache.commons.io.input.NullInputStream;
+import org.htmlunit.FailingHttpStatusCodeException;
+import org.htmlunit.HttpMethod;
+import org.htmlunit.WebRequest;
+import org.htmlunit.html.HtmlCheckBoxInput;
+import org.htmlunit.html.HtmlPage;
+import org.htmlunit.html.HtmlTextInput;
+import org.htmlunit.xml.XmlPage;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizationCheckBuilder;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRule;
@@ -709,7 +709,7 @@ public class SpecificUsersAuthorizationStrategyTest {
             HtmlPage page = wc.getPage(p, "authorization");
             HtmlTextInput userid = page.getFirstByXPath(
                     "//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'userid') and @type='text']");
-            userid.setValueAttribute("test1");
+            userid.setValue("test1");
             j.submit(page.getFormByName("config"));
 
             assertEquals(
@@ -725,7 +725,7 @@ public class SpecificUsersAuthorizationStrategyTest {
             HtmlPage page = wc.getPage(p, "authorization");
             HtmlTextInput userid = page.getFirstByXPath(
                     "//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'userid') and @type='text']");
-            userid.setValueAttribute("test2");
+            userid.setValue("test2");
             try {
                 j.submit(page.getFormByName("config"));
                 fail();
@@ -767,7 +767,7 @@ public class SpecificUsersAuthorizationStrategyTest {
             useApitoken.setChecked(false);
             HtmlTextInput password = page.getFirstByXPath(
                     "//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password')]");
-            password.setValueAttribute("test2");
+            password.setValue("test2");
             j.submit(page.getFormByName("config"));
 
             assertEquals(
@@ -785,7 +785,7 @@ public class SpecificUsersAuthorizationStrategyTest {
             useApitoken.setChecked(false);
             HtmlTextInput password = page.getFirstByXPath(
                     "//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password')]");
-            password.setValueAttribute("badpassword");
+            password.setValue("badpassword");
             try {
                 j.submit(page.getFormByName("config"));
                 fail();
@@ -802,10 +802,10 @@ public class SpecificUsersAuthorizationStrategyTest {
             useApitoken.setChecked(true);
             HtmlTextInput password = page.getFirstByXPath(
                     "//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password')]");
-            password.setValueAttribute("test2");
+            password.setValue("test2");
             HtmlTextInput apitoken = page.getFirstByXPath(
                     "//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
-            apitoken.setValueAttribute("test2");
+            apitoken.setValue("test2");
             try {
                 j.submit(page.getFormByName("config"));
                 fail();
@@ -872,7 +872,7 @@ public class SpecificUsersAuthorizationStrategyTest {
             useApitoken.setChecked(true);
             HtmlTextInput apitoken = page.getFirstByXPath(
                     "//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
-            apitoken.setValueAttribute(apitokenForTest2);
+            apitoken.setValue(apitokenForTest2);
             j.submit(page.getFormByName("config"));
 
             assertEquals(
@@ -890,7 +890,7 @@ public class SpecificUsersAuthorizationStrategyTest {
             useApitoken.setChecked(true);
             HtmlTextInput apitoken = page.getFirstByXPath(
                     "//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
-            apitoken.setValueAttribute(apitokenForTest2 + "xxx");
+            apitoken.setValue(apitokenForTest2 + "xxx");
             try {
                 j.submit(page.getFormByName("config"));
                 fail();
@@ -907,10 +907,10 @@ public class SpecificUsersAuthorizationStrategyTest {
             useApitoken.setChecked(false);
             HtmlTextInput password = page.getFirstByXPath(
                     "//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password')]");
-            password.setValueAttribute(apitokenForTest2);
+            password.setValue(apitokenForTest2);
             HtmlTextInput apitoken = page.getFirstByXPath(
                     "//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
-            apitoken.setValueAttribute(apitokenForTest2);
+            apitoken.setValue(apitokenForTest2);
             try {
                 j.submit(page.getFormByName("config"));
                 fail();
