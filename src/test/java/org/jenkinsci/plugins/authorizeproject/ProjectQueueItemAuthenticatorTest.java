@@ -27,9 +27,6 @@ package org.jenkinsci.plugins.authorizeproject;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
 
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.matrix.AxisList;
@@ -56,6 +53,9 @@ import jenkins.security.QueueItemAuthenticatorConfiguration;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.acegisecurity.Authentication;
+import org.htmlunit.html.HtmlForm;
+import org.htmlunit.html.HtmlPage;
+import org.htmlunit.html.HtmlTextInput;
 import org.jenkinsci.plugins.authorizeproject.strategy.AnonymousAuthorizationStrategy;
 import org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizationCheckBuilder;
@@ -398,16 +398,16 @@ public class ProjectQueueItemAuthenticatorTest {
             HtmlTextInput valueField = form.getFirstByXPath(
                     "//input[@id='AuthorizeProjectStrategyWithGlobalSecurityConfigurationValueField']");
             assertNotNull(valueField);
-            assertEquals("", valueField.getValueAttribute());
+            assertEquals("", valueField.getValue());
 
             // verify alternate.jelly is displayed
             HtmlTextInput alternateField = form.getFirstByXPath(
                     "//input[@id='AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration']");
             assertNotNull(alternateField);
-            assertEquals("", alternateField.getValueAttribute());
+            assertEquals("", alternateField.getValue());
 
-            valueField.setValueAttribute(value1);
-            alternateField.setValueAttribute(alternateValue1);
+            valueField.setValue(value1);
+            alternateField.setValue(alternateValue1);
 
             j.submit(form);
 
@@ -424,13 +424,13 @@ public class ProjectQueueItemAuthenticatorTest {
             HtmlTextInput valueField = form.getFirstByXPath(
                     "//input[@id='AuthorizeProjectStrategyWithGlobalSecurityConfigurationValueField']");
             assertNotNull(valueField);
-            assertEquals(value1, valueField.getValueAttribute());
+            assertEquals(value1, valueField.getValue());
 
             // verify alternate.jelly is displayed
             HtmlTextInput alternateField = form.getFirstByXPath(
                     "//input[@id='AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration']");
             assertNotNull(alternateField);
-            assertEquals(alternateValue1, alternateField.getValueAttribute());
+            assertEquals(alternateValue1, alternateField.getValue());
         }
 
         // enabled / disabled preservation

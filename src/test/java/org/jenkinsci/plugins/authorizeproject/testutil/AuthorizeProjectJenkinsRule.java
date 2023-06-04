@@ -24,13 +24,13 @@
 
 package org.jenkinsci.plugins.authorizeproject.testutil;
 
-import com.gargoylesoftware.htmlunit.WebResponse;
 import hudson.model.Describable;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jenkins.security.QueueItemAuthenticatorConfiguration;
+import org.htmlunit.WebResponse;
 import org.jenkinsci.plugins.authorizeproject.ProjectQueueItemAuthenticator;
 import org.jvnet.hudson.test.JenkinsRule;
 
