@@ -38,16 +38,10 @@ import org.kohsuke.stapler.StaplerRequest;
  */
 public abstract class AuthorizeProjectStrategyDescriptor extends Descriptor<AuthorizeProjectStrategy> {
 
-    /**
-     * {@inheritDoc}
-     */
     protected AuthorizeProjectStrategyDescriptor() {
         super();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     protected AuthorizeProjectStrategyDescriptor(Class<? extends AuthorizeProjectStrategy> clazz) {
         super(clazz);
     }
