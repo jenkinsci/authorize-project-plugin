@@ -24,7 +24,6 @@
 
 package org.jenkinsci.plugins.authorizeproject;
 
-import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
 
 import hudson.FilePath;
@@ -44,18 +43,13 @@ import hudson.model.User;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
-import hudson.util.VersionNumber;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Set;
 import jenkins.model.Jenkins;
 import jenkins.security.QueueItemAuthenticatorConfiguration;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.acegisecurity.Authentication;
-import org.htmlunit.html.HtmlForm;
-import org.htmlunit.html.HtmlPage;
-import org.htmlunit.html.HtmlTextInput;
 import org.jenkinsci.plugins.authorizeproject.strategy.AnonymousAuthorizationStrategy;
 import org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizationCheckBuilder;
@@ -63,11 +57,9 @@ import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRu
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.jvnet.hudson.test.JenkinsRule.WebClient;
 import org.jvnet.hudson.test.TestExtension;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
@@ -194,43 +186,6 @@ public class ProjectQueueItemAuthenticatorTest {
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
             assertEquals(ACL.SYSTEM, checker.authentication);
         }
-    }
-
-    @Test
-    public void testDisabledInProjectAuthorization() throws Exception {
-        // HTMLUnit does not support the fetch JavaScript API, must skip test after 2.401.1
-        Assume.assumeThat(j.jenkins.getVersion().isOlderThan(new VersionNumber("2.402")), is(true));
-        FreeStyleProject p = j.createFreeStyleProject();
-        p.addProperty(new AuthorizeProjectProperty(new AnonymousAuthorizationStrategy()));
-
-        assertTrue(ProjectQueueItemAuthenticator.getConfigured()
-                .isStrategyEnabled(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class)));
-
-        j.submit(j.createWebClient().getPage(p, "authorization").getFormByName("config"));
-
-        // can be reconfigured if it is enabled.
-        assertEquals(
-                AnonymousAuthorizationStrategy.class,
-                p.getProperty(AuthorizeProjectProperty.class).getStrategy().getClass());
-
-        Set<String> enabledStrategies = Set.of();
-        Set<String> disabledStrategies = Set.of(
-                j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class).getId());
-
-        QueueItemAuthenticatorConfiguration.get().getAuthenticators().clear();
-        QueueItemAuthenticatorConfiguration.get()
-                .getAuthenticators()
-                .add(new ProjectQueueItemAuthenticator(enabledStrategies, disabledStrategies));
-
-        assertFalse(ProjectQueueItemAuthenticator.getConfigured()
-                .isStrategyEnabled(j.jenkins.getDescriptor(AnonymousAuthorizationStrategy.class)));
-
-        j.submit(j.createWebClient().getPage(p, "authorization").getFormByName("config"));
-
-        // cannot be reconfigured if it is disabled.
-        assertNotEquals(
-                AnonymousAuthorizationStrategy.class,
-                p.getProperty(AuthorizeProjectProperty.class).getStrategy().getClass());
     }
 
     @Test
@@ -368,116 +323,6 @@ public class ProjectQueueItemAuthenticatorTest {
                 return getViewPage(clazz, "alternate.jelly");
             }
         }
-    }
-
-    @Test
-    public void testGlobalSecurityConfiguration() throws Exception {
-        // HTMLUnit does not support the fetch JavaScript API, must skip test after 2.401.1
-        Assume.assumeThat(j.jenkins.getVersion().isOlderThan(new VersionNumber("2.402")), is(true));
-        AuthorizeProjectStrategyWithGlobalSecurityConfiguration.DescriptorImpl descriptor =
-                (AuthorizeProjectStrategyWithGlobalSecurityConfiguration.DescriptorImpl)
-                        Jenkins.get().getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class);
-        AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.DescriptorImpl alternateDescriptor =
-                (AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.DescriptorImpl) Jenkins.get()
-                        .getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class);
-
-        final String value1 = "value1 for AuthorizeProjectStrategyWithGlobalSecurityConfigurationValueField";
-        final String alternateValue1 = "value1 for AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration";
-
-        WebClient wc = j.createWebClient();
-
-        // access to Configure Global Security.
-        {
-            assertNull(descriptor.getValue());
-            assertNull(alternateDescriptor.getValue());
-
-            HtmlPage page = wc.goTo("configureSecurity");
-            HtmlForm form = page.getFormByName("config");
-
-            // verify global-security.jelly is displayed
-            HtmlTextInput valueField = form.getFirstByXPath(
-                    "//input[@id='AuthorizeProjectStrategyWithGlobalSecurityConfigurationValueField']");
-            assertNotNull(valueField);
-            assertEquals("", valueField.getValue());
-
-            // verify alternate.jelly is displayed
-            HtmlTextInput alternateField = form.getFirstByXPath(
-                    "//input[@id='AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration']");
-            assertNotNull(alternateField);
-            assertEquals("", alternateField.getValue());
-
-            valueField.setValue(value1);
-            alternateField.setValue(alternateValue1);
-
-            j.submit(form);
-
-            assertEquals(value1, descriptor.getValue());
-            assertEquals(alternateValue1, alternateDescriptor.getValue());
-        }
-
-        // field is displayed again
-        {
-            HtmlPage page = wc.goTo("configureSecurity");
-            HtmlForm form = page.getFormByName("config");
-
-            // verify global-security.jelly is displayed
-            HtmlTextInput valueField = form.getFirstByXPath(
-                    "//input[@id='AuthorizeProjectStrategyWithGlobalSecurityConfigurationValueField']");
-            assertNotNull(valueField);
-            assertEquals(value1, valueField.getValue());
-
-            // verify alternate.jelly is displayed
-            HtmlTextInput alternateField = form.getFirstByXPath(
-                    "//input[@id='AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration']");
-            assertNotNull(alternateField);
-            assertEquals(alternateValue1, alternateField.getValue());
-        }
-
-        // enabled / disabled preservation
-        Set<String> enabledStrategies;
-        Set<String> disabledStrategies;
-
-        // all are enabled
-        enabledStrategies = new HashSet<>();
-        disabledStrategies = new HashSet<>();
-        enabledStrategies.add(j.jenkins
-                .getDescriptor(AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration.class)
-                .getId());
-        enabledStrategies.add(j.jenkins
-                .getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class)
-                .getId());
-        enabledStrategies.add(j.jenkins
-                .getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class)
-                .getId());
-        assertStrategyEnablingConfigurationPreserved(enabledStrategies, disabledStrategies);
-
-        // all are disabled
-        enabledStrategies = new HashSet<>();
-        disabledStrategies = new HashSet<>();
-        disabledStrategies.add(j.jenkins
-                .getDescriptor(AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration.class)
-                .getId());
-        disabledStrategies.add(j.jenkins
-                .getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class)
-                .getId());
-        disabledStrategies.add(j.jenkins
-                .getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class)
-                .getId());
-        assertStrategyEnablingConfigurationPreserved(enabledStrategies, disabledStrategies);
-
-        // mixed
-        enabledStrategies = new HashSet<>();
-        disabledStrategies = new HashSet<>();
-        disabledStrategies.add(j.jenkins
-                .getDescriptor(AuthorizeProjectStrategyWithoutGlobalSecurityConfiguration.class)
-                .getId());
-        enabledStrategies.add(j.jenkins
-                .getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class)
-                .getId());
-        disabledStrategies.add(j.jenkins
-                .getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class)
-                .getId());
-        assertStrategyEnablingConfigurationPreserved(enabledStrategies, disabledStrategies);
     }
 
     public void assertStrategyEnablingConfigurationPreserved(
