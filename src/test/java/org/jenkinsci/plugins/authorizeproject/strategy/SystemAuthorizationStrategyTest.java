@@ -47,6 +47,7 @@ import hudson.security.GlobalMatrixAuthorizationStrategy;
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
 import java.net.URL;
+import javax.xml.XMLConstants;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -153,6 +154,9 @@ public class SystemAuthorizationStrategyTest {
         // {@link XmlPage#asXml} does unnecessary indentations.
         Document doc = page.getXmlDocument();
         TransformerFactory tfactory = TransformerFactory.newInstance();
+        tfactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        tfactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+        tfactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
         Transformer transformer = tfactory.newTransformer();
 
         StringWriter sw = new StringWriter();
