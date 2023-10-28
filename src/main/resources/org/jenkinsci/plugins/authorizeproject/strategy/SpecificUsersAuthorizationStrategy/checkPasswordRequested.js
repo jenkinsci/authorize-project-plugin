@@ -45,16 +45,16 @@ Behaviour.specify(".specific-user-authorization", "checkPasswordRequired", 0, fu
   
   var useridField = findFormItem(e, "userid", findChild(e));
   var passwordField = findFormItem(e, "password", findChild(e));
-  var passwordFieldBlock = findAncestor(passwordField, "TR");
+  var passwordFieldBlock = passwordField.closest("TR");
   /*
     [JENKINS-64341] - In Jenkins version greater than 2.263.4
     the table tags for fields (in forms) were replaced by div tags.
-    Since the changes were applied the 'findAncestor(passwordField, "TR")'
+    Since the changes were applied the 'passwordField.closest("TR")'
     method returns null. It is necessary to use the method
-    'findAncestorClass(passwordField, "tr")' instead of.
+    'passwordField.closest(".tr")' instead.
   */
   if (passwordFieldBlock == null) {
-      passwordFieldBlock = findAncestorClass(passwordField, "tr");
+      passwordFieldBlock = passwordField.closest(".tr");
     }
 
   var passwordCheckBlock = findFollowingTR(passwordField, "validation-error-area");
