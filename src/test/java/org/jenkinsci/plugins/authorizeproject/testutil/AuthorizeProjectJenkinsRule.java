@@ -56,7 +56,7 @@ public class AuthorizeProjectJenkinsRule extends JenkinsRule {
 
     @Override
     public WebClient createWebClient() {
-        return new WebClient() {
+        WebClient webClient = new WebClient() {
             private static final long serialVersionUID = 3389654318647204218L;
 
             @Override
@@ -68,6 +68,8 @@ public class AuthorizeProjectJenkinsRule extends JenkinsRule {
                 super.throwFailingHttpStatusCodeExceptionIfNecessary(webResponse);
             }
         };
+        webClient.getOptions().setFetchPolyfillEnabled(true);
+        return webClient;
     }
 
     public void before() throws Throwable {
