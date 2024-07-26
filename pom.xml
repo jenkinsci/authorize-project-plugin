@@ -49,7 +49,7 @@
     <revision>1.7.3</revision>
     <changelist>-SNAPSHOT</changelist>
     <gitHubRepo>jenkinsci/authorize-project-plugin</gitHubRepo>
-    <jenkins.baseline>2.426</jenkins.baseline>
+    <jenkins.baseline>2.440</jenkins.baseline>
     <jenkins.version>${jenkins.baseline}.3</jenkins.version>
     <spotbugs.effort>Max</spotbugs.effort>
     <spotbugs.threshold>Low</spotbugs.threshold>
