@@ -357,7 +357,7 @@ public class SpecificUsersAuthorizationStrategyTest {
                 new URL(wc.getContextPath() + String.format("%s/config.xml", destProject.getUrl())), HttpMethod.POST);
         req.setAdditionalHeader(
                 j.jenkins.getCrumbIssuer().getCrumbRequestField(),
-                j.jenkins.getCrumbIssuer().getCrumb(null));
+                j.jenkins.getCrumbIssuer().getCrumb((jakarta.servlet.ServletRequest) null));
         req.setRequestBody(configXml);
         wc.getPage(req);
 
@@ -410,7 +410,7 @@ public class SpecificUsersAuthorizationStrategyTest {
                 new URL(wc.getContextPath() + String.format("%s/config.xml", destProject.getUrl())), HttpMethod.POST);
         req.setAdditionalHeader(
                 j.jenkins.getCrumbIssuer().getCrumbRequestField(),
-                j.jenkins.getCrumbIssuer().getCrumb(null));
+                j.jenkins.getCrumbIssuer().getCrumb((jakarta.servlet.ServletRequest) null));
         req.setRequestBody(configXml);
 
         assertThrows(FailingHttpStatusCodeException.class, () -> wc.getPage(req));
