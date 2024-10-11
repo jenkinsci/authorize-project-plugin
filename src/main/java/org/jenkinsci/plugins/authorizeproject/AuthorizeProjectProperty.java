@@ -40,12 +40,12 @@ import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
 import hudson.model.Queue;
 import hudson.util.FormApply;
+import jakarta.servlet.ServletException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 import jenkins.model.TransientActionFactory;
 import net.sf.json.JSONObject;
@@ -55,7 +55,7 @@ import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.HttpResponse;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
 /**
@@ -139,7 +139,7 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
      * {@inheritDoc}
      */
     @Override
-    public JobProperty<?> reconfigure(StaplerRequest req, JSONObject form) throws Descriptor.FormException {
+    public JobProperty<?> reconfigure(StaplerRequest2 req, JSONObject form) throws Descriptor.FormException {
         // This is called when the job configuration is submitted.
         // authorize-project is preserved in job configuration pages.
         // It is updated via AuthorizationAction instead.
@@ -284,7 +284,8 @@ public class AuthorizeProjectProperty extends JobProperty<Job<?, ?>> {
         @RequirePOST
         @NonNull
         @Restricted(NoExternalUse.class)
-        public synchronized HttpResponse doAuthorize(@NonNull StaplerRequest req) throws IOException, ServletException {
+        public synchronized HttpResponse doAuthorize(@NonNull StaplerRequest2 req)
+                throws IOException, ServletException {
             job.checkPermission(Job.CONFIGURE);
             JSONObject json = req.getSubmittedForm();
             JSONObject o = json.optJSONObject(getPropertyDescriptor().getJsonSafeClassName());
