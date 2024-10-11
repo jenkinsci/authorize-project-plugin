@@ -40,7 +40,7 @@ import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 /**
  * Run builds as {@link ACL#SYSTEM}. Using this strategy becomes important when
@@ -176,7 +176,7 @@ public class SystemAuthorizationStrategy extends AuthorizeProjectStrategy {
          * {@inheritDoc}
          */
         @Override
-        public void configureFromGlobalSecurity(StaplerRequest req, JSONObject js) throws FormException {
+        public void configureFromGlobalSecurity(StaplerRequest2 req, JSONObject js) throws FormException {
             setPermitReconfiguration(js.getBoolean("permitReconfiguration"));
         }
 
@@ -184,7 +184,7 @@ public class SystemAuthorizationStrategy extends AuthorizeProjectStrategy {
          * {@inheritDoc}
          */
         @Override
-        public SystemAuthorizationStrategy newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+        public SystemAuthorizationStrategy newInstance(StaplerRequest2 req, JSONObject formData) throws FormException {
             SystemAuthorizationStrategy result = (SystemAuthorizationStrategy) super.newInstance(req, formData);
             Jenkins instance = Jenkins.get();
             if (!instance.hasPermission(Jenkins.RUN_SCRIPTS)) {
