@@ -276,9 +276,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         @Restricted(NoExternalUse.class) // used by stapler/jelly
         @SuppressWarnings("unused")
         public String calcCheckPasswordRequestedUrl() {
-            return String.format(
-                    "%s/%s/checkPasswordRequested",
-                    getCurrentDescriptorByNameUrl(), getDescriptorUrl());
+            return String.format("%s/%s/checkPasswordRequested", getCurrentDescriptorByNameUrl(), getDescriptorUrl());
         }
 
         /**
