@@ -42,7 +42,7 @@ import jenkins.model.Jenkins;
 import org.acegisecurity.AccessDeniedException;
 import org.acegisecurity.Authentication;
 import org.kohsuke.stapler.Stapler;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 /**
  * Extension point to define a new strategy to authorize builds configured in project configuration pages.
@@ -182,7 +182,7 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
             // It may not be allowed even if the user is an administrator of the job.
             return;
         }
-        StaplerRequest request = Stapler.getCurrentRequest();
+        StaplerRequest2 request = Stapler.getCurrentRequest2();
         AccessControlled context = (request != null) ? request.findAncestorObject(AccessControlled.class) : null;
         if (context == null) {
             context = Jenkins.get();
