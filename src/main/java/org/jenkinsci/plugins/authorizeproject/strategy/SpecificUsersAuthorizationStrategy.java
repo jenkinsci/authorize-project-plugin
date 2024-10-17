@@ -277,7 +277,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         @SuppressWarnings("unused")
         public String calcCheckPasswordRequestedUrl() {
             return String.format(
-                    "'%s/%s/checkPasswordRequested' + qs(this).nearBy('userid')",
+                    "%s/%s/checkPasswordRequested",
                     getCurrentDescriptorByNameUrl(), getDescriptorUrl());
         }
 
