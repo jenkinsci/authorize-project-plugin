@@ -74,8 +74,10 @@ Behaviour.specify(".specific-user-authorization", "checkPasswordRequired", 0, fu
   
   var onchange = function(evt) {
     var url = useridField.getAttribute("checkPasswordRequestedUrl");
-    url = eval(url);
-    fetch(url, {
+    var params = new URLSearchParams({
+      userid: useridField.value,
+    });
+    fetch(url + "?" + params, {
       method: "post",
       headers: crumb.wrap({}),
     }).then((rsp) => {
