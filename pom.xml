@@ -10,7 +10,7 @@
   </parent>
 
   <artifactId>authorize-project</artifactId>
-  <version>${revision}${changelist}</version>
+  <version>1.8.1</version>
   <packaging>hpi</packaging>
   <name>Authorize Project</name>
   <description>Configure projects to run with specified authorization.</description>
@@ -40,7 +40,7 @@
   <scm>
     <connection>scm:git:https://github.com/${gitHubRepo}</connection>
     <developerConnection>scm:git:git@github.com:${gitHubRepo}</developerConnection>
-    <tag>${scmTag}</tag>
+    <tag>authorize-project-1.8.1</tag>
     <url>https://github.com/${gitHubRepo}</url>
   </scm>
 
