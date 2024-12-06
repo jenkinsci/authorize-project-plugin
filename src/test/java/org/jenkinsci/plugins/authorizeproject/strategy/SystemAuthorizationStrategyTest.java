@@ -173,7 +173,7 @@ public class SystemAuthorizationStrategyTest {
         wc.login("admin");
 
         // GET config.xml of srcProject
-        String configXml = getConfigXml(wc.goToXml(String.format("%s/config.xml", srcProject.getUrl())));
+        String configXml = getConfigXml(wc.goToXml("%s/config.xml".formatted(srcProject.getUrl())));
 
         // POST config.xml of srcProject to a new project.
         // This should success.
@@ -182,10 +182,10 @@ public class SystemAuthorizationStrategyTest {
         String projectName = destProject.getFullName();
 
         WebRequest req = new WebRequest(
-                new URL(wc.getContextPath() + String.format("%s/config.xml", destProject.getUrl())), HttpMethod.POST);
+                new URL(wc.getContextPath() + "%s/config.xml".formatted(destProject.getUrl())), HttpMethod.POST);
         req.setAdditionalHeader(
                 j.jenkins.getCrumbIssuer().getCrumbRequestField(),
-                j.jenkins.getCrumbIssuer().getCrumb(null));
+                j.jenkins.getCrumbIssuer().getCrumb((jakarta.servlet.ServletRequest) null));
         req.setRequestBody(configXml);
         wc.getPage(req);
 
@@ -223,7 +223,7 @@ public class SystemAuthorizationStrategyTest {
                 .setPermitReconfiguration(true);
 
         // GET config.xml of srcProject
-        String configXml = getConfigXml(wc.goToXml(String.format("%s/config.xml", srcProject.getUrl())));
+        String configXml = getConfigXml(wc.goToXml("%s/config.xml".formatted(srcProject.getUrl())));
 
         // POST config.xml of srcProject (userid is set to admin) to a new project.
         // This should fail.
@@ -232,10 +232,10 @@ public class SystemAuthorizationStrategyTest {
         String projectName = destProject.getFullName();
 
         WebRequest req = new WebRequest(
-                new URL(wc.getContextPath() + String.format("%s/config.xml", destProject.getUrl())), HttpMethod.POST);
+                new URL(wc.getContextPath() + "%s/config.xml".formatted(destProject.getUrl())), HttpMethod.POST);
         req.setAdditionalHeader(
                 j.jenkins.getCrumbIssuer().getCrumbRequestField(),
-                j.jenkins.getCrumbIssuer().getCrumb(null));
+                j.jenkins.getCrumbIssuer().getCrumb((jakarta.servlet.ServletRequest) null));
         req.setRequestBody(configXml);
 
         assertThrows(FailingHttpStatusCodeException.class, () -> wc.getPage(req));
