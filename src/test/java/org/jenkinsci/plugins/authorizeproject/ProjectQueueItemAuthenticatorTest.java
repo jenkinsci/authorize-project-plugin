@@ -70,7 +70,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.JenkinsRule.WebClient;
 import org.jvnet.hudson.test.TestExtension;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 public class ProjectQueueItemAuthenticatorTest {
     @Rule
@@ -284,7 +284,8 @@ public class ProjectQueueItemAuthenticatorTest {
             }
 
             @Override
-            public void configureFromGlobalSecurity(StaplerRequest req, JSONObject js) throws Descriptor.FormException {
+            public void configureFromGlobalSecurity(StaplerRequest2 req, JSONObject js)
+                    throws Descriptor.FormException {
                 throw new FormException("Should not be called for global-security.jelly is not defined.", "");
             }
         }
@@ -320,7 +321,8 @@ public class ProjectQueueItemAuthenticatorTest {
             }
 
             @Override
-            public void configureFromGlobalSecurity(StaplerRequest req, JSONObject js) throws Descriptor.FormException {
+            public void configureFromGlobalSecurity(StaplerRequest2 req, JSONObject js)
+                    throws Descriptor.FormException {
                 value = js.getString("value");
                 save();
             }
@@ -358,7 +360,8 @@ public class ProjectQueueItemAuthenticatorTest {
             }
 
             @Override
-            public void configureFromGlobalSecurity(StaplerRequest req, JSONObject js) throws Descriptor.FormException {
+            public void configureFromGlobalSecurity(StaplerRequest2 req, JSONObject js)
+                    throws Descriptor.FormException {
                 value = js.getString("value");
                 save();
             }

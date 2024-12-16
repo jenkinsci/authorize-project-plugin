@@ -54,7 +54,7 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 /**
  * Run builds as a user specified in project configuration pages.
@@ -290,7 +290,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
          */
         @Restricted(NoExternalUse.class) // used by stapler/jelly
         @SuppressWarnings("unused")
-        public String doCheckPasswordRequested(StaplerRequest req, @QueryParameter String userid) {
+        public String doCheckPasswordRequested(StaplerRequest2 req, @QueryParameter String userid) {
             return Boolean.toString(isAuthenticationRequired(userid.trim()));
         }
 
@@ -324,7 +324,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         @Restricted(NoExternalUse.class) // used by stapler/jelly
         @SuppressWarnings("unused")
         public FormValidation doCheckPassword(
-                StaplerRequest req,
+                StaplerRequest2 req,
                 @QueryParameter String userid,
                 @QueryParameter String password,
                 @QueryParameter String apitoken,
