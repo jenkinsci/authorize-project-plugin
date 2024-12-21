@@ -12,7 +12,7 @@ import net.sf.json.JSONObject;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 /**
  * A dummy {@link JobProperty} responsible for providing the {@link AuthorizeProjectStrategy} with a veto over job
@@ -47,7 +47,7 @@ public class ConfigurationPermissionEnforcer extends JobProperty<Job<?, ?>> {
          * {@inheritDoc}
          */
         @Override
-        public JobProperty<?> newInstance(@NonNull StaplerRequest req, JSONObject formData) throws FormException {
+        public JobProperty<?> newInstance(@NonNull StaplerRequest2 req, JSONObject formData) throws FormException {
             Job<?, ?> job = req.findAncestorObject(Job.class);
             AccessControlled context = req.findAncestorObject(AccessControlled.class);
             checkConfigurePermission(job, context);
