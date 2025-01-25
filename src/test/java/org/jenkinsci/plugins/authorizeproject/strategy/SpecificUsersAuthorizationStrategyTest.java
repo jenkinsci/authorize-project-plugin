@@ -38,6 +38,7 @@ import hudson.security.AuthorizationMatrixProperty;
 import hudson.security.GlobalMatrixAuthorizationStrategy;
 import hudson.security.Permission;
 import hudson.security.ProjectMatrixAuthorizationStrategy;
+import jakarta.servlet.ServletRequest;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -135,7 +136,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     @Test
     @LocalData
     public void testIsAuthenticationRequiredAnonymous() {
-        try (ACLContext ignored = ACL.as(Jenkins.ANONYMOUS)) {
+        try (ACLContext ignored = ACL.as2(Jenkins.ANONYMOUS2)) {
             assertFalse(Jenkins.get().hasPermission(Jenkins.ADMINISTER));
             assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test2"));
         }
@@ -201,14 +202,14 @@ public class SpecificUsersAuthorizationStrategyTest {
     @Test
     @LocalData
     public void testAuthenticate() throws Exception {
-        // if not configured, run in SYSTEM privilege.
+        // if not configured, run in SYSTEM2 privilege.
         {
             FreeStyleProject p = j.createFreeStyleProject();
             AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
             p.getBuildersList().add(checker);
 
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-            assertEquals(ACL.SYSTEM, checker.authentication);
+            assertEquals(ACL.SYSTEM2, checker.authentication);
         }
 
         // if configured, run in specified user.
@@ -244,7 +245,7 @@ public class SpecificUsersAuthorizationStrategyTest {
             p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("nosuchuser")));
 
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-            assertEquals(Jenkins.ANONYMOUS, checker.authentication);
+            assertEquals(Jenkins.ANONYMOUS2, checker.authentication);
         }
 
         // null
@@ -259,7 +260,7 @@ public class SpecificUsersAuthorizationStrategyTest {
             p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy(null)));
 
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-            assertEquals(Jenkins.ANONYMOUS, checker.authentication);
+            assertEquals(Jenkins.ANONYMOUS2, checker.authentication);
         }
     }
 
@@ -288,7 +289,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("invaliduser")));
 
         j.assertBuildStatusSuccess(p.scheduleBuild2(0).get(10, TimeUnit.SECONDS));
-        assertEquals(Jenkins.ANONYMOUS, checker.authentication);
+        assertEquals(Jenkins.ANONYMOUS2, checker.authentication);
     }
 
     @Test
@@ -357,7 +358,7 @@ public class SpecificUsersAuthorizationStrategyTest {
                 new URL(wc.getContextPath() + String.format("%s/config.xml", destProject.getUrl())), HttpMethod.POST);
         req.setAdditionalHeader(
                 j.jenkins.getCrumbIssuer().getCrumbRequestField(),
-                j.jenkins.getCrumbIssuer().getCrumb(null));
+                j.jenkins.getCrumbIssuer().getCrumb((ServletRequest) null));
         req.setRequestBody(configXml);
         wc.getPage(req);
 
@@ -410,7 +411,7 @@ public class SpecificUsersAuthorizationStrategyTest {
                 new URL(wc.getContextPath() + String.format("%s/config.xml", destProject.getUrl())), HttpMethod.POST);
         req.setAdditionalHeader(
                 j.jenkins.getCrumbIssuer().getCrumbRequestField(),
-                j.jenkins.getCrumbIssuer().getCrumb(null));
+                j.jenkins.getCrumbIssuer().getCrumb((ServletRequest) null));
         req.setRequestBody(configXml);
 
         assertThrows(FailingHttpStatusCodeException.class, () -> wc.getPage(req));

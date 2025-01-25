@@ -36,7 +36,6 @@ import hudson.tasks.BuildTrigger;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import jenkins.model.Jenkins;
-import org.acegisecurity.providers.UsernamePasswordAuthenticationToken;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizationCheckBuilder;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRule;
@@ -46,6 +45,7 @@ import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.JenkinsRule.WebClient;
 import org.jvnet.hudson.test.recipes.LocalData;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 public class TriggeringUsersAuthorizationStrategyTest {
     @Rule
@@ -67,7 +67,7 @@ public class TriggeringUsersAuthorizationStrategyTest {
         AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
         p.getBuildersList().add(checker);
 
-        // if not configured, run in SYSTEM privilege.
+        // if not configured, run in SYSTEM2 privilege.
         {
             assertNull(p.getLastBuild());
             WebClient wc = j.createWebClient();
@@ -77,7 +77,7 @@ public class TriggeringUsersAuthorizationStrategyTest {
             assertNotNull(b);
             j.assertBuildStatusSuccess(b);
 
-            assertEquals(ACL.SYSTEM, checker.authentication);
+            assertEquals(ACL.SYSTEM2, checker.authentication);
             b.delete();
         }
 
@@ -93,7 +93,7 @@ public class TriggeringUsersAuthorizationStrategyTest {
             assertNotNull(b);
             j.assertBuildStatusSuccess(b);
 
-            assertEquals(Jenkins.ANONYMOUS, checker.authentication);
+            assertEquals(Jenkins.ANONYMOUS2, checker.authentication);
             b.delete();
         }
 
@@ -167,7 +167,7 @@ public class TriggeringUsersAuthorizationStrategyTest {
         AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
         p.getBuildersList().add(checker);
 
-        try (ACLContext ignored = ACL.as(new UsernamePasswordAuthenticationToken("validuser", "validuser"))) {
+        try (ACLContext ignored = ACL.as2(new UsernamePasswordAuthenticationToken("validuser", "validuser"))) {
             j.assertBuildStatusSuccess(
                     p.scheduleBuild2(0, new Cause.UserIdCause()).get(10, TimeUnit.SECONDS));
         }
@@ -176,10 +176,10 @@ public class TriggeringUsersAuthorizationStrategyTest {
         // In case of specifying an invalid user,
         // falls back to anonymous.
         // And the build should not be blocked.
-        try (ACLContext ignored = ACL.as(new UsernamePasswordAuthenticationToken("invaliduser", "invaliduser"))) {
+        try (ACLContext ignored = ACL.as2(new UsernamePasswordAuthenticationToken("invaliduser", "invaliduser"))) {
             j.assertBuildStatusSuccess(
                     p.scheduleBuild2(0, new Cause.UserIdCause()).get(10, TimeUnit.SECONDS));
         }
-        assertEquals(Jenkins.ANONYMOUS, checker.authentication);
+        assertEquals(Jenkins.ANONYMOUS2, checker.authentication);
     }
 }

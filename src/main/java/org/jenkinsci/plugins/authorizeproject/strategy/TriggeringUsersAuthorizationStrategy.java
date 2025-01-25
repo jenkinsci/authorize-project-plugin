@@ -38,11 +38,11 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
-import org.acegisecurity.Authentication;
-import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategyDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 /**
  * Run builds as a user who triggered the build.
@@ -67,16 +67,16 @@ public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrate
         if (cause != null) {
             User u = User.get(cause.getUserId(), false, Map.of());
             if (u == null) {
-                return Jenkins.ANONYMOUS;
+                return Jenkins.ANONYMOUS2;
             }
             try {
-                return u.impersonate();
+                return u.impersonate2();
             } catch (UsernameNotFoundException e) {
                 LOGGER.log(
                         Level.WARNING,
                         String.format("Invalid User %s. Falls back to anonymous.", cause.getUserId()),
                         e);
-                return Jenkins.ANONYMOUS;
+                return Jenkins.ANONYMOUS2;
             }
         }
         return null;

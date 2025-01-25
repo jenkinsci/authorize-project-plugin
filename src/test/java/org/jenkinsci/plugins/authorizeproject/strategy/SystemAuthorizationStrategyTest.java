@@ -44,6 +44,7 @@ import hudson.model.Item;
 import hudson.model.ParametersDefinitionProperty;
 import hudson.model.StringParameterDefinition;
 import hudson.security.GlobalMatrixAuthorizationStrategy;
+import jakarta.servlet.ServletRequest;
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
 import java.net.URL;
@@ -185,7 +186,7 @@ public class SystemAuthorizationStrategyTest {
                 new URL(wc.getContextPath() + String.format("%s/config.xml", destProject.getUrl())), HttpMethod.POST);
         req.setAdditionalHeader(
                 j.jenkins.getCrumbIssuer().getCrumbRequestField(),
-                j.jenkins.getCrumbIssuer().getCrumb(null));
+                j.jenkins.getCrumbIssuer().getCrumb((ServletRequest) null));
         req.setRequestBody(configXml);
         wc.getPage(req);
 
@@ -235,7 +236,7 @@ public class SystemAuthorizationStrategyTest {
                 new URL(wc.getContextPath() + String.format("%s/config.xml", destProject.getUrl())), HttpMethod.POST);
         req.setAdditionalHeader(
                 j.jenkins.getCrumbIssuer().getCrumbRequestField(),
-                j.jenkins.getCrumbIssuer().getCrumb(null));
+                j.jenkins.getCrumbIssuer().getCrumb((ServletRequest) null));
         req.setRequestBody(configXml);
 
         assertThrows(FailingHttpStatusCodeException.class, () -> wc.getPage(req));

@@ -28,10 +28,10 @@ import hudson.Extension;
 import hudson.model.Job;
 import hudson.model.Queue;
 import jenkins.model.Jenkins;
-import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategyDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.springframework.security.core.Authentication;
 
 /**
  * Run builds as anonymous.
@@ -51,7 +51,7 @@ public class AnonymousAuthorizationStrategy extends AuthorizeProjectStrategy {
      */
     @Override
     public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
-        return Jenkins.ANONYMOUS;
+        return Jenkins.ANONYMOUS2;
     }
 
     /**

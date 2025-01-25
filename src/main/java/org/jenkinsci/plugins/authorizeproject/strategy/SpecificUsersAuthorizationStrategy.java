@@ -39,10 +39,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import jenkins.security.ApiTokenProperty;
-import org.acegisecurity.AccessDeniedException;
-import org.acegisecurity.Authentication;
-import org.acegisecurity.providers.UsernamePasswordAuthenticationToken;
-import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
@@ -54,7 +50,11 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 /**
  * Run builds as a user specified in project configuration pages.
@@ -78,7 +78,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
     private transient String password;
 
     private static final Authentication[] BUILTIN_USERS = {
-        ACL.SYSTEM, Jenkins.ANONYMOUS,
+        ACL.SYSTEM2, Jenkins.ANONYMOUS2,
     };
 
     /**
@@ -149,7 +149,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
                     Jenkins.get()
                             .getSecurityRealm()
                             .getSecurityComponents()
-                            .manager
+                            .manager2
                             .authenticate(new UsernamePasswordAuthenticationToken(userId, password));
                     // supplied password matches
                     return true;
@@ -192,14 +192,14 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         User u = User.get(getUserid(), false, Map.of());
         if (u == null) {
             // fallback to anonymous
-            return Jenkins.ANONYMOUS;
+            return Jenkins.ANONYMOUS2;
         }
         try {
-            Authentication a = u.impersonate();
+            Authentication a = u.impersonate2();
             return a;
         } catch (UsernameNotFoundException e) {
             LOGGER.log(Level.WARNING, String.format("Invalid User %s. Falls back to anonymous.", getUserid()), e);
-            return Jenkins.ANONYMOUS;
+            return Jenkins.ANONYMOUS2;
         }
     }
 
@@ -211,7 +211,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         if (isDontRestrictJobConfiguration()) {
             return true;
         }
-        return AuthorizeProjectUtil.userIdEquals(Jenkins.getAuthentication().getName(), userid);
+        return AuthorizeProjectUtil.userIdEquals(Jenkins.getAuthentication2().getName(), userid);
     }
 
     /**
@@ -290,7 +290,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
          */
         @Restricted(NoExternalUse.class) // used by stapler/jelly
         @SuppressWarnings("unused")
-        public String doCheckPasswordRequested(StaplerRequest req, @QueryParameter String userid) {
+        public String doCheckPasswordRequested(StaplerRequest2 req, @QueryParameter String userid) {
             return Boolean.toString(isAuthenticationRequired(userid.trim()));
         }
 
@@ -324,7 +324,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         @Restricted(NoExternalUse.class) // used by stapler/jelly
         @SuppressWarnings("unused")
         public FormValidation doCheckPassword(
-                StaplerRequest req,
+                StaplerRequest2 req,
                 @QueryParameter String userid,
                 @QueryParameter String password,
                 @QueryParameter String apitoken,
