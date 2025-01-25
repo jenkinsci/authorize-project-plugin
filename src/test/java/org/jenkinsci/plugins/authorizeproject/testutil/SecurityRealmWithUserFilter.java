@@ -26,8 +26,8 @@ package org.jenkinsci.plugins.authorizeproject.testutil;
 
 import hudson.security.SecurityRealm;
 import java.util.List;
-import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 /**
  * Wraps other {@link SecurityRealm},
@@ -48,14 +48,14 @@ public class SecurityRealmWithUserFilter extends SecurityRealm {
     public SecurityComponents createSecurityComponents() {
         final SecurityComponents baseComponent = baseSecurityRealm.createSecurityComponents();
         return new SecurityComponents(
-                baseComponent.manager,
+                baseComponent.manager2,
                 username -> {
                     if (!validUserList.contains(username)) {
                         throw new UsernameNotFoundException(
                                 String.format("%s is not listed as valid username.", username));
                     }
-                    return baseComponent.userDetails.loadUserByUsername(username);
+                    return baseComponent.userDetails2.loadUserByUsername(username);
                 },
-                baseComponent.rememberMe);
+                baseComponent.rememberMe2);
     }
 }

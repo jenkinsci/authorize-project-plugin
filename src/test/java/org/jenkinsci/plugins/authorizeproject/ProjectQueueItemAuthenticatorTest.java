@@ -52,7 +52,6 @@ import jenkins.model.Jenkins;
 import jenkins.security.QueueItemAuthenticatorConfiguration;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
-import org.acegisecurity.Authentication;
 import org.htmlunit.html.HtmlForm;
 import org.htmlunit.html.HtmlPage;
 import org.htmlunit.html.HtmlTextInput;
@@ -70,7 +69,8 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.JenkinsRule.WebClient;
 import org.jvnet.hudson.test.TestExtension;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.springframework.security.core.Authentication;
 
 public class ProjectQueueItemAuthenticatorTest {
     @Rule
@@ -96,14 +96,14 @@ public class ProjectQueueItemAuthenticatorTest {
 
     @Test
     public void testWorkForFreeStyleProject() throws Exception {
-        // if not configured, run in SYSTEM privilege.
+        // if not configured, run in SYSTEM2 privilege.
         {
             FreeStyleProject p = j.createFreeStyleProject();
             AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
             p.getBuildersList().add(checker);
 
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-            assertEquals(ACL.SYSTEM, checker.authentication);
+            assertEquals(ACL.SYSTEM2, checker.authentication);
         }
 
         // if configured, AuthorizeProjectStrategy takes effect
@@ -115,10 +115,10 @@ public class ProjectQueueItemAuthenticatorTest {
             p.addProperty(new AuthorizeProjectProperty(new AnonymousAuthorizationStrategy()));
 
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-            assertEquals(Jenkins.ANONYMOUS, checker.authentication);
+            assertEquals(Jenkins.ANONYMOUS2, checker.authentication);
         }
 
-        // if configured wrong, run in SYSTEM privilege.
+        // if configured wrong, run in SYSTEM2 privilege.
         {
             FreeStyleProject p = j.createFreeStyleProject();
             AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
@@ -127,10 +127,10 @@ public class ProjectQueueItemAuthenticatorTest {
             p.addProperty(new AuthorizeProjectProperty(null));
 
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-            assertEquals(ACL.SYSTEM, checker.authentication);
+            assertEquals(ACL.SYSTEM2, checker.authentication);
         }
 
-        // if the strategy returns null, run in SYSTEM privilege.
+        // if the strategy returns null, run in SYSTEM2 privilege.
         {
             FreeStyleProject p = j.createFreeStyleProject();
             AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
@@ -139,13 +139,13 @@ public class ProjectQueueItemAuthenticatorTest {
             p.addProperty(new AuthorizeProjectProperty(new NullAuthorizeProjectStrategy()));
 
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-            assertEquals(ACL.SYSTEM, checker.authentication);
+            assertEquals(ACL.SYSTEM2, checker.authentication);
         }
     }
 
     @Test
     public void testWorkForMatrixProject() throws Exception {
-        // if not configured, run in SYSTEM privilege.
+        // if not configured, run in SYSTEM2 privilege.
         {
             MatrixProject p = j.createProject(MatrixProject.class);
             p.setAxes(new AxisList(new TextAxis("axis1", "value1")));
@@ -153,7 +153,7 @@ public class ProjectQueueItemAuthenticatorTest {
             p.getBuildersList().add(checker);
 
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-            assertEquals(ACL.SYSTEM, checker.authentication);
+            assertEquals(ACL.SYSTEM2, checker.authentication);
         }
 
         // if configured, AuthorizeProjectStrategy takes effect
@@ -166,10 +166,10 @@ public class ProjectQueueItemAuthenticatorTest {
             p.addProperty(new AuthorizeProjectProperty(new AnonymousAuthorizationStrategy()));
 
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-            assertEquals(Jenkins.ANONYMOUS, checker.authentication);
+            assertEquals(Jenkins.ANONYMOUS2, checker.authentication);
         }
 
-        // if configured wrong, run in SYSTEM privilege.
+        // if configured wrong, run in SYSTEM2 privilege.
         {
             MatrixProject p = j.createProject(MatrixProject.class);
             p.setAxes(new AxisList(new TextAxis("axis1", "value1")));
@@ -179,10 +179,10 @@ public class ProjectQueueItemAuthenticatorTest {
             p.addProperty(new AuthorizeProjectProperty(null));
 
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-            assertEquals(ACL.SYSTEM, checker.authentication);
+            assertEquals(ACL.SYSTEM2, checker.authentication);
         }
 
-        // if the strategy returns null, run in SYSTEM privilege.
+        // if the strategy returns null, run in SYSTEM2 privilege.
         {
             MatrixProject p = j.createProject(MatrixProject.class);
             p.setAxes(new AxisList(new TextAxis("axis1", "value1")));
@@ -192,7 +192,7 @@ public class ProjectQueueItemAuthenticatorTest {
             p.addProperty(new AuthorizeProjectProperty(new NullAuthorizeProjectStrategy()));
 
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-            assertEquals(ACL.SYSTEM, checker.authentication);
+            assertEquals(ACL.SYSTEM2, checker.authentication);
         }
     }
 
@@ -245,7 +245,7 @@ public class ProjectQueueItemAuthenticatorTest {
 
         // strategy works if it is enabled
         j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-        assertEquals(Jenkins.ANONYMOUS, checker.authentication);
+        assertEquals(Jenkins.ANONYMOUS2, checker.authentication);
 
         Set<String> enabledStrategies = Set.of();
         Set<String> disabledStrategies = Set.of(
@@ -261,7 +261,7 @@ public class ProjectQueueItemAuthenticatorTest {
 
         // strategy doesn't work if it is disabled even when it is configured
         j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-        assertEquals(ACL.SYSTEM, checker.authentication);
+        assertEquals(ACL.SYSTEM2, checker.authentication);
     }
 
     /**
@@ -284,7 +284,8 @@ public class ProjectQueueItemAuthenticatorTest {
             }
 
             @Override
-            public void configureFromGlobalSecurity(StaplerRequest req, JSONObject js) throws Descriptor.FormException {
+            public void configureFromGlobalSecurity(StaplerRequest2 req, JSONObject js)
+                    throws Descriptor.FormException {
                 throw new FormException("Should not be called for global-security.jelly is not defined.", "");
             }
         }
@@ -320,7 +321,8 @@ public class ProjectQueueItemAuthenticatorTest {
             }
 
             @Override
-            public void configureFromGlobalSecurity(StaplerRequest req, JSONObject js) throws Descriptor.FormException {
+            public void configureFromGlobalSecurity(StaplerRequest2 req, JSONObject js)
+                    throws Descriptor.FormException {
                 value = js.getString("value");
                 save();
             }
@@ -358,7 +360,8 @@ public class ProjectQueueItemAuthenticatorTest {
             }
 
             @Override
-            public void configureFromGlobalSecurity(StaplerRequest req, JSONObject js) throws Descriptor.FormException {
+            public void configureFromGlobalSecurity(StaplerRequest2 req, JSONObject js)
+                    throws Descriptor.FormException {
                 value = js.getString("value");
                 save();
             }
@@ -501,43 +504,6 @@ public class ProjectQueueItemAuthenticatorTest {
         }
     }
 
-    /**
-     * Test alternate file except global-security.jelly can be used.
-     */
-    public static class AuthorizeProjectStrategyWithOldSignature extends AuthorizeProjectStrategy {
-        private String name;
-
-        @DataBoundConstructor
-        public AuthorizeProjectStrategyWithOldSignature(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
-            return User.getById(name, true).impersonate();
-        }
-
-        @TestExtension
-        public static class DescriptorImpl extends AuthorizeProjectStrategyDescriptor {
-            @Override
-            public String getDisplayName() {
-                return "AuthorizeProjectStrategyWithOldSignature";
-            }
-        }
-    }
-
-    @Test
-    public void testOldSignature() throws Exception {
-        j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
-        FreeStyleProject p = j.createFreeStyleProject();
-        p.addProperty(new AuthorizeProjectProperty(new AuthorizeProjectStrategyWithOldSignature("test1")));
-        AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
-        p.getBuildersList().add(checker);
-
-        j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-        assertEquals("test1", checker.authentication.getName());
-    }
-
     public static class AuthorizationRecordAction extends InvisibleAction {
         // transient because the UsernamePasswordAuthenticationToken is forbidden to be serialized by JEP-200
         public final transient Authentication authentication;
@@ -554,7 +520,7 @@ public class ProjectQueueItemAuthenticatorTest {
         @Override
         public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener)
                 throws InterruptedException, IOException {
-            run.addAction(new AuthorizationRecordAction(Jenkins.getAuthentication()));
+            run.addAction(new AuthorizationRecordAction(Jenkins.getAuthentication2()));
         }
 
         @TestExtension("testWorkflow")
@@ -580,19 +546,8 @@ public class ProjectQueueItemAuthenticatorTest {
             p.setDefinition(new CpsFlowDefinition("node{ step([$class: 'AuthorizationCheckSimpleBuilder']); }", true));
             WorkflowRun b = p.scheduleBuild2(0).get();
             j.assertBuildStatusSuccess(b);
-            assertEquals(ACL.SYSTEM, b.getAction(AuthorizationRecordAction.class).authentication);
+            assertEquals(ACL.SYSTEM2, b.getAction(AuthorizationRecordAction.class).authentication);
         }
-        {
-            WorkflowJob p = j.jenkins.createProject(
-                    WorkflowJob.class, "test" + j.jenkins.getItems().size());
-            p.addProperty(new AuthorizeProjectProperty(new AuthorizeProjectStrategyWithOldSignature("test1")));
-            p.setDefinition(new CpsFlowDefinition("node{ step([$class: 'AuthorizationCheckSimpleBuilder']); }", true));
-            WorkflowRun b = p.scheduleBuild2(0).get();
-            j.assertBuildStatusSuccess(b);
-            // Strategies with old signatures don't work for Jobs.
-            assertEquals(ACL.SYSTEM, b.getAction(AuthorizationRecordAction.class).authentication);
-        }
-
         {
             WorkflowJob p = j.jenkins.createProject(
                     WorkflowJob.class, "test" + j.jenkins.getItems().size());
@@ -602,7 +557,7 @@ public class ProjectQueueItemAuthenticatorTest {
             WorkflowRun b = p.scheduleBuild2(0).get();
             j.assertBuildStatusSuccess(b);
             assertEquals(
-                    User.getById("test1", false).impersonate(),
+                    User.getById("test1", false).impersonate2(),
                     b.getAction(AuthorizationRecordAction.class).authentication);
         }
     }

@@ -34,14 +34,14 @@ public class GlobalQueueItemAuthenticatorTest {
         DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators =
                 QueueItemAuthenticatorConfiguration.get().getAuthenticators();
         authenticators.remove(GlobalQueueItemAuthenticator.class);
-        // if not configured, run in SYSTEM privilege.
+        // if not configured, run in SYSTEM2 privilege.
         {
             FreeStyleProject p = j.createFreeStyleProject();
             AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
             p.getBuildersList().add(checker);
 
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-            assertEquals(ACL.SYSTEM, checker.authentication);
+            assertEquals(ACL.SYSTEM2, checker.authentication);
         }
 
         authenticators.add(new GlobalQueueItemAuthenticator(
@@ -70,7 +70,7 @@ public class GlobalQueueItemAuthenticatorTest {
             p.addProperty(new AuthorizeProjectProperty(new AnonymousAuthorizationStrategy()));
 
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-            assertEquals(Jenkins.ANONYMOUS, checker.authentication);
+            assertEquals(Jenkins.ANONYMOUS2, checker.authentication);
         }
 
         // if configured ProjectQueueItemAuthenticator wrong, run fall through to GlobalQueueItemAuthenticator.

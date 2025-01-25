@@ -46,10 +46,10 @@ public class AnonymousAuthorizationStrategyTest {
         AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
         p.getBuildersList().add(checker);
 
-        // if not configured, run in SYSTEM privilege.
+        // if not configured, run in SYSTEM2 privilege.
         {
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-            assertEquals(ACL.SYSTEM, checker.authentication);
+            assertEquals(ACL.SYSTEM2, checker.authentication);
         }
 
         p.addProperty(new AuthorizeProjectProperty(new AnonymousAuthorizationStrategy()));
@@ -57,7 +57,7 @@ public class AnonymousAuthorizationStrategyTest {
         // if configured, run in ANONYMOUS privilege.
         {
             j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-            assertEquals(Jenkins.ANONYMOUS, checker.authentication);
+            assertEquals(Jenkins.ANONYMOUS2, checker.authentication);
         }
     }
 }

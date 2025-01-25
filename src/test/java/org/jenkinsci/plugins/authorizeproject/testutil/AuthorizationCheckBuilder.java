@@ -32,7 +32,7 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import java.io.IOException;
 import jenkins.model.Jenkins;
-import org.acegisecurity.Authentication;
+import org.springframework.security.core.Authentication;
 
 public class AuthorizationCheckBuilder extends Builder {
 
@@ -48,7 +48,7 @@ public class AuthorizationCheckBuilder extends Builder {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
             throws InterruptedException, IOException {
-        authentication = Jenkins.getAuthentication();
+        authentication = Jenkins.getAuthentication2();
         return true;
     }
 

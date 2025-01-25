@@ -8,10 +8,10 @@ import java.util.stream.Collectors;
 import jenkins.security.QueueItemAuthenticator;
 import jenkins.security.QueueItemAuthenticatorDescriptor;
 import net.sf.json.JSONObject;
-import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.authorizeproject.strategy.AnonymousAuthorizationStrategy;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.springframework.security.core.Authentication;
 
 /**
  * A global default authenticator to allow changing the default for all projects.
@@ -31,7 +31,7 @@ public class GlobalQueueItemAuthenticator extends QueueItemAuthenticator {
     }
 
     @Override
-    public Authentication authenticate(Queue.Item item) {
+    public Authentication authenticate2(Queue.Item item) {
         return strategy != null && item.task instanceof Job ? strategy.authenticate((Job<?, ?>) item.task, item) : null;
     }
 
@@ -65,13 +65,13 @@ public class GlobalQueueItemAuthenticator extends QueueItemAuthenticator {
 
         /**
          * Creates new {@link GlobalQueueItemAuthenticator} from inputs.
-         * This is required to call {@link hudson.model.Descriptor#newInstance(StaplerRequest, JSONObject)}
+         * This is required to call {@link hudson.model.Descriptor#newInstance(StaplerRequest2, JSONObject)}
          * of {@link AuthorizeProjectProperty}.
          *
-         * @see hudson.model.Descriptor#newInstance(org.kohsuke.stapler.StaplerRequest, net.sf.json.JSONObject)
+         * @see hudson.model.Descriptor#newInstance(org.kohsuke.stapler.StaplerRequest2, net.sf.json.JSONObject)
          */
         @Override
-        public GlobalQueueItemAuthenticator newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+        public GlobalQueueItemAuthenticator newInstance(StaplerRequest2 req, JSONObject formData) throws FormException {
             if (formData == null || formData.isNullObject()) {
                 return null;
             }

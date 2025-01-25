@@ -26,9 +26,7 @@ package org.jenkinsci.plugins.authorizeproject;
 
 import hudson.DescriptorExtensionList;
 import hudson.ExtensionPoint;
-import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
-import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.model.Job;
 import hudson.model.Queue;
@@ -36,13 +34,12 @@ import hudson.security.ACL;
 import hudson.security.AccessControlled;
 import java.io.InvalidObjectException;
 import java.io.ObjectStreamException;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
-import org.acegisecurity.AccessDeniedException;
-import org.acegisecurity.Authentication;
 import org.kohsuke.stapler.Stapler;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 
 /**
  * Extension point to define a new strategy to authorize builds configured in project configuration pages.
@@ -64,35 +61,7 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
      * @param item the item in queue, which will be a build.
      * @return {@code true} if authentication was successful
      */
-    public Authentication authenticate(Job<?, ?> project, Queue.Item item) {
-        if (!Util.isOverridden(
-                AuthorizeProjectStrategy.class, getClass(), "authenticate", AbstractProject.class, Queue.Item.class)) {
-            throw new AbstractMethodError();
-        }
-
-        if (!(project instanceof AbstractProject)) {
-            Descriptor<?> d = Jenkins.get().getDescriptor(getClass());
-            LOGGER.log(
-                    Level.WARNING,
-                    "This authorization strategy ({0}) is designed for authorize-project < 1.1.0 and not applicable for non-AbstractProjects (like WorkflowJob). ignored.",
-                    (d != null) ? d.getDisplayName() : getClass().getName());
-            return null;
-        }
-        return authenticate((AbstractProject<?, ?>) project, item);
-    }
-
-    /**
-     * Old {@link AbstractProject} based version of {@link #authenticate(Job, Queue.Item)}.
-     *
-     * @param project the project to run.
-     * @param item the item in queue, which will be a build.
-     * @return {@code true} if authentication was successful
-     * @deprecated use {@link #authenticate(hudson.model.Job, Queue.Item)} instead.
-     */
-    @Deprecated
-    public Authentication authenticate(AbstractProject<?, ?> project, Queue.Item item) {
-        return authenticate((Job<?, ?>) project, item);
-    }
+    public abstract Authentication authenticate(Job<?, ?> project, Queue.Item item);
 
     /**
      * {@inheritDoc}
@@ -112,7 +81,7 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
     public final void checkJobConfigurePermission(AccessControlled context) {
         if (!hasJobConfigurePermission(context)) {
             throw new AccessDeniedException(Messages.AuthorizeProjectStrategy_UserNotAuthorizedForJob(
-                    Jenkins.getAuthentication().getName()));
+                    Jenkins.getAuthentication2().getName()));
         }
     }
 
@@ -138,7 +107,7 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
     public final void checkAuthorizationConfigurePermission(AccessControlled context) {
         if (!hasAuthorizationConfigurePermission(context)) {
             throw new AccessDeniedException(Messages.AuthorizeProjectStrategy_UserNotAuthorized(
-                    Jenkins.getAuthentication().getName()));
+                    Jenkins.getAuthentication2().getName()));
         }
     }
 
@@ -169,8 +138,8 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
     }
 
     private void checkUnsecuredConfiguration() throws ObjectStreamException {
-        Authentication authentication = Jenkins.getAuthentication();
-        if (authentication == ACL.SYSTEM) {
+        Authentication authentication = Jenkins.getAuthentication2();
+        if (authentication == ACL.SYSTEM2) {
             // It is considered to initial loading or reloading.
             return;
         }
@@ -182,18 +151,18 @@ public abstract class AuthorizeProjectStrategy extends AbstractDescribableImpl<A
             // It may not be allowed even if the user is an administrator of the job.
             return;
         }
-        StaplerRequest request = Stapler.getCurrentRequest();
+        StaplerRequest2 request = Stapler.getCurrentRequest2();
         AccessControlled context = (request != null) ? request.findAncestorObject(AccessControlled.class) : null;
         if (context == null) {
             context = Jenkins.get();
         }
         if (!hasJobConfigurePermission(context)) {
-            String name = Jenkins.getAuthentication().getName();
+            String name = Jenkins.getAuthentication2().getName();
             String userNotAuthorizedForJob = Messages.AuthorizeProjectStrategy_UserNotAuthorizedForJob(name);
             throw new InvalidObjectException(userNotAuthorizedForJob);
         }
         if (!hasAuthorizationConfigurePermission(context)) {
-            String name = Jenkins.getAuthentication().getName();
+            String name = Jenkins.getAuthentication2().getName();
             String userNotAuthorized = Messages.AuthorizeProjectStrategy_UserNotAuthorized(name);
             throw new InvalidObjectException(userNotAuthorized);
         }
