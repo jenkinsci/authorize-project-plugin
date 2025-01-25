@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
-import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * Base {@link Descriptor} class for {@link AuthorizeProjectStrategy} instances.
@@ -91,7 +91,7 @@ public abstract class AuthorizeProjectStrategyDescriptor extends Descriptor<Auth
      * Invoked when configuration is submitted from "Configure Global Security" as a child of {@link ProjectQueueItemAuthenticator}.
      * You should call save() by yourself.
      */
-    public void configureFromGlobalSecurity(StaplerRequest2 req, JSONObject js) throws FormException {}
+    public void configureFromGlobalSecurity(StaplerRequest req, JSONObject js) throws FormException {}
 
     /**
      * @return this strategy can be enabled by default.
