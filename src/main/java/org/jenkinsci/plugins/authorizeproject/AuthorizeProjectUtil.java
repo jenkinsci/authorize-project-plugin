@@ -30,7 +30,7 @@ import hudson.model.Descriptor;
 import hudson.model.Descriptor.FormException;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
-import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerRequest;
 
 /**
  *
@@ -40,7 +40,7 @@ public class AuthorizeProjectUtil {
      * Create a new {@link Describable} object from user inputs.
      */
     public static <T extends Describable<?>> T bindJSONWithDescriptor(
-            StaplerRequest2 req, JSONObject formData, String fieldName, Class<T> clazz) throws FormException {
+            StaplerRequest req, JSONObject formData, String fieldName, Class<T> clazz) throws FormException {
         formData = formData.getJSONObject(fieldName);
         if (formData == null || formData.isNullObject()) {
             return null;

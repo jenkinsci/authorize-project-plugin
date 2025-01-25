@@ -43,7 +43,7 @@ import jenkins.security.QueueItemAuthenticatorDescriptor;
 import net.sf.json.JSONObject;
 import org.acegisecurity.Authentication;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * Authorize builds of projects configured with {@link AuthorizeProjectProperty}.
@@ -179,11 +179,10 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
          * @param formData the form data.
          * @return the authenticator.
          * @throws hudson.model.Descriptor.FormException if the submitted form is invalid.
-         * @see hudson.model.Descriptor#newInstance(org.kohsuke.stapler.StaplerRequest2, net.sf.json.JSONObject)
+         * @see hudson.model.Descriptor#newInstance(org.kohsuke.stapler.StaplerRequest, net.sf.json.JSONObject)
          */
         @Override
-        public ProjectQueueItemAuthenticator newInstance(StaplerRequest2 req, JSONObject formData)
-                throws FormException {
+        public ProjectQueueItemAuthenticator newInstance(StaplerRequest req, JSONObject formData) throws FormException {
             Set<String> enabledStrategies = new HashSet<>();
             Set<String> disabledStrategies = new HashSet<>();
 
