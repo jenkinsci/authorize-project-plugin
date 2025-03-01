@@ -154,7 +154,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
                     // supplied password matches
                     return true;
                 } catch (Exception e) { // handles any exception including NPE.
-                    LOGGER.log(Level.WARNING, String.format("Failed to authenticate %s", userId), e);
+                    LOGGER.log(Level.WARNING, "Failed to authenticate %s".formatted(userId), e);
                 }
             }
         }
@@ -198,7 +198,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
             Authentication a = u.impersonate2();
             return a;
         } catch (UsernameNotFoundException e) {
-            LOGGER.log(Level.WARNING, String.format("Invalid User %s. Falls back to anonymous.", getUserid()), e);
+            LOGGER.log(Level.WARNING, "Invalid User %s. Falls back to anonymous.".formatted(getUserid()), e);
             return Jenkins.ANONYMOUS2;
         }
     }
@@ -276,7 +276,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         @Restricted(NoExternalUse.class) // used by stapler/jelly
         @SuppressWarnings("unused")
         public String calcCheckPasswordRequestedUrl() {
-            return String.format("%s/%s/checkPasswordRequested", getCurrentDescriptorByNameUrl(), getDescriptorUrl());
+            return "%s/%s/checkPasswordRequested".formatted(getCurrentDescriptorByNameUrl(), getDescriptorUrl());
         }
 
         /**

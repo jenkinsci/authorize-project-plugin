@@ -346,7 +346,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         wc.login("test1");
 
         // GET config.xml of srcProject (userid is set to test1)
-        String configXml = getConfigXml(wc.goToXml(String.format("%s/config.xml", srcProject.getUrl())));
+        String configXml = getConfigXml(wc.goToXml("%s/config.xml".formatted(srcProject.getUrl())));
 
         // POST config.xml of srcProject (userid is set to test1) to a new project.
         // This should success.
@@ -355,7 +355,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         String projectName = destProject.getFullName();
 
         WebRequest req = new WebRequest(
-                new URL(wc.getContextPath() + String.format("%s/config.xml", destProject.getUrl())), HttpMethod.POST);
+                new URL(wc.getContextPath() + "%s/config.xml".formatted(destProject.getUrl())), HttpMethod.POST);
         req.setAdditionalHeader(
                 j.jenkins.getCrumbIssuer().getCrumbRequestField(),
                 j.jenkins.getCrumbIssuer().getCrumb((ServletRequest) null));
@@ -399,7 +399,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         wc.login("test1");
 
         // GET config.xml of srcProject (userid is set to admin)
-        String configXml = getConfigXml(wc.goToXml(String.format("%s/config.xml", srcProject.getUrl())));
+        String configXml = getConfigXml(wc.goToXml("%s/config.xml".formatted(srcProject.getUrl())));
 
         // POST config.xml of srcProject (userid is set to admin) to a new project.
         // This should fail.
@@ -408,7 +408,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         String projectName = destProject.getFullName();
 
         WebRequest req = new WebRequest(
-                new URL(wc.getContextPath() + String.format("%s/config.xml", destProject.getUrl())), HttpMethod.POST);
+                new URL(wc.getContextPath() + "%s/config.xml".formatted(destProject.getUrl())), HttpMethod.POST);
         req.setAdditionalHeader(
                 j.jenkins.getCrumbIssuer().getCrumbRequestField(),
                 j.jenkins.getCrumbIssuer().getCrumb((ServletRequest) null));
