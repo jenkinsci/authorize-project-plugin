@@ -99,8 +99,8 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
             return null;
         }
         Job<?, ?> project = (Job<?, ?>) item.task;
-        if (project instanceof AbstractProject) {
-            project = ((AbstractProject<?, ?>) project).getRootProject();
+        if (project instanceof AbstractProject<?, ?> abstractProject) {
+            project = abstractProject.getRootProject();
         }
         AuthorizeProjectProperty prop = project.getProperty(AuthorizeProjectProperty.class);
         if (prop == null) {
@@ -138,8 +138,8 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
             return false;
         }
 
-        if (d instanceof AuthorizeProjectStrategyDescriptor) {
-            return ((AuthorizeProjectStrategyDescriptor) d).isEnabledByDefault();
+        if (d instanceof AuthorizeProjectStrategyDescriptor descriptor) {
+            return descriptor.isEnabledByDefault();
         }
 
         return true;
@@ -191,10 +191,9 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
                 String name = d.getJsonSafeClassName();
                 if (formData.has(name)) {
                     enabledStrategies.add(d.getId());
-                    if (d instanceof AuthorizeProjectStrategyDescriptor
-                            && ((AuthorizeProjectStrategyDescriptor) d).getGlobalSecurityConfigPage() != null) {
-                        ((AuthorizeProjectStrategyDescriptor) d)
-                                .configureFromGlobalSecurity(req, formData.getJSONObject(name));
+                    if (d instanceof AuthorizeProjectStrategyDescriptor descriptor
+                            && descriptor.getGlobalSecurityConfigPage() != null) {
+                        descriptor.configureFromGlobalSecurity(req, formData.getJSONObject(name));
                     }
                 } else {
                     disabledStrategies.add(d.getId());
@@ -211,8 +210,8 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
     public static ProjectQueueItemAuthenticator getConfigured() {
         for (QueueItemAuthenticator authenticator :
                 QueueItemAuthenticatorConfiguration.get().getAuthenticators()) {
-            if (authenticator instanceof ProjectQueueItemAuthenticator) {
-                return (ProjectQueueItemAuthenticator) authenticator;
+            if (authenticator instanceof ProjectQueueItemAuthenticator itemAuthenticator) {
+                return itemAuthenticator;
             }
         }
         return null;
