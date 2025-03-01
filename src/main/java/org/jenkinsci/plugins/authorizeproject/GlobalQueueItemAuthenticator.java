@@ -32,7 +32,7 @@ public class GlobalQueueItemAuthenticator extends QueueItemAuthenticator {
 
     @Override
     public Authentication authenticate2(Queue.Item item) {
-        return strategy != null && item.task instanceof Job ? strategy.authenticate((Job<?, ?>) item.task, item) : null;
+        return strategy != null && item.task instanceof Job<?, ?> j ? strategy.authenticate(j, item) : null;
     }
 
     @Extension

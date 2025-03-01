@@ -93,10 +93,10 @@ public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrate
     private UserIdCause getRootUserIdCause(Queue.Item item) {
         Run<?, ?> upstream = null;
         for (Cause c : item.getCauses()) {
-            if (c instanceof UserIdCause) {
-                return (UserIdCause) c;
-            } else if (c instanceof UpstreamCause) {
-                upstream = ((UpstreamCause) c).getUpstreamRun();
+            if (c instanceof UserIdCause cause) {
+                return cause;
+            } else if (c instanceof UpstreamCause cause) {
+                upstream = cause.getUpstreamRun();
             }
         }
 
