@@ -64,7 +64,7 @@ public class AuthorizeProjectUtil {
 
             return instance;
         } catch (ClassNotFoundException e) {
-            throw new FormException(String.format("Failed to instantiate %s", staplerClazzName), e, fieldName);
+            throw new FormException("Failed to instantiate %s".formatted(staplerClazzName), e, fieldName);
         }
     }
 

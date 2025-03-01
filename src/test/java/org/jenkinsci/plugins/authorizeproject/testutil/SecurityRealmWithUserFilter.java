@@ -51,8 +51,7 @@ public class SecurityRealmWithUserFilter extends SecurityRealm {
                 baseComponent.manager2,
                 username -> {
                     if (!validUserList.contains(username)) {
-                        throw new UsernameNotFoundException(
-                                String.format("%s is not listed as valid username.", username));
+                        throw new UsernameNotFoundException("%s is not listed as valid username.".formatted(username));
                     }
                     return baseComponent.userDetails2.loadUserByUsername(username);
                 },

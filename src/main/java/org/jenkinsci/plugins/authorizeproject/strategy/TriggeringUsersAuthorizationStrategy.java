@@ -72,10 +72,7 @@ public class TriggeringUsersAuthorizationStrategy extends AuthorizeProjectStrate
             try {
                 return u.impersonate2();
             } catch (UsernameNotFoundException e) {
-                LOGGER.log(
-                        Level.WARNING,
-                        String.format("Invalid User %s. Falls back to anonymous.", cause.getUserId()),
-                        e);
+                LOGGER.log(Level.WARNING, "Invalid User %s. Falls back to anonymous.".formatted(cause.getUserId()), e);
                 return Jenkins.ANONYMOUS2;
             }
         }
