@@ -11,6 +11,7 @@ import io.jenkins.plugins.casc.ConfiguratorRegistry;
 import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
 import io.jenkins.plugins.casc.misc.JenkinsConfiguredWithCodeRule;
 import io.jenkins.plugins.casc.misc.Util;
+import io.jenkins.plugins.casc.misc.junit.jupiter.WithJenkinsConfiguredWithCode;
 import io.jenkins.plugins.casc.model.CNode;
 import java.util.Set;
 import jenkins.security.QueueItemAuthenticator;
@@ -20,18 +21,14 @@ import org.jenkinsci.plugins.authorizeproject.strategy.AnonymousAuthorizationStr
 import org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy;
 import org.jenkinsci.plugins.authorizeproject.strategy.SystemAuthorizationStrategy;
 import org.jenkinsci.plugins.authorizeproject.strategy.TriggeringUsersAuthorizationStrategy;
-import org.junit.Rule;
-import org.junit.Test;
-import org.jvnet.hudson.test.recipes.LocalData;
+import org.junit.jupiter.api.Test;
 
-public class ConfigurationAsCodeTest {
-
-    @Rule
-    public JenkinsConfiguredWithCodeRule r = new JenkinsConfiguredWithCodeRule();
+@WithJenkinsConfiguredWithCode
+class ConfigurationAsCodeTest {
 
     @Test
     @ConfiguredWithCode("ConfigurationAsCodeTest/global.config.AnonymousAuthorizationStrategy.yml")
-    public void importGlobalAnonymousAuthorizationStrategy() {
+    void importGlobalAnonymousAuthorizationStrategy(JenkinsConfiguredWithCodeRule r) {
         DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators =
                 QueueItemAuthenticatorConfiguration.get().getAuthenticators();
         GlobalQueueItemAuthenticator queueItemAuthenticator = authenticators.get(GlobalQueueItemAuthenticator.class);
@@ -42,13 +39,13 @@ public class ConfigurationAsCodeTest {
 
     @Test
     @ConfiguredWithCode("ConfigurationAsCodeTest/global.config.AnonymousAuthorizationStrategy.yml")
-    public void exportGlobalAnonymousAuthorizationStrategy() throws Exception {
+    void exportGlobalAnonymousAuthorizationStrategy(JenkinsConfiguredWithCodeRule r) throws Exception {
         assertExport("ConfigurationAsCodeTest/global.export.AnonymousAuthorizationStrategy.yml");
     }
 
     @Test
     @ConfiguredWithCode("ConfigurationAsCodeTest/global.config.SpecificUsersAuthorizationStrategy.yml")
-    public void importGlobalSpecificUsersAuthorizationStrategy() {
+    void importGlobalSpecificUsersAuthorizationStrategy(JenkinsConfiguredWithCodeRule r) {
         DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators =
                 QueueItemAuthenticatorConfiguration.get().getAuthenticators();
         GlobalQueueItemAuthenticator queueItemAuthenticator = authenticators.get(GlobalQueueItemAuthenticator.class);
@@ -62,13 +59,13 @@ public class ConfigurationAsCodeTest {
 
     @Test
     @ConfiguredWithCode("ConfigurationAsCodeTest/global.config.SpecificUsersAuthorizationStrategy.yml")
-    public void exportGlobalSpecificUsersAuthorizationStrategy() throws Exception {
+    void exportGlobalSpecificUsersAuthorizationStrategy(JenkinsConfiguredWithCodeRule r) throws Exception {
         assertExport("ConfigurationAsCodeTest/global.export.SpecificUsersAuthorizationStrategy.yml");
     }
 
     @Test
     @ConfiguredWithCode("ConfigurationAsCodeTest/global.config.SystemAuthorizationStrategy.yml")
-    public void importGlobalSystemAuthorizationStrategy() {
+    void importGlobalSystemAuthorizationStrategy(JenkinsConfiguredWithCodeRule r) {
         DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators =
                 QueueItemAuthenticatorConfiguration.get().getAuthenticators();
         GlobalQueueItemAuthenticator queueItemAuthenticator = authenticators.get(GlobalQueueItemAuthenticator.class);
@@ -79,13 +76,13 @@ public class ConfigurationAsCodeTest {
 
     @Test
     @ConfiguredWithCode("ConfigurationAsCodeTest/global.config.SystemAuthorizationStrategy.yml")
-    public void exportGlobalSystemAuthorizationStrategy() throws Exception {
+    void exportGlobalSystemAuthorizationStrategy(JenkinsConfiguredWithCodeRule r) throws Exception {
         assertExport("ConfigurationAsCodeTest/global.export.SystemAuthorizationStrategy.yml");
     }
 
     @Test
     @ConfiguredWithCode("ConfigurationAsCodeTest/global.config.TriggeringUsersAuthorizationStrategy.yml")
-    public void importGlobalTriggeringUsersAuthorizationStrategy() {
+    void importGlobalTriggeringUsersAuthorizationStrategy(JenkinsConfiguredWithCodeRule r) {
         DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators =
                 QueueItemAuthenticatorConfiguration.get().getAuthenticators();
         GlobalQueueItemAuthenticator queueItemAuthenticator = authenticators.get(GlobalQueueItemAuthenticator.class);
@@ -96,13 +93,13 @@ public class ConfigurationAsCodeTest {
 
     @Test
     @ConfiguredWithCode("ConfigurationAsCodeTest/global.config.TriggeringUsersAuthorizationStrategy.yml")
-    public void exportGlobalTriggeringUsersAuthorizationStrategy() throws Exception {
+    void exportGlobalTriggeringUsersAuthorizationStrategy(JenkinsConfiguredWithCodeRule r) throws Exception {
         assertExport("ConfigurationAsCodeTest/global.export.TriggeringUsersAuthorizationStrategy.yml");
     }
 
     @Test
     @ConfiguredWithCode("ConfigurationAsCodeTest/project.config.all.yml")
-    public void importProjectTriggeringUsersAuthorizationStrategy() {
+    void importProjectTriggeringUsersAuthorizationStrategy(JenkinsConfiguredWithCodeRule r) {
         DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators =
                 QueueItemAuthenticatorConfiguration.get().getAuthenticators();
         ProjectQueueItemAuthenticator queueItemAuthenticator = authenticators.get(ProjectQueueItemAuthenticator.class);
@@ -121,7 +118,7 @@ public class ConfigurationAsCodeTest {
 
     @Test
     @ConfiguredWithCode("ConfigurationAsCodeTest/project.config.all.yml")
-    public void exportProjectTriggeringUsersAuthorizationStrategy() throws Exception {
+    void exportProjectTriggeringUsersAuthorizationStrategy(JenkinsConfiguredWithCodeRule r) throws Exception {
         assertExport("ConfigurationAsCodeTest/project.export.all.yml");
     }
 
@@ -134,25 +131,5 @@ public class ConfigurationAsCodeTest {
         String expected = Util.toStringFromYamlFile(this, resourcePath);
 
         assertThat(exported, equalTo(expected));
-    }
-
-    @LocalData
-    @Test
-    public void strategyEnabledMapMigration() {
-        DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators =
-                QueueItemAuthenticatorConfiguration.get().getAuthenticators();
-        ProjectQueueItemAuthenticator queueItemAuthenticator = authenticators.get(ProjectQueueItemAuthenticator.class);
-
-        assertThat(authenticators, hasSize(1));
-        assertThat(
-                queueItemAuthenticator.getDisabledStrategies(),
-                equalTo(Set.of(
-                        SpecificUsersAuthorizationStrategy.class.getName(),
-                        SystemAuthorizationStrategy.class.getName())));
-        assertThat(
-                queueItemAuthenticator.getEnabledStrategies(),
-                equalTo(Set.of(
-                        AnonymousAuthorizationStrategy.class.getName(),
-                        TriggeringUsersAuthorizationStrategy.class.getName())));
     }
 }

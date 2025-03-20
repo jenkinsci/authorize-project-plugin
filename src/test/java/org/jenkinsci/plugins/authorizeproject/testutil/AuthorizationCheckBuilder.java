@@ -30,7 +30,6 @@ import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
-import java.io.IOException;
 import jenkins.model.Jenkins;
 import org.springframework.security.core.Authentication;
 
@@ -46,14 +45,12 @@ public class AuthorizationCheckBuilder extends Builder {
     }
 
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
-            throws InterruptedException, IOException {
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         authentication = Jenkins.getAuthentication2();
         return true;
     }
 
     public static class DescriptorImpl extends BuildStepDescriptor<Builder> {
-        @SuppressWarnings("rawtypes")
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {
             return true;

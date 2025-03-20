@@ -1,14 +1,15 @@
 package org.jenkinsci.plugins.authorizeproject;
 
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import hudson.model.FreeStyleProject;
 import hudson.model.User;
 import hudson.security.ACL;
 import hudson.util.DescribableList;
 import hudson.util.VersionNumber;
+import java.util.Set;
 import jenkins.model.Jenkins;
 import jenkins.security.QueueItemAuthenticator;
 import jenkins.security.QueueItemAuthenticatorConfiguration;
@@ -16,19 +17,27 @@ import jenkins.security.QueueItemAuthenticatorDescriptor;
 import org.jenkinsci.plugins.authorizeproject.strategy.AnonymousAuthorizationStrategy;
 import org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizationCheckBuilder;
-import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRule;
-import org.junit.Assume;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.JenkinsRule.WebClient;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class GlobalQueueItemAuthenticatorTest {
-    @Rule
-    public JenkinsRule j = new AuthorizeProjectJenkinsRule();
+@WithJenkins
+class GlobalQueueItemAuthenticatorTest {
+
+    private JenkinsRule j;
+
+    @BeforeEach
+    void setUp(JenkinsRule j) {
+        this.j = j;
+        QueueItemAuthenticatorConfiguration.get()
+                .getAuthenticators()
+                .add(new ProjectQueueItemAuthenticator(Set.of(), Set.of()));
+    }
 
     @Test
-    public void testWorkForFreeStyleProject() throws Exception {
+    void testWorkForFreeStyleProject() throws Exception {
         Jenkins.get().setSecurityRealm(j.createDummySecurityRealm());
 
         DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators =
@@ -60,7 +69,7 @@ public class GlobalQueueItemAuthenticatorTest {
         {
             ProjectQueueItemAuthenticator pqia = authenticators.get(ProjectQueueItemAuthenticator.class);
             GlobalQueueItemAuthenticator gqia = authenticators.get(GlobalQueueItemAuthenticator.class);
-            assertTrue("Project is before Global", authenticators.indexOf(pqia) < authenticators.indexOf(gqia));
+            assertTrue(authenticators.indexOf(pqia) < authenticators.indexOf(gqia), "Project is before Global");
         }
         {
             FreeStyleProject p = j.createFreeStyleProject();
@@ -87,9 +96,9 @@ public class GlobalQueueItemAuthenticatorTest {
     }
 
     @Test
-    public void testConfiguration() throws Exception {
+    void testConfiguration() throws Exception {
         // HTMLUnit does not support the fetch JavaScript API, must skip test after 2.401.1
-        Assume.assumeThat(j.jenkins.getVersion().isOlderThan(new VersionNumber("2.402")), is(true));
+        assumeTrue(Jenkins.getVersion().isOlderThan(new VersionNumber("2.402")));
         GlobalQueueItemAuthenticator auth = new GlobalQueueItemAuthenticator(new AnonymousAuthorizationStrategy());
         QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(auth);
 
@@ -102,9 +111,9 @@ public class GlobalQueueItemAuthenticatorTest {
     }
 
     @Test
-    public void testConfigurationWithDescriptorNewInstance() throws Exception {
+    void testConfigurationWithDescriptorNewInstance() throws Exception {
         // HTMLUnit does not support the fetch JavaScript API, must skip test after 2.401.1
-        Assume.assumeThat(j.jenkins.getVersion().isOlderThan(new VersionNumber("2.402")), is(true));
+        assumeTrue(Jenkins.getVersion().isOlderThan(new VersionNumber("2.402")));
         GlobalQueueItemAuthenticator auth =
                 new GlobalQueueItemAuthenticator(new SpecificUsersAuthorizationStrategy("admin"));
         QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(auth);

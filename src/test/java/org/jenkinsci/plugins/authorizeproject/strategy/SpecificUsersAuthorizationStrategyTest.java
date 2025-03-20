@@ -24,7 +24,7 @@
 
 package org.jenkinsci.plugins.authorizeproject.strategy;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import hudson.cli.CLICommandInvoker;
 import hudson.model.FreeStyleProject;
@@ -56,6 +56,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import jenkins.model.Jenkins;
 import jenkins.security.ApiTokenProperty;
+import jenkins.security.QueueItemAuthenticatorConfiguration;
 import org.apache.commons.io.input.NullInputStream;
 import org.htmlunit.FailingHttpStatusCodeException;
 import org.htmlunit.HttpMethod;
@@ -65,19 +66,33 @@ import org.htmlunit.html.HtmlPage;
 import org.htmlunit.html.HtmlTextInput;
 import org.htmlunit.xml.XmlPage;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
+import org.jenkinsci.plugins.authorizeproject.ProjectQueueItemAuthenticator;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizationCheckBuilder;
-import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRule;
 import org.jenkinsci.plugins.authorizeproject.testutil.SecurityRealmWithUserFilter;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.JenkinsRule.WebClient;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.jvnet.hudson.test.recipes.LocalData;
 import org.w3c.dom.Document;
 
-public class SpecificUsersAuthorizationStrategyTest {
-    @Rule
-    public JenkinsRule j = new AuthorizeProjectJenkinsRule(SpecificUsersAuthorizationStrategy.class);
+@WithJenkins
+class SpecificUsersAuthorizationStrategyTest {
+
+    private JenkinsRule j;
+
+    @BeforeEach
+    void setUp(JenkinsRule j) {
+        this.j = j;
+        QueueItemAuthenticatorConfiguration.get()
+                .getAuthenticators()
+                .add(new ProjectQueueItemAuthenticator(
+                        Set.of(j.jenkins
+                                .getDescriptor(SpecificUsersAuthorizationStrategy.class)
+                                .getId()),
+                        Set.of()));
+    }
 
     private void prepareSecurity() {
         // This allows any users authenticate name == password
@@ -115,7 +130,7 @@ public class SpecificUsersAuthorizationStrategyTest {
 
     @Test
     @LocalData
-    public void testIsAuthenticationRequiredAsUser() {
+    void testIsAuthenticationRequiredAsUser() {
         try (ACLContext ignored = ACL.as(User.getById("test1", true))) {
             assertFalse(Jenkins.get().hasPermission(Jenkins.ADMINISTER));
             assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test1"));
@@ -126,7 +141,7 @@ public class SpecificUsersAuthorizationStrategyTest {
 
     @Test
     @LocalData
-    public void testIsAuthenticationRequiredAsAdministrator() {
+    void testIsAuthenticationRequiredAsAdministrator() {
         try (ACLContext ignored = ACL.as(User.getById("admin", true))) {
             assertTrue(Jenkins.get().hasPermission(Jenkins.ADMINISTER));
             assertFalse(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test2"));
@@ -135,7 +150,7 @@ public class SpecificUsersAuthorizationStrategyTest {
 
     @Test
     @LocalData
-    public void testIsAuthenticationRequiredAnonymous() {
+    void testIsAuthenticationRequiredAnonymous() {
         try (ACLContext ignored = ACL.as2(Jenkins.ANONYMOUS2)) {
             assertFalse(Jenkins.get().hasPermission(Jenkins.ADMINISTER));
             assertTrue(SpecificUsersAuthorizationStrategy.isAuthenticationRequired("test2"));
@@ -143,7 +158,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
 
     @Test
-    public void testGetCurrentStrategy() throws Exception {
+    void testGetCurrentStrategy() throws Exception {
         {
             assertNull(SpecificUsersAuthorizationStrategy.getCurrentStrategy(null));
         }
@@ -179,7 +194,7 @@ public class SpecificUsersAuthorizationStrategyTest {
 
     @Test
     @LocalData
-    public void testAuthenticateWithPassword() {
+    void testAuthenticateWithPassword() {
         assertTrue(SpecificUsersAuthorizationStrategy.authenticate("test1", false, null, "test1"));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", false, null, "test2"));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", false, null, ""));
@@ -188,7 +203,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
 
     @Test
-    public void testAuthenticateWithApitoken() throws Exception {
+    void testAuthenticateWithApiToken() throws Exception {
         prepareSecurity();
         String apitokenForTest1 = getApiToken(User.getById("test1", true));
 
@@ -201,7 +216,7 @@ public class SpecificUsersAuthorizationStrategyTest {
 
     @Test
     @LocalData
-    public void testAuthenticate() throws Exception {
+    void testAuthenticate() throws Exception {
         // if not configured, run in SYSTEM2 privilege.
         {
             FreeStyleProject p = j.createFreeStyleProject();
@@ -265,7 +280,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
 
     @Test
-    public void testUserNotFoundException() throws Exception {
+    void testUserNotFoundException() throws Exception {
         j.jenkins.setSecurityRealm(new SecurityRealmWithUserFilter(j.createDummySecurityRealm(), List.of("validuser")));
 
         // Users should be created before the test.
@@ -294,7 +309,7 @@ public class SpecificUsersAuthorizationStrategyTest {
 
     @Test
     @LocalData
-    public void testLoadOnStart() throws Exception {
+    void testLoadOnStart() throws Exception {
         // verify that SpecificUserAuthorizationStrategy is loaded correctly from the disk on startup.
         {
             FreeStyleProject p = j.jenkins.getItemByFullName("test", FreeStyleProject.class);
@@ -322,7 +337,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         }
     }
 
-    private String getConfigXml(XmlPage page) throws TransformerException {
+    private static String getConfigXml(XmlPage page) throws TransformerException {
         // {@link XmlPage#asXml} does unnecessary indentations.
         Document doc = page.getXmlDocument();
         TransformerFactory tfactory = TransformerFactory.newInstance();
@@ -335,7 +350,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
 
     @Test
-    public void testRestInterfaceSuccess() throws Exception {
+    void testRestInterfaceSuccess() throws Exception {
         prepareSecurity();
 
         FreeStyleProject srcProject = j.createFreeStyleProject();
@@ -388,7 +403,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
 
     @Test
-    public void testRestInterfaceFailure() throws Exception {
+    void testRestInterfaceFailure() throws Exception {
         prepareSecurity();
 
         FreeStyleProject srcProject = j.createFreeStyleProject();
@@ -434,7 +449,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
 
     @Test
-    public void testCliSuccess() throws Exception {
+    void testCliSuccess() throws Exception {
         prepareSecurity();
 
         FreeStyleProject srcProject = j.createFreeStyleProject();
@@ -445,7 +460,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         wc.login("test1");
 
         // GET config.xml of srcProject (userid is set to test1)
-        String configXml = null;
+        String configXml;
         {
             CLICommandInvoker.Result result =
                     new CLICommandInvoker(j, "get-job").asUser("test1").invokeWithArgs(srcProject.getFullName());
@@ -453,7 +468,7 @@ public class SpecificUsersAuthorizationStrategyTest {
             String stderr = result.stderr();
             int ret = result.returnCode();
 
-            assertEquals(stderr, 0, ret);
+            assertEquals(0, ret, stderr);
         }
 
         // POST config.xml of srcProject (userid is set to test1) to a new project.
@@ -470,7 +485,7 @@ public class SpecificUsersAuthorizationStrategyTest {
             String stderr = result.stderr();
             int ret = result.returnCode();
 
-            assertEquals(stderr, 0, ret);
+            assertEquals(0, ret, stderr);
         }
 
         {
@@ -499,7 +514,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
 
     @Test
-    public void testCliFailure() throws Exception {
+    void testCliFailure() throws Exception {
         prepareSecurity();
 
         FreeStyleProject srcProject = j.createFreeStyleProject();
@@ -510,7 +525,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         wc.login("test1");
 
         // GET config.xml of srcProject (userid is set to admin)
-        String configXml = null;
+        String configXml;
         {
             CLICommandInvoker.Result result =
                     new CLICommandInvoker(j, "get-job").asUser("test1").invokeWithArgs(srcProject.getFullName());
@@ -518,7 +533,7 @@ public class SpecificUsersAuthorizationStrategyTest {
             String stderr = result.stderr();
             int ret = result.returnCode();
 
-            assertEquals(stderr, 0, ret);
+            assertEquals(0, ret, stderr);
         }
 
         // POST config.xml of srcProject (userid is set to admin) to a new project.
@@ -555,7 +570,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
 
     @Test
-    public void testCliSuccessBySystemAdmin() throws Exception {
+    void testCliSuccessBySystemAdmin() throws Exception {
         prepareSecurity();
 
         FreeStyleProject srcProject = j.createFreeStyleProject();
@@ -563,7 +578,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         srcProject.save();
 
         // GET config.xml of srcProject (userid is set to test1)
-        String configXml = null;
+        String configXml;
         {
             CLICommandInvoker.Result result = new CLICommandInvoker(j, "get-job")
                     .withStdin(new NullInputStream(0))
@@ -573,7 +588,7 @@ public class SpecificUsersAuthorizationStrategyTest {
             String stderr = result.stderr();
             int ret = result.returnCode();
 
-            assertEquals(stderr, 0, ret);
+            assertEquals(0, ret, stderr);
         }
 
         // POST config.xml of srcProject (userid is set to test1) to a new project.
@@ -590,7 +605,7 @@ public class SpecificUsersAuthorizationStrategyTest {
             String stderr = result.stderr();
             int ret = result.returnCode();
 
-            assertEquals(stderr, 0, ret);
+            assertEquals(0, ret, stderr);
         }
 
         {
@@ -619,7 +634,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
 
     @Test
-    public void testCliFailureEvenByJobAdmin() throws Exception {
+    void testCliFailureEvenByJobAdmin() throws Exception {
         prepareJobBasedSecurity();
 
         // required since matrix-auth:1.7
@@ -635,7 +650,7 @@ public class SpecificUsersAuthorizationStrategyTest {
         srcProject.save();
 
         // GET config.xml of srcProject (userid is set to admin)
-        String configXml = null;
+        String configXml;
         {
             CLICommandInvoker.Result result = new CLICommandInvoker(j, "get-job")
                     .withStdin(new NullInputStream(0))
@@ -645,7 +660,7 @@ public class SpecificUsersAuthorizationStrategyTest {
             String stderr = result.stderr();
             int ret = result.returnCode();
 
-            assertEquals(stderr, 0, ret);
+            assertEquals(0, ret, stderr);
         }
 
         // POST config.xml of srcProject (userid is set to test1) to a new project.
@@ -687,7 +702,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
 
     @Test
-    public void testConfigurationAuthentication() throws Exception {
+    void testConfigurationAuthentication() throws Exception {
         prepareSecurity();
 
         FreeStyleProject p = j.createFreeStyleProject();
@@ -698,12 +713,11 @@ public class SpecificUsersAuthorizationStrategyTest {
         // Authentication is required if not current user
         p.removeProperty(AuthorizeProjectProperty.class);
         p.addProperty(new AuthorizeProjectProperty(new SpecificUsersAuthorizationStrategy("admin")));
-        try {
-            j.submit(wc.getPage(p, "authorization").getFormByName("config"));
-            fail();
-        } catch (FailingHttpStatusCodeException e) {
-            assertEquals(403, e.getStatusCode());
-        }
+
+        FailingHttpStatusCodeException e1 = assertThrows(
+                FailingHttpStatusCodeException.class,
+                () -> j.submit(wc.getPage(p, "authorization").getFormByName("config")));
+        assertEquals(403, e1.getStatusCode());
 
         // No authentication is required if oneself.
         {
@@ -727,17 +741,15 @@ public class SpecificUsersAuthorizationStrategyTest {
             HtmlTextInput userid = page.getFirstByXPath(
                     "//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'userid') and @type='text']");
             userid.setValue("test2");
-            try {
-                j.submit(page.getFormByName("config"));
-                fail();
-            } catch (FailingHttpStatusCodeException e) {
-                assertEquals(403, e.getStatusCode());
-            }
+
+            FailingHttpStatusCodeException e2 =
+                    assertThrows(FailingHttpStatusCodeException.class, () -> j.submit(page.getFormByName("config")));
+            assertEquals(403, e2.getStatusCode());
         }
     }
 
     @Test
-    public void testConfigurePassword() throws Exception {
+    void testConfigurePassword() throws Exception {
         prepareSecurity();
 
         FreeStyleProject p = j.createFreeStyleProject();
@@ -752,12 +764,10 @@ public class SpecificUsersAuthorizationStrategyTest {
             HtmlCheckBoxInput useApitoken = page.getFirstByXPath(
                     "//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
             useApitoken.setChecked(false);
-            try {
-                j.submit(page.getFormByName("config"));
-                fail();
-            } catch (FailingHttpStatusCodeException e) {
-                assertEquals(403, e.getStatusCode());
-            }
+
+            FailingHttpStatusCodeException e =
+                    assertThrows(FailingHttpStatusCodeException.class, () -> j.submit(page.getFormByName("config")));
+            assertEquals(403, e.getStatusCode());
         }
 
         // authentication succeeds with the good password
@@ -787,12 +797,11 @@ public class SpecificUsersAuthorizationStrategyTest {
             HtmlTextInput password = page.getFirstByXPath(
                     "//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'password')]");
             password.setValue("badpassword");
-            try {
-                j.submit(page.getFormByName("config"));
-                fail();
-            } catch (FailingHttpStatusCodeException e) {
-                assertEquals(403, e.getStatusCode());
-            }
+
+            FailingHttpStatusCodeException e =
+                    assertThrows(FailingHttpStatusCodeException.class, () -> j.submit(page.getFormByName("config")));
+
+            assertEquals(403, e.getStatusCode());
         }
 
         // authentication fails if the password is used for apitoken
@@ -807,17 +816,15 @@ public class SpecificUsersAuthorizationStrategyTest {
             HtmlTextInput apitoken = page.getFirstByXPath(
                     "//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
             apitoken.setValue("test2");
-            try {
-                j.submit(page.getFormByName("config"));
-                fail();
-            } catch (FailingHttpStatusCodeException e) {
-                assertEquals(403, e.getStatusCode());
-            }
+
+            FailingHttpStatusCodeException e =
+                    assertThrows(FailingHttpStatusCodeException.class, () -> j.submit(page.getFormByName("config")));
+            assertEquals(403, e.getStatusCode());
         }
     }
 
     @Test
-    public void testConfigureDontRestrictJobConfiguration() throws Exception {
+    void testConfigureDontRestrictJobConfiguration() throws Exception {
         prepareSecurity();
 
         boolean[] testValues = {true, false};
@@ -840,7 +847,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
 
     @Test
-    public void testConfigureApitoken() throws Exception {
+    void testConfigureApiToken() throws Exception {
         prepareSecurity();
 
         FreeStyleProject p = j.createFreeStyleProject();
@@ -857,12 +864,10 @@ public class SpecificUsersAuthorizationStrategyTest {
             HtmlCheckBoxInput useApitoken = page.getFirstByXPath(
                     "//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'useApitoken') and @type='checkbox']");
             useApitoken.setChecked(true);
-            try {
-                j.submit(page.getFormByName("config"));
-                fail();
-            } catch (FailingHttpStatusCodeException e) {
-                assertEquals(403, e.getStatusCode());
-            }
+
+            FailingHttpStatusCodeException e =
+                    assertThrows(FailingHttpStatusCodeException.class, () -> j.submit(page.getFormByName("config")));
+            assertEquals(403, e.getStatusCode());
         }
 
         // authentication succeeds with the good apitoken
@@ -892,12 +897,10 @@ public class SpecificUsersAuthorizationStrategyTest {
             HtmlTextInput apitoken = page.getFirstByXPath(
                     "//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
             apitoken.setValue(apitokenForTest2 + "xxx");
-            try {
-                j.submit(page.getFormByName("config"));
-                fail();
-            } catch (FailingHttpStatusCodeException e) {
-                assertEquals(403, e.getStatusCode());
-            }
+
+            FailingHttpStatusCodeException e =
+                    assertThrows(FailingHttpStatusCodeException.class, () -> j.submit(page.getFormByName("config")));
+            assertEquals(403, e.getStatusCode());
         }
 
         // authentication fails if the apitoken is used for password
@@ -912,17 +915,15 @@ public class SpecificUsersAuthorizationStrategyTest {
             HtmlTextInput apitoken = page.getFirstByXPath(
                     "//*[contains(@class, 'specific-user-authorization')]//input[contains(@name, 'apitoken') and @type='text']");
             apitoken.setValue(apitokenForTest2);
-            try {
-                j.submit(page.getFormByName("config"));
-                fail();
-            } catch (FailingHttpStatusCodeException e) {
-                assertEquals(403, e.getStatusCode());
-            }
+
+            FailingHttpStatusCodeException e =
+                    assertThrows(FailingHttpStatusCodeException.class, () -> j.submit(page.getFormByName("config")));
+            assertEquals(403, e.getStatusCode());
         }
     }
 
     @Test
-    public void testConfigureJobByTheUserIsAllowed() throws Exception {
+    void testConfigureJobByTheUserIsAllowed() throws Exception {
         prepareSecurity();
 
         FreeStyleProject p = j.createFreeStyleProject();
@@ -936,7 +937,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
 
     @Test
-    public void testConfigureJobByAnotherUserIsForbidden() throws Exception {
+    void testConfigureJobByAnotherUserIsForbidden() throws Exception {
         prepareSecurity();
 
         FreeStyleProject p = j.createFreeStyleProject();
@@ -954,7 +955,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
 
     @Test
-    public void testDontRestrictJobConfiguration() throws Exception {
+    void testDontRestrictJobConfiguration() throws Exception {
         prepareSecurity();
 
         FreeStyleProject p = j.createFreeStyleProject();
@@ -970,7 +971,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
 
     @Test
-    public void testConfigureJobBySystemAdminIsAllowed() throws Exception {
+    void testConfigureJobBySystemAdminIsAllowed() throws Exception {
         prepareJobBasedSecurity();
 
         FreeStyleProject p = j.createFreeStyleProject();
@@ -990,7 +991,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
 
     @Test
-    public void testConfigureJobByJobAdminIsNotAllowed() throws Exception {
+    void testConfigureJobByJobAdminIsNotAllowed() throws Exception {
         prepareJobBasedSecurity();
 
         FreeStyleProject p = j.createFreeStyleProject();
@@ -1015,7 +1016,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
 
     @Test
-    public void testReadResolveNoNeedReauthenticationIsSet() throws Exception {
+    void testReadResolveNoNeedReauthenticationIsSet() throws Exception {
         SpecificUsersAuthorizationStrategy target = new SpecificUsersAuthorizationStrategy("test1");
         target.setDontRestrictJobConfiguration(false);
 
@@ -1032,7 +1033,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
 
     @Test
-    public void testReadResolveNoNeedReauthenticationIsUnset() throws Exception {
+    void testReadResolveNoNeedReauthenticationIsUnset() throws Exception {
         SpecificUsersAuthorizationStrategy target = new SpecificUsersAuthorizationStrategy("test1");
         target.setDontRestrictJobConfiguration(true);
 
@@ -1049,7 +1050,7 @@ public class SpecificUsersAuthorizationStrategyTest {
     }
 
     @Test
-    public void testReadResolveNoNeedReauthenticationIsNotDefined() throws Exception {
+    void testReadResolveNoNeedReauthenticationIsNotDefined() throws Exception {
         boolean[] testValues = {true, false};
         for (boolean testValue : testValues) {
             SpecificUsersAuthorizationStrategy target = new SpecificUsersAuthorizationStrategy("test1");

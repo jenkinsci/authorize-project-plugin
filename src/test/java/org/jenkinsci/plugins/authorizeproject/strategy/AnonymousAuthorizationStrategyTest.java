@@ -24,24 +24,36 @@
 
 package org.jenkinsci.plugins.authorizeproject.strategy;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hudson.model.FreeStyleProject;
 import hudson.security.ACL;
+import java.util.Set;
 import jenkins.model.Jenkins;
+import jenkins.security.QueueItemAuthenticatorConfiguration;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
+import org.jenkinsci.plugins.authorizeproject.ProjectQueueItemAuthenticator;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizationCheckBuilder;
-import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class AnonymousAuthorizationStrategyTest {
-    @Rule
-    public JenkinsRule j = new AuthorizeProjectJenkinsRule();
+@WithJenkins
+class AnonymousAuthorizationStrategyTest {
+
+    private JenkinsRule j;
+
+    @BeforeEach
+    void setUp(JenkinsRule j) {
+        this.j = j;
+        QueueItemAuthenticatorConfiguration.get()
+                .getAuthenticators()
+                .add(new ProjectQueueItemAuthenticator(Set.of(), Set.of()));
+    }
 
     @Test
-    public void testAuthenticate() throws Exception {
+    void testAuthenticate() throws Exception {
         FreeStyleProject p = j.createFreeStyleProject();
         AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
         p.getBuildersList().add(checker);
