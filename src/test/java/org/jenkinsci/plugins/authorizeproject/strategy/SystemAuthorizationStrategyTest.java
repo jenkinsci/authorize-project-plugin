@@ -31,12 +31,7 @@ import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 import hudson.cli.CLICommandInvoker;
 import hudson.model.FreeStyleProject;
@@ -48,29 +43,45 @@ import jakarta.servlet.ServletRequest;
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
 import java.net.URL;
+import java.util.Set;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import jenkins.model.Jenkins;
+import jenkins.security.QueueItemAuthenticatorConfiguration;
 import org.apache.commons.io.input.NullInputStream;
 import org.htmlunit.FailingHttpStatusCodeException;
 import org.htmlunit.HttpMethod;
 import org.htmlunit.WebRequest;
 import org.htmlunit.xml.XmlPage;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
-import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.jenkinsci.plugins.authorizeproject.ProjectQueueItemAuthenticator;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.JenkinsRule.WebClient;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.jvnet.hudson.test.recipes.LocalData;
 import org.w3c.dom.Document;
 
-public class SystemAuthorizationStrategyTest {
-    @Rule
-    public JenkinsRule j = new AuthorizeProjectJenkinsRule(SystemAuthorizationStrategy.class);
+@WithJenkins
+class SystemAuthorizationStrategyTest {
+
+    private JenkinsRule j;
+
+    @BeforeEach
+    void setUp(JenkinsRule j) {
+        this.j = j;
+        QueueItemAuthenticatorConfiguration.get()
+                .getAuthenticators()
+                .add(new ProjectQueueItemAuthenticator(
+                        Set.of(j.jenkins
+                                .getDescriptor(SystemAuthorizationStrategy.class)
+                                .getId()),
+                        Set.of()));
+    }
 
     private void prepareSecurity() {
         // This allows any users authenticate name == password
@@ -93,7 +104,7 @@ public class SystemAuthorizationStrategyTest {
     }
 
     @Test
-    public void testGetCurrentStrategy() throws Exception {
+    void testGetCurrentStrategy() throws Exception {
         {
             assertNull(SystemAuthorizationStrategy.getCurrentStrategy(null));
         }
@@ -128,7 +139,7 @@ public class SystemAuthorizationStrategyTest {
 
     @Test
     @LocalData
-    public void testLoadOnStart() throws Exception {
+    void testLoadOnStart() throws Exception {
         // verify that SystemAuthorizationStrategy is loaded correctly from the disk on startup.
         {
             FreeStyleProject p = j.jenkins.getItemByFullName("test", FreeStyleProject.class);
@@ -150,7 +161,7 @@ public class SystemAuthorizationStrategyTest {
         }
     }
 
-    private String getConfigXml(XmlPage page) throws TransformerException {
+    private static String getConfigXml(XmlPage page) throws TransformerException {
         // {@link XmlPage#asXml} does unnecessary indentations.
         Document doc = page.getXmlDocument();
         TransformerFactory tfactory = TransformerFactory.newInstance();
@@ -163,7 +174,7 @@ public class SystemAuthorizationStrategyTest {
     }
 
     @Test
-    public void testRestInterfaceSuccess() throws Exception {
+    void testRestInterfaceSuccess() throws Exception {
         prepareSecurity();
 
         FreeStyleProject srcProject = j.createFreeStyleProject();
@@ -208,7 +219,7 @@ public class SystemAuthorizationStrategyTest {
     }
 
     @Test
-    public void testRestInterfaceFailure() throws Exception {
+    void testRestInterfaceFailure() throws Exception {
         prepareSecurity();
 
         FreeStyleProject srcProject = j.createFreeStyleProject();
@@ -259,7 +270,7 @@ public class SystemAuthorizationStrategyTest {
     }
 
     @Test
-    public void testCliSuccess() throws Exception {
+    void testCliSuccess() throws Exception {
         prepareSecurity();
 
         FreeStyleProject srcProject = j.createFreeStyleProject();
@@ -280,7 +291,7 @@ public class SystemAuthorizationStrategyTest {
             String stderr = result.stderr();
             int ret = result.returnCode();
 
-            assertEquals(stderr, 0, ret);
+            assertEquals(0, ret, stderr);
         }
 
         // POST config.xml of srcProject to a new project.
@@ -297,7 +308,7 @@ public class SystemAuthorizationStrategyTest {
             String stderr = result.stderr();
             int ret = result.returnCode();
 
-            assertEquals(stderr, 0, ret);
+            assertEquals(0, ret, stderr);
         }
 
         {
@@ -318,7 +329,7 @@ public class SystemAuthorizationStrategyTest {
     }
 
     @Test
-    public void testCliFailure() throws Exception {
+    void testCliFailure() throws Exception {
         prepareSecurity();
 
         FreeStyleProject srcProject = j.createFreeStyleProject();
@@ -344,7 +355,7 @@ public class SystemAuthorizationStrategyTest {
             String stderr = result.stderr();
             int ret = result.returnCode();
 
-            assertEquals(stderr, 0, ret);
+            assertEquals(0, ret, stderr);
         }
 
         // POST config.xml of srcProject (userid is set to admin) to a new project.
@@ -381,7 +392,7 @@ public class SystemAuthorizationStrategyTest {
     }
 
     @Test
-    public void testConfigurationAuthentication() throws Exception {
+    void testConfigurationAuthentication() throws Exception {
         prepareSecurity();
 
         FreeStyleProject p = j.createFreeStyleProject();
@@ -399,11 +410,10 @@ public class SystemAuthorizationStrategyTest {
 
         // Configuration is not allowed if reconfiguration is permitted.
         descriptor.setPermitReconfiguration(false);
-        try {
-            j.submit(wc.getPage(p, "configure").getFormByName("config"));
-            fail();
-        } catch (FailingHttpStatusCodeException e) {
-            assertEquals(403, e.getStatusCode());
-        }
+
+        FailingHttpStatusCodeException e = assertThrows(
+                FailingHttpStatusCodeException.class,
+                () -> j.submit(wc.getPage(p, "configure").getFormByName("config")));
+        assertEquals(403, e.getStatusCode());
     }
 }

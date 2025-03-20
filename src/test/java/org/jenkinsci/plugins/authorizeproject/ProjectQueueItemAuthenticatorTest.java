@@ -24,8 +24,8 @@
 
 package org.jenkinsci.plugins.authorizeproject;
 
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import hudson.FilePath;
 import hudson.Launcher;
@@ -45,7 +45,6 @@ import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.VersionNumber;
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import jenkins.model.Jenkins;
@@ -58,23 +57,21 @@ import org.htmlunit.html.HtmlTextInput;
 import org.jenkinsci.plugins.authorizeproject.strategy.AnonymousAuthorizationStrategy;
 import org.jenkinsci.plugins.authorizeproject.strategy.SpecificUsersAuthorizationStrategy;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizationCheckBuilder;
-import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRule;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.Assume;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.JenkinsRule.WebClient;
 import org.jvnet.hudson.test.TestExtension;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest2;
 import org.springframework.security.core.Authentication;
 
-public class ProjectQueueItemAuthenticatorTest {
-    @Rule
-    public JenkinsRule j = new AuthorizeProjectJenkinsRule(SpecificUsersAuthorizationStrategy.class);
+@WithJenkins
+class ProjectQueueItemAuthenticatorTest {
 
     public static class NullAuthorizeProjectStrategy extends AuthorizeProjectStrategy {
         @DataBoundConstructor
@@ -94,8 +91,22 @@ public class ProjectQueueItemAuthenticatorTest {
         }
     }
 
+    private JenkinsRule j;
+
+    @BeforeEach
+    void setUp(JenkinsRule j) {
+        this.j = j;
+        QueueItemAuthenticatorConfiguration.get()
+                .getAuthenticators()
+                .add(new ProjectQueueItemAuthenticator(
+                        Set.of(j.jenkins
+                                .getDescriptor(SpecificUsersAuthorizationStrategy.class)
+                                .getId()),
+                        Set.of()));
+    }
+
     @Test
-    public void testWorkForFreeStyleProject() throws Exception {
+    void testWorkForFreeStyleProject() throws Exception {
         // if not configured, run in SYSTEM2 privilege.
         {
             FreeStyleProject p = j.createFreeStyleProject();
@@ -144,7 +155,7 @@ public class ProjectQueueItemAuthenticatorTest {
     }
 
     @Test
-    public void testWorkForMatrixProject() throws Exception {
+    void testWorkForMatrixProject() throws Exception {
         // if not configured, run in SYSTEM2 privilege.
         {
             MatrixProject p = j.createProject(MatrixProject.class);
@@ -197,9 +208,9 @@ public class ProjectQueueItemAuthenticatorTest {
     }
 
     @Test
-    public void testDisabledInProjectAuthorization() throws Exception {
+    void testDisabledInProjectAuthorization() throws Exception {
         // HTMLUnit does not support the fetch JavaScript API, must skip test after 2.401.1
-        Assume.assumeThat(j.jenkins.getVersion().isOlderThan(new VersionNumber("2.402")), is(true));
+        assumeTrue(Jenkins.getVersion().isOlderThan(new VersionNumber("2.402")));
         FreeStyleProject p = j.createFreeStyleProject();
         p.addProperty(new AuthorizeProjectProperty(new AnonymousAuthorizationStrategy()));
 
@@ -234,7 +245,7 @@ public class ProjectQueueItemAuthenticatorTest {
     }
 
     @Test
-    public void testDisabledAtRuntime() throws Exception {
+    void testDisabledAtRuntime() throws Exception {
         FreeStyleProject p = j.createFreeStyleProject();
         AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
         p.getBuildersList().add(checker);
@@ -321,8 +332,7 @@ public class ProjectQueueItemAuthenticatorTest {
             }
 
             @Override
-            public void configureFromGlobalSecurity(StaplerRequest2 req, JSONObject js)
-                    throws Descriptor.FormException {
+            public void configureFromGlobalSecurity(StaplerRequest2 req, JSONObject js) {
                 value = js.getString("value");
                 save();
             }
@@ -360,8 +370,7 @@ public class ProjectQueueItemAuthenticatorTest {
             }
 
             @Override
-            public void configureFromGlobalSecurity(StaplerRequest2 req, JSONObject js)
-                    throws Descriptor.FormException {
+            public void configureFromGlobalSecurity(StaplerRequest2 req, JSONObject js) {
                 value = js.getString("value");
                 save();
             }
@@ -374,9 +383,9 @@ public class ProjectQueueItemAuthenticatorTest {
     }
 
     @Test
-    public void testGlobalSecurityConfiguration() throws Exception {
+    void testGlobalSecurityConfiguration() throws Exception {
         // HTMLUnit does not support the fetch JavaScript API, must skip test after 2.401.1
-        Assume.assumeThat(j.jenkins.getVersion().isOlderThan(new VersionNumber("2.402")), is(true));
+        assumeTrue(Jenkins.getVersion().isOlderThan(new VersionNumber("2.402")));
         AuthorizeProjectStrategyWithGlobalSecurityConfiguration.DescriptorImpl descriptor =
                 (AuthorizeProjectStrategyWithGlobalSecurityConfiguration.DescriptorImpl)
                         Jenkins.get().getDescriptor(AuthorizeProjectStrategyWithGlobalSecurityConfiguration.class);
@@ -452,7 +461,7 @@ public class ProjectQueueItemAuthenticatorTest {
         enabledStrategies.add(j.jenkins
                 .getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class)
                 .getId());
-        assertStrategyEnablingConfigurationPreserved(enabledStrategies, disabledStrategies);
+        assertStrategyEnablingConfigurationPreserved(j, enabledStrategies, disabledStrategies);
 
         // all are disabled
         enabledStrategies = new HashSet<>();
@@ -466,7 +475,7 @@ public class ProjectQueueItemAuthenticatorTest {
         disabledStrategies.add(j.jenkins
                 .getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class)
                 .getId());
-        assertStrategyEnablingConfigurationPreserved(enabledStrategies, disabledStrategies);
+        assertStrategyEnablingConfigurationPreserved(j, enabledStrategies, disabledStrategies);
 
         // mixed
         enabledStrategies = new HashSet<>();
@@ -480,11 +489,11 @@ public class ProjectQueueItemAuthenticatorTest {
         disabledStrategies.add(j.jenkins
                 .getDescriptor(AuthorizeProjectStrategyWithAlternateGlobalSecurityConfiguration.class)
                 .getId());
-        assertStrategyEnablingConfigurationPreserved(enabledStrategies, disabledStrategies);
+        assertStrategyEnablingConfigurationPreserved(j, enabledStrategies, disabledStrategies);
     }
 
-    public void assertStrategyEnablingConfigurationPreserved(
-            Set<String> enabledStrategies, Set<String> disabledStrategies) throws Exception {
+    private static void assertStrategyEnablingConfigurationPreserved(
+            JenkinsRule j, Set<String> enabledStrategies, Set<String> disabledStrategies) throws Exception {
         QueueItemAuthenticatorConfiguration.get().getAuthenticators().clear();
         QueueItemAuthenticatorConfiguration.get()
                 .getAuthenticators()
@@ -492,15 +501,15 @@ public class ProjectQueueItemAuthenticatorTest {
         j.submit(j.createWebClient().goTo("configureSecurity").getFormByName("config"));
         for (String enabledStrategy : enabledStrategies) {
             assertTrue(
-                    enabledStrategy,
                     ProjectQueueItemAuthenticator.getConfigured()
-                            .isStrategyEnabled(j.jenkins.getDescriptor(enabledStrategy)));
+                            .isStrategyEnabled(j.jenkins.getDescriptor(enabledStrategy)),
+                    enabledStrategy);
         }
         for (String disabledStrategy : disabledStrategies) {
             assertFalse(
-                    disabledStrategy,
                     ProjectQueueItemAuthenticator.getConfigured()
-                            .isStrategyEnabled(j.jenkins.getDescriptor(disabledStrategy)));
+                            .isStrategyEnabled(j.jenkins.getDescriptor(disabledStrategy)),
+                    disabledStrategy);
         }
     }
 
@@ -518,8 +527,7 @@ public class ProjectQueueItemAuthenticatorTest {
         public AuthorizationCheckSimpleBuilder() {}
 
         @Override
-        public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener)
-                throws InterruptedException, IOException {
+        public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) {
             run.addAction(new AuthorizationRecordAction(Jenkins.getAuthentication2()));
         }
 
@@ -538,7 +546,7 @@ public class ProjectQueueItemAuthenticatorTest {
     }
 
     @Test
-    public void testWorkflow() throws Exception {
+    void testWorkflow() throws Exception {
         j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
         {
             WorkflowJob p = j.jenkins.createProject(

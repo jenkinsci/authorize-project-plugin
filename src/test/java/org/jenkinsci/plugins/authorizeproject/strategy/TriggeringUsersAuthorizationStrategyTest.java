@@ -24,7 +24,7 @@
 
 package org.jenkinsci.plugins.authorizeproject.strategy;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import hudson.model.Cause;
 import hudson.model.FreeStyleBuild;
@@ -33,23 +33,35 @@ import hudson.model.User;
 import hudson.security.ACL;
 import hudson.security.ACLContext;
 import hudson.tasks.BuildTrigger;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import jenkins.model.Jenkins;
+import jenkins.security.QueueItemAuthenticatorConfiguration;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
+import org.jenkinsci.plugins.authorizeproject.ProjectQueueItemAuthenticator;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizationCheckBuilder;
-import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizeProjectJenkinsRule;
 import org.jenkinsci.plugins.authorizeproject.testutil.SecurityRealmWithUserFilter;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.JenkinsRule.WebClient;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.jvnet.hudson.test.recipes.LocalData;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
-public class TriggeringUsersAuthorizationStrategyTest {
-    @Rule
-    public JenkinsRule j = new AuthorizeProjectJenkinsRule();
+@WithJenkins
+class TriggeringUsersAuthorizationStrategyTest {
+
+    private JenkinsRule j;
+
+    @BeforeEach
+    void setUp(JenkinsRule j) {
+        this.j = j;
+        QueueItemAuthenticatorConfiguration.get()
+                .getAuthenticators()
+                .add(new ProjectQueueItemAuthenticator(new HashSet<>(), new HashSet<>()));
+    }
 
     private void triggerBuildWithoutParameters(WebClient wc, FreeStyleProject project) throws Exception {
         // This code may get not to work in future versions of Jenkins.
@@ -57,12 +69,14 @@ public class TriggeringUsersAuthorizationStrategyTest {
         // * A form to resend a request with POST method has no name attribute.
         // * A button to submit is differ from that of other forms in Jenkins.
         //   (other forms is with <BUTTON>, but this form is with <SUBMIT>.
+        wc.setThrowExceptionOnFailingStatusCode(false);
         j.submit(wc.getPage(project, "build").getFormByName(""));
+        wc.setThrowExceptionOnFailingStatusCode(true);
     }
 
     @Test
     @LocalData
-    public void testAuthenticate() throws Exception {
+    void testAuthenticate() throws Exception {
         FreeStyleProject p = j.createFreeStyleProject();
         AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
         p.getBuildersList().add(checker);
@@ -128,7 +142,7 @@ public class TriggeringUsersAuthorizationStrategyTest {
 
     @Test
     @LocalData
-    public void testAuthenticateDownstream() throws Exception {
+    void testAuthenticateDownstream() throws Exception {
         FreeStyleProject p = j.createFreeStyleProject();
         AuthorizationCheckBuilder checker = new AuthorizationCheckBuilder();
         p.getBuildersList().add(checker);
@@ -155,7 +169,7 @@ public class TriggeringUsersAuthorizationStrategyTest {
     }
 
     @Test
-    public void testUserNotFoundException() throws Exception {
+    void testUserNotFoundException() throws Exception {
         j.jenkins.setSecurityRealm(new SecurityRealmWithUserFilter(j.createDummySecurityRealm(), List.of("validuser")));
 
         // Users should be created before the test.
