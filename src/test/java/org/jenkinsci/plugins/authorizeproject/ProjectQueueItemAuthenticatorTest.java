@@ -545,6 +545,29 @@ class ProjectQueueItemAuthenticatorTest {
         }
     }
 
+    /**
+     * Verify that {@link ProjectQueueItemAuthenticator#getConfigured()} handles
+     * an unavailable {@link QueueItemAuthenticatorConfiguration} gracefully
+     * instead of causing a {@link StackOverflowError} (JENKINS-61990).
+     */
+    @Test
+    void testGetConfiguredReturnsNullWhenExtensionListUnavailable() {
+        assertNotNull(
+                ProjectQueueItemAuthenticator.getConfigured(),
+                "Should return configured instance when Jenkins is fully initialized");
+        assertTrue(
+                ProjectQueueItemAuthenticator.isConfigured(),
+                "Should report as configured when Jenkins is fully initialized");
+
+        QueueItemAuthenticatorConfiguration.get().getAuthenticators().clear();
+        assertNull(
+                ProjectQueueItemAuthenticator.getConfigured(),
+                "Should return null when no ProjectQueueItemAuthenticator is configured");
+        assertFalse(
+                ProjectQueueItemAuthenticator.isConfigured(),
+                "Should report as not configured when authenticator list is empty");
+    }
+
     @Test
     void testWorkflow() throws Exception {
         j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
