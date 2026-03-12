@@ -234,28 +234,18 @@ class SpecificUsersAuthorizationStrategyTest {
                 j.jenkins.getDescriptor(SpecificUsersAuthorizationStrategy.class);
 
         // admin does not require authentication
-        assertEquals(
-                FormValidation.Kind.OK,
-                descriptor.doCheckPassword(null, "test1", "", "", false).kind);
+        assertEquals(FormValidation.Kind.OK, descriptor.doCheckPassword(null, "test1", "", "", false).kind);
 
         // non-admin user specifying a different user requires authentication
         try (ACLContext ignored = ACL.as(User.getById("test1", true))) {
             // blank password
-            assertEquals(
-                    FormValidation.Kind.ERROR,
-                    descriptor.doCheckPassword(null, "test2", "", "", false).kind);
+            assertEquals(FormValidation.Kind.ERROR, descriptor.doCheckPassword(null, "test2", "", "", false).kind);
             // valid password
-            assertEquals(
-                    FormValidation.Kind.OK,
-                    descriptor.doCheckPassword(null, "test2", "test2", "", false).kind);
+            assertEquals(FormValidation.Kind.OK, descriptor.doCheckPassword(null, "test2", "test2", "", false).kind);
             // blank API token
-            assertEquals(
-                    FormValidation.Kind.ERROR,
-                    descriptor.doCheckPassword(null, "test2", "", "", true).kind);
+            assertEquals(FormValidation.Kind.ERROR, descriptor.doCheckPassword(null, "test2", "", "", true).kind);
             // non-blank API token
-            assertEquals(
-                    FormValidation.Kind.OK,
-                    descriptor.doCheckPassword(null, "test2", "", "sometoken", true).kind);
+            assertEquals(FormValidation.Kind.OK, descriptor.doCheckPassword(null, "test2", "", "sometoken", true).kind);
         }
     }
 
