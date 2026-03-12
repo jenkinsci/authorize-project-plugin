@@ -2,7 +2,7 @@
 
 [![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/authorize-project.svg)](https://plugins.jenkins.io/authorize-project)
 [![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/authorize-project.svg?color=blue)](https://plugins.jenkins.io/authorize-project)
-[![Build Status](https://ci.jenkins.io/buildStatus/icon?job=Plugins%2Fauthorize-project-plugin%2Fmaster)](https://ci.jenkins.io/job/Plugins/job/authorize-project-plugin/job/master/)
+[![Build Status](https://ci.jenkins.io/job/Plugins/job/authorize-project-plugin/job/master/badge/icon)](https://ci.jenkins.io/job/Plugins/job/authorize-project-plugin/job/master/)
 [![GitHub release](https://img.shields.io/github/v/release/jenkinsci/authorize-project-plugin)](https://github.com/jenkinsci/authorize-project-plugin/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
