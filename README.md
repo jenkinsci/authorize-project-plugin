@@ -1,100 +1,77 @@
 # Authorize Project Plugin for Jenkins
 
-This plugin allows projects to run builds with specified authorization.
+[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/authorize-project.svg)](https://plugins.jenkins.io/authorize-project)
+[![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/authorize-project.svg?color=blue)](https://plugins.jenkins.io/authorize-project)
+[![Build Status](https://ci.jenkins.io/job/Plugins/job/authorize-project-plugin/job/master/badge/icon)](https://ci.jenkins.io/job/Plugins/job/authorize-project-plugin/job/master/)
+[![GitHub release](https://img.shields.io/github/v/release/jenkinsci/authorize-project-plugin)](https://github.com/jenkinsci/authorize-project-plugin/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## What's this?
+Configure projects to run builds with specified authorization using [QueueItemAuthenticator](https://javadoc.jenkins.io/jenkins/security/QueueItemAuthenticator.html).
 
-This plugin provides following features:
+## Features
 
--   You can configure projects to have their builds run with specified
-    authorization.
-    -   This is an implementation of
-        [QueueItemAuthenticator](http://javadoc.jenkins-ci.org/jenkins/security/QueueItemAuthenticator.html).
--   Provides following ways to specify authorization.
-    -   Run as the user who triggered the build.
-        -   Does not work for scheduled, or polled builds.
-        -   Configuring projects are allowed only to users with the
-            BUILD permission.
-    -   Run as anonymous.
-    -   Run as the specified user.
-        -   You are requested to enter the password of the specified
-            user except in the following cases:
-            -   You are an administrator.
-            -   You are the specified user.
-            -   The specified user is not changed from the last
-                configuration, and "No need for re-authentication" is
-                checked.
-                -   This can be a security risk
-        -   Configuring projects are allowed only to administrators and
-            the user configured as the authorization.
-            -   "Don't restrict job configuration" allows other users
-                (with the CONFIGURE permission) to configure the
-                project. Ensure that only appropriate users have
-                CONFIGURE permission for that project.
-    -   Run as SYSTEM
-        -   This is provided only to cancel the global configuration.
-            SYSTEM authorization is often considered as "unconfigured",
-            features provided by plugins may treat it as anonymous.
--   Provides an extension point to add new ways to specify
-    authorization.
+### Authorization Strategies
 
-## Screenshots
+| Strategy | Description |
+|----------|-------------|
+| **Run as the user who triggered the build** | Does not work for scheduled or polled builds. Only users with BUILD permission can configure projects. |
+| **Run as anonymous** | Runs the build with no permissions. |
+| **Run as a specific user** | Requires password/API token of the target user, unless you are an administrator or specifying yourself. |
+| **Run as SYSTEM** | Provided only to override the global configuration. Plugins may treat SYSTEM as anonymous. |
 
--   The plugin adds "Access Control for Builds" in "Manage Jenkins" \> "Configure Global
-    Security". Adding "Configure Build Authorizations in Project
-    Configuration" enables Authorize Project plugin.
-    ![](docs/images/authorize-project_01_globalsecurity.png)
-    -   You can also disable specific strategies in this page. Disabled
-        strategies are never used for authorization.
--   A new side bar menu "Authorization" will appear in project pages.
-    ![](docs/images/sidebar.png)
--   You can select how to authorize builds of the project in the
-    "Authorization" page.
-    ![](docs/images/authorization-page.png)
--   When selecting "Run as Specific User", you can enter User ID with
-    whose authorization builds will run. If you enter a user ID except
-    yourself and have no administrative privilege, you are required to
-    enter the password of that user.
-    ![](docs/images/authorization-page-specific-user.png)
-    -   You can also use API token, especially for non password-based
-        security realms.
--   Configuring project settings by unauthorized users are forbidden
-    when you configure the authorization for the project. See [What's this](/)? for details.
-    ![](docs/images/access-denied.png)
+### Access Control
 
-## Extension point
+When "Run as Specific User" is selected:
 
-A new way to authorize projects can be added by extending
-[`AuthorizeProjectStrategy`](https://javadoc.jenkins.io/plugin/authorize-project/org/jenkinsci/plugins/authorizeproject/AuthorizeProjectStrategy.html),
-overriding the following method:
+- Administrators can specify any user without authentication.
+- Non-admin users specifying a different user must provide credentials (password or API token).
+- Only administrators and the configured user can modify the project configuration, unless "Don't restrict job configuration" is enabled.
 
-``` syntaxhighlighter-pre
+## Configuration
+
+### Global Security
+
+Add "Configure Build Authorizations in Project Configuration" under **Manage Jenkins > Security > Access Control for Builds**. You can also disable specific strategies from this page.
+
+![Global Security Configuration](docs/images/authorize-project_01_globalsecurity.png)
+
+### Project Authorization
+
+A new **Authorization** menu appears in project sidebars, where you select the authorization strategy for that project.
+
+| | |
+|---|---|
+| ![Sidebar](docs/images/sidebar.png) | ![Authorization Page](docs/images/authorization-page.png) |
+
+When using "Run as Specific User", you can authenticate via password or API token (useful for non-password-based security realms).
+
+![Specific User](docs/images/authorization-page-specific-user.png)
+
+Unauthorized configuration attempts are blocked:
+
+![Access Denied](docs/images/access-denied.png)
+
+## Extension Point
+
+Add custom authorization strategies by extending [`AuthorizeProjectStrategy`](https://javadoc.jenkins.io/plugin/authorize-project/org/jenkinsci/plugins/authorizeproject/AuthorizeProjectStrategy.html):
+
+```java
 public abstract Authentication authenticate(
     hudson.model.AbstractProject<?, ?> project,
     hudson.model.Queue.Item item
 );
 ```
 
-Use `AuthorizeProjectStrategyDescriptor` for `Descriptor`.
-If you want to provide global configuration properties, do as following:
-
--   `global-security.jelly` is displayed in "Configure Global Security"
-    page.
--   Override
-    `AuthorizeProjectStrategyDescriptor#configureFromGlobalSecurity` to
-    save configuration.
+Use `AuthorizeProjectStrategyDescriptor` for your `Descriptor`. For global configuration properties, provide a `global-security.jelly` and override `AuthorizeProjectStrategyDescriptor#configureFromGlobalSecurity`.
 
 ## Issues
 
-To report a bug or request an enhancement to this plugin please create a
-ticket in JIRA (you need to login or to sign up for an account).
-Also have a look on [How to report an issue](https://www.jenkins.io/participate/report-issue/)
+Report bugs and request features via [GitHub Issues](https://github.com/jenkinsci/authorize-project-plugin/issues).
 
--   [Bug report](https://issues.jenkins.io/secure/CreateIssueDetails!init.jspa?pid=10172&issuetype=1&components=18155&priority=4&assignee=ikedam)
--   [Request or propose an improvement of existing feature](https://issues.jenkins.io/secure/CreateIssueDetails!init.jspa?pid=10172&issuetype=4&components=18155&priority=4)
--   [Request or propose a new feature](https://issues.jenkins.io/secure/CreateIssueDetails!init.jspa?pid=10172&issuetype=2&components=18155&priority=4)
+## Contributing
 
-## Change Log
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-* See [GitHub Releases](https://github.com/jenkinsci/authorize-project-plugin/releases) for the recent releases
-* See the [Changelog Archive](https://github.com/jenkinsci/authorize-project-plugin/blob/authorize-project-1.6.0/docs/CHANGELOG.old.md) for version 1.3.0 and older
+## Changelog
+
+See [GitHub Releases](https://github.com/jenkinsci/authorize-project-plugin/releases) for recent changes and the [Changelog Archive](https://github.com/jenkinsci/authorize-project-plugin/blob/authorize-project-1.6.0/docs/CHANGELOG.old.md) for version 1.3.0 and older.
