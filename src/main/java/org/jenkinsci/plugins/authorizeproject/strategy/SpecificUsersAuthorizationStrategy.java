@@ -39,7 +39,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import jenkins.security.ApiTokenProperty;
-import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategy;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectStrategyDescriptor;
@@ -113,7 +112,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
     }
 
     public SpecificUsersAuthorizationStrategy(String userid) {
-        this.userid = StringUtils.trim(userid);
+        this.userid = userid == null ? null : userid.trim();
         this.dontRestrictJobConfiguration = false;
         for (Authentication a : BUILTIN_USERS) {
             if (AuthorizeProjectUtil.userIdEquals(this.userid, a.getPrincipal().toString())) {
@@ -302,7 +301,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
         @Restricted(NoExternalUse.class) // used by stapler/jelly
         @SuppressWarnings("unused")
         public FormValidation doCheckUserid(@QueryParameter String userid) {
-            if (StringUtils.isBlank(userid)) {
+            if (userid.isBlank()) {
                 return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_userid_required());
             }
             for (Authentication a : BUILTIN_USERS) {
@@ -334,7 +333,7 @@ public class SpecificUsersAuthorizationStrategy extends AuthorizeProjectStrategy
                 return FormValidation.ok();
             }
 
-            if (useApitoken ? StringUtils.isBlank(apitoken) : StringUtils.isBlank(password)) {
+            if (useApitoken ? apitoken.isBlank() : password.isBlank()) {
                 return FormValidation.error(Messages.SpecificUsersAuthorizationStrategy_password_required());
             }
 
