@@ -38,6 +38,7 @@ import hudson.security.AuthorizationMatrixProperty;
 import hudson.security.GlobalMatrixAuthorizationStrategy;
 import hudson.security.Permission;
 import hudson.security.ProjectMatrixAuthorizationStrategy;
+import hudson.util.FormValidation;
 import jakarta.servlet.ServletRequest;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -212,6 +213,40 @@ class SpecificUsersAuthorizationStrategyTest {
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", true, "", null));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate("test1", true, null, null));
         assertFalse(SpecificUsersAuthorizationStrategy.authenticate(null, true, apitokenForTest1, null));
+    }
+
+    @Test
+    void testDoCheckUserid() {
+        var descriptor = (SpecificUsersAuthorizationStrategy.DescriptorImpl)
+                j.jenkins.getDescriptor(SpecificUsersAuthorizationStrategy.class);
+
+        assertEquals(FormValidation.Kind.ERROR, descriptor.doCheckUserid("").kind);
+        assertEquals(FormValidation.Kind.ERROR, descriptor.doCheckUserid("   ").kind);
+        assertEquals(FormValidation.Kind.OK, descriptor.doCheckUserid("validuser").kind);
+        assertEquals(FormValidation.Kind.ERROR, descriptor.doCheckUserid("SYSTEM").kind);
+        assertEquals(FormValidation.Kind.ERROR, descriptor.doCheckUserid("anonymous").kind);
+    }
+
+    @Test
+    void testDoCheckPassword() {
+        prepareSecurity();
+        var descriptor = (SpecificUsersAuthorizationStrategy.DescriptorImpl)
+                j.jenkins.getDescriptor(SpecificUsersAuthorizationStrategy.class);
+
+        // admin does not require authentication
+        assertEquals(FormValidation.Kind.OK, descriptor.doCheckPassword(null, "test1", "", "", false).kind);
+
+        // non-admin user specifying a different user requires authentication
+        try (ACLContext ignored = ACL.as(User.getById("test1", true))) {
+            // blank password
+            assertEquals(FormValidation.Kind.ERROR, descriptor.doCheckPassword(null, "test2", "", "", false).kind);
+            // valid password
+            assertEquals(FormValidation.Kind.OK, descriptor.doCheckPassword(null, "test2", "test2", "", false).kind);
+            // blank API token
+            assertEquals(FormValidation.Kind.ERROR, descriptor.doCheckPassword(null, "test2", "", "", true).kind);
+            // non-blank API token
+            assertEquals(FormValidation.Kind.OK, descriptor.doCheckPassword(null, "test2", "", "sometoken", true).kind);
+        }
     }
 
     @Test

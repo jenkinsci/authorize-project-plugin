@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.authorizeproject;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.Extension;
+import hudson.init.InitMilestone;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.model.DescriptorVisibilityFilter;
@@ -36,7 +37,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import jenkins.model.Jenkins;
 import jenkins.security.QueueItemAuthenticator;
 import jenkins.security.QueueItemAuthenticatorConfiguration;
 import jenkins.security.QueueItemAuthenticatorDescriptor;
@@ -49,6 +53,8 @@ import org.springframework.security.core.Authentication;
  * Authorize builds of projects configured with {@link AuthorizeProjectProperty}.
  */
 public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
+    private static final Logger LOGGER = Logger.getLogger(ProjectQueueItemAuthenticator.class.getName());
+
     private final Set<String> enabledStrategies;
     private final Set<String> disabledStrategies;
 
@@ -205,14 +211,24 @@ public class ProjectQueueItemAuthenticator extends QueueItemAuthenticator {
     }
 
     /**
-     * @return instance configured in Global Security configuration.
+     * @return instance configured in Global Security configuration,
+     *         or {@code null} if not configured or Jenkins is still initializing.
      */
     public static ProjectQueueItemAuthenticator getConfigured() {
-        for (QueueItemAuthenticator authenticator :
-                QueueItemAuthenticatorConfiguration.get().getAuthenticators()) {
-            if (authenticator instanceof ProjectQueueItemAuthenticator itemAuthenticator) {
-                return itemAuthenticator;
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
+        if (jenkins == null || jenkins.getInitLevel() != InitMilestone.COMPLETED) {
+            return null;
+        }
+        try {
+            for (QueueItemAuthenticator authenticator :
+                    QueueItemAuthenticatorConfiguration.get().getAuthenticators()) {
+                if (authenticator instanceof ProjectQueueItemAuthenticator itemAuthenticator) {
+                    return itemAuthenticator;
+                }
             }
+        } catch (IllegalStateException e) {
+            LOGGER.log(Level.FINE, "QueueItemAuthenticatorConfiguration not yet available", e);
+            return null;
         }
         return null;
     }
