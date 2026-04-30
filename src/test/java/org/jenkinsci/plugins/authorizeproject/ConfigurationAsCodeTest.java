@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 
 import hudson.util.DescribableList;
+import io.jenkins.plugins.casc.ConfigurationAsCode;
 import io.jenkins.plugins.casc.ConfigurationContext;
 import io.jenkins.plugins.casc.ConfiguratorRegistry;
 import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
@@ -120,6 +121,32 @@ class ConfigurationAsCodeTest {
     @ConfiguredWithCode("ConfigurationAsCodeTest/project.config.all.yml")
     void exportProjectTriggeringUsersAuthorizationStrategy(JenkinsConfiguredWithCodeRule r) throws Exception {
         assertExport("ConfigurationAsCodeTest/project.export.all.yml");
+    }
+
+    @Test
+    @ConfiguredWithCode("ConfigurationAsCodeTest/global.config.AnonymousAuthorizationStrategy.yml")
+    void reapplyDoesNotFailWithUnknownAttribute(JenkinsConfiguredWithCodeRule r) throws Exception {
+        // Reproduces JENKINS-71142 scenario: ansible/JCasC redeploy on running Jenkins
+        // where queueItemAuthenticator must remain a known attribute on the security category.
+        DescribableList<QueueItemAuthenticator, QueueItemAuthenticatorDescriptor> authenticators =
+                QueueItemAuthenticatorConfiguration.get().getAuthenticators();
+        assertThat(authenticators, hasSize(1));
+
+        String yaml =
+                "security:\n  queueItemAuthenticator:\n    authenticators:\n      - global:\n          strategy: \"anonymousAuthorizationStrategy\"\n";
+        java.nio.file.Path tmp = java.nio.file.Files.createTempFile("casc-reapply", ".yml");
+        java.nio.file.Files.writeString(tmp, yaml);
+        try {
+            ConfigurationAsCode.get().configure(tmp.toUri().toString());
+        } finally {
+            java.nio.file.Files.deleteIfExists(tmp);
+        }
+
+        authenticators = QueueItemAuthenticatorConfiguration.get().getAuthenticators();
+        assertThat(authenticators, hasSize(1));
+        assertThat(
+                authenticators.get(GlobalQueueItemAuthenticator.class).getStrategy(),
+                instanceOf(AnonymousAuthorizationStrategy.class));
     }
 
     private void assertExport(String resourcePath) throws Exception {
