@@ -33,6 +33,7 @@ import hudson.model.User;
 import hudson.security.ACL;
 import hudson.security.ACLContext;
 import hudson.tasks.BuildTrigger;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -65,10 +66,18 @@ class TriggeringUsersAuthorizationStrategyTest {
                 .add(new ProjectQueueItemAuthenticator(new HashSet<>(), new HashSet<>()));
     }
 
-    private void triggerBuildWithoutParameters(WebClient wc, FreeStyleProject project) throws Exception {
-        // POST directly to the build URL so the build is triggered as the user authenticated in the
-        // WebClient. Avoid scraping the GET-then-resend confirmation page, whose markup is internal to
-        // Jenkins core and changed in 2.565 (jenkinsci/jenkins#26333).
+    // Trigger a build as an authenticated user via API token. Such requests are exempt from
+    // CSRF, so no crumb is needed.
+    private void triggerBuildAs(String username, FreeStyleProject project) throws Exception {
+        WebClient wc = j.createWebClient().withBasicApiToken(username);
+        wc.getPage(new WebRequest(new URL(j.getURL(), project.getUrl() + "build?delay=0sec"), HttpMethod.POST));
+    }
+
+    // Trigger a build anonymously. No API token is available for an anonymous request, so a
+    // CSRF crumb is required. The build page markup is no longer scraped (it changed in 2.565,
+    // jenkinsci/jenkins#26333).
+    private void triggerBuildAnonymously(FreeStyleProject project) throws Exception {
+        WebClient wc = j.createWebClient();
         wc.getPage(new WebRequest(wc.createCrumbedUrl(project.getUrl() + "build?delay=0sec"), HttpMethod.POST));
     }
 
@@ -82,8 +91,7 @@ class TriggeringUsersAuthorizationStrategyTest {
         // if not configured, run in SYSTEM2 privilege.
         {
             assertNull(p.getLastBuild());
-            WebClient wc = j.createWebClient();
-            triggerBuildWithoutParameters(wc, p);
+            triggerBuildAnonymously(p);
             j.waitUntilNoActivity();
             FreeStyleBuild b = p.getLastBuild();
             assertNotNull(b);
@@ -98,8 +106,7 @@ class TriggeringUsersAuthorizationStrategyTest {
         // if configured, run in ANONYMOUS privilege.
         {
             assertNull(p.getLastBuild());
-            WebClient wc = j.createWebClient();
-            triggerBuildWithoutParameters(wc, p);
+            triggerBuildAnonymously(p);
             j.waitUntilNoActivity();
             FreeStyleBuild b = p.getLastBuild();
             assertNotNull(b);
@@ -112,8 +119,7 @@ class TriggeringUsersAuthorizationStrategyTest {
         // if triggered from a user, run in the privilege of that user.
         {
             assertNull(p.getLastBuild());
-            WebClient wc = j.createWebClient().login("test1");
-            triggerBuildWithoutParameters(wc, p);
+            triggerBuildAs("test1", p);
             j.waitUntilNoActivity();
             FreeStyleBuild b = p.getLastBuild();
             assertNotNull(b);
@@ -126,8 +132,7 @@ class TriggeringUsersAuthorizationStrategyTest {
         // test with another user.
         {
             assertNull(p.getLastBuild());
-            WebClient wc = j.createWebClient().login("test2");
-            triggerBuildWithoutParameters(wc, p);
+            triggerBuildAs("test2", p);
             j.waitUntilNoActivity();
             FreeStyleBuild b = p.getLastBuild();
             assertNotNull(b);
@@ -154,8 +159,7 @@ class TriggeringUsersAuthorizationStrategyTest {
         // if triggered from a user, its downstream runs in the privilege of that user.
         {
             assertNull(p.getLastBuild());
-            WebClient wc = j.createWebClient().login("test1");
-            triggerBuildWithoutParameters(wc, upstream);
+            triggerBuildAs("test1", upstream);
             j.waitUntilNoActivity();
             FreeStyleBuild b = p.getLastBuild();
             assertNotNull(b);
