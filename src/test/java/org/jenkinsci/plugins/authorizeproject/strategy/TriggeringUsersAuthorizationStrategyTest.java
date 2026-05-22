@@ -38,6 +38,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import jenkins.model.Jenkins;
 import jenkins.security.QueueItemAuthenticatorConfiguration;
+import org.htmlunit.HttpMethod;
+import org.htmlunit.WebRequest;
 import org.jenkinsci.plugins.authorizeproject.AuthorizeProjectProperty;
 import org.jenkinsci.plugins.authorizeproject.ProjectQueueItemAuthenticator;
 import org.jenkinsci.plugins.authorizeproject.testutil.AuthorizationCheckBuilder;
@@ -64,14 +66,10 @@ class TriggeringUsersAuthorizationStrategyTest {
     }
 
     private void triggerBuildWithoutParameters(WebClient wc, FreeStyleProject project) throws Exception {
-        // This code may get not to work in future versions of Jenkins.
-        // There are several problems:
-        // * A form to resend a request with POST method has no name attribute.
-        // * A button to submit is differ from that of other forms in Jenkins.
-        //   (other forms is with <BUTTON>, but this form is with <SUBMIT>.
-        wc.setThrowExceptionOnFailingStatusCode(false);
-        j.submit(wc.getPage(project, "build").getFormByName(""));
-        wc.setThrowExceptionOnFailingStatusCode(true);
+        // POST directly to the build URL so the build is triggered as the user authenticated in the
+        // WebClient. Avoid scraping the GET-then-resend confirmation page, whose markup is internal to
+        // Jenkins core and changed in 2.565 (jenkinsci/jenkins#26333).
+        wc.getPage(new WebRequest(wc.createCrumbedUrl(project.getUrl() + "build?delay=0sec"), HttpMethod.POST));
     }
 
     @Test
